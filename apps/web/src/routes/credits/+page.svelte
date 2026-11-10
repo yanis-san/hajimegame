@@ -11,8 +11,9 @@
 	<section>
 		<h2>Dictionnaire</h2>
 		<p>
-			Les mots viennent du fichier <strong>JMdict</strong>, © Electronic Dictionary Research and
-			Development Group (EDRDG), utilisé conformément à la
+			Les mots et leurs sens (anglais, et français quand JMdict le fournit) viennent du fichier <strong
+				>JMdict</strong
+			>, © Electronic Dictionary Research and Development Group (EDRDG), utilisé conformément à la
 			<a href="https://www.edrdg.org/edrdg/licence.html" rel="noreferrer">licence du groupe</a>
 			(<a href="https://creativecommons.org/licenses/by-sa/4.0/" rel="noreferrer">CC BY-SA 4.0</a>).
 			Le dictionnaire de jeu est une version filtrée et reformatée de ce fichier ; ses règles de

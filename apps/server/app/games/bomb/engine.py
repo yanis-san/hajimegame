@@ -181,6 +181,8 @@ class BombEngine:
                 reading=hit.reading,
                 score_gain=gain,
                 score=state.score,
+                meaning_fr=hit.meaning_fr,
+                meaning_en=hit.meaning_en,
             )
         )
         self._update_bonus(state, hit.reading, out)

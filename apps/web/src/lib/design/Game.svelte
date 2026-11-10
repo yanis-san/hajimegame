@@ -6,8 +6,9 @@
 	import type { GameSession } from '#lib/game/session.svelte.ts';
 	import Bomb from './Bomb.svelte';
 	import type { Mood } from './Mascot.svelte';
+	import Meanings from './Meanings.svelte';
 	import Particles from './Particles.svelte';
-	import PlayerChip from './PlayerChip.svelte';
+	import PlayerCard from './PlayerCard.svelte';
 	import WordInput from './WordInput.svelte';
 	import WordsList from './WordsList.svelte';
 	import { flyWord, shake } from './fly';
@@ -19,6 +20,7 @@
 	let root: HTMLElement | undefined = $state();
 	let bombBox: HTMLElement | undefined = $state();
 	let listBox: HTMLElement | undefined = $state();
+	let lastBox: HTMLElement | undefined = $state();
 	let input: WordInput | undefined = $state();
 	let width = $state(1000);
 	let height = $state(800);
@@ -29,22 +31,10 @@
 	let rejectTimer: ReturnType<typeof setTimeout> | undefined;
 
 	const desktop = $derived(width >= 900);
-	const bombSize = $derived(desktop ? 165 : Math.max(120, Math.min(180, Math.round(height * 0.2))));
-	const mySeat = $derived(
-		Math.max(
-			0,
-			store.players.findIndex((p) => p.id === store.you)
-		)
+	const bombSize = $derived(
+		desktop ? 230 : Math.max(130, Math.min(200, Math.round(height * 0.22)))
 	);
-
-	/** Seats on a ring (desktop), with the local player at the bottom. */
-	const seats = $derived(
-		store.players.map((p, i) => {
-			const n = store.players.length;
-			const angle = Math.PI / 2 + ((i - mySeat) / n) * Math.PI * 2;
-			return { player: p, x: 50 + 44 * Math.cos(angle), y: 50 + 43 * Math.sin(angle) };
-		})
-	);
+	const lastWord = $derived(store.words.at(-1) ?? null);
 
 	function setMood(next: Mood, ms: number): void {
 		mood = next;
@@ -78,8 +68,10 @@
 		setMood('relief', 700);
 		const who = store.player(event.playerId);
 		announcement = t('a11y.accepted', { name: who?.name ?? '', word: event.word });
-		if (bombBox && listBox)
-			flyWord(event.word, bombBox.getBoundingClientRect(), listBox.getBoundingClientRect());
+		const target = desktop ? listBox : lastBox;
+		if (bombBox && target) {
+			flyWord(event.word, bombBox.getBoundingClientRect(), target.getBoundingClientRect());
+		}
 		if (event.playerId === store.you) {
 			input?.clear();
 			rejection = '';
@@ -154,11 +146,26 @@
 <svelte:window bind:innerWidth={width} bind:innerHeight={height} />
 <Particles bind:this={particles} />
 
-<section class="game" bind:this={root} aria-label="Partie">
+<section class="game" bind:this={root} aria-label="Partie" style="--bomb:{bombSize}px">
 	<div class="sr-only" aria-live="polite" aria-atomic="true">{announcement}</div>
 
-	<div class="stage">
-		<div class="arena" class:arena-on={desktop}>
+	<!-- players: a row of tiles on phones, a column on desktop -->
+	<div class="players" role="list">
+		{#each store.players as player (player.id)}
+			<div role="listitem" class="slot">
+				<PlayerCard
+					{player}
+					you={player.id === store.you}
+					active={player.id === store.turn?.player_id && store.phase === 'playing'}
+					maxLives={store.settings.lives}
+					typing={store.typing}
+				/>
+			</div>
+		{/each}
+	</div>
+
+	<div class="main">
+		<div class="stage">
 			<div class="center" bind:this={bombBox}>
 				<Bomb
 					fragment={store.turn?.fragment ?? ''}
@@ -171,130 +178,179 @@
 					size={bombSize}
 					onspark={(x, y, k) => particles?.spark(x, y, k)}
 				/>
-				<p class="live" aria-hidden="true" class:mine={store.isMyTurn}>
-					{#if store.turn}
-						<span class="who">{store.isMyTurn ? t('game.yourTurn') : activeName}</span>
-					{/if}
-					<span class="typed">{store.isMyTurn ? '' : store.typing}</span>
-				</p>
 			</div>
 
-			{#each seats as seat (seat.player.id)}
-				<div class="seat" style="--x:{seat.x}%; --y:{seat.y}%">
-					<PlayerChip
-						player={seat.player}
-						you={seat.player.id === store.you}
-						active={seat.player.id === store.turn?.player_id && store.phase === 'playing'}
-						maxLives={store.settings.lives}
-						typing={store.typing}
-						size={desktop ? 'lg' : 'md'}
-						compact={!desktop}
-					/>
-				</div>
-			{/each}
+			<p class="turnline" class:mine={store.isMyTurn} aria-hidden="true">
+				{#if store.turn}
+					{#if store.isMyTurn}
+						<strong>{t('game.yourTurn')}</strong>
+						{t('game.typeHere')}
+						<span class="frag">{store.turn.fragment}</span>
+					{:else}
+						{t('game.turnOf', { name: activeName })}
+						{#if store.typing}<span class="typed">{store.typing}</span>{/if}
+					{/if}
+				{/if}
+			</p>
 		</div>
 
-		<aside class="words" bind:this={listBox}>
-			<WordsList words={store.words} players={store.players} />
-		</aside>
+		<!-- last accepted word with its meaning (French first, English otherwise) -->
+		<div class="last" bind:this={lastBox}>
+			{#if lastWord}
+				{#key lastWord.turn + lastWord.word}
+					<div class="lastcard">
+						<div class="lead">
+							<span class="w">{lastWord.word}</span>
+							{#if lastWord.reading !== lastWord.word}<span class="r">{lastWord.reading}</span>{/if}
+						</div>
+						<Meanings fr={lastWord.meaning_fr} en={lastWord.meaning_en} />
+					</div>
+				{/key}
+			{:else}
+				<p class="hint">{t('game.wordsEmpty')}</p>
+			{/if}
+		</div>
+
+		<footer class="foot">
+			{#if store.spectator}
+				<p class="watching">{t('game.spectating')}</p>
+			{:else}
+				<WordInput
+					bind:this={input}
+					fragment={store.turn?.fragment ?? ''}
+					active={store.isMyTurn && (store.me?.alive ?? false)}
+					{placeholder}
+					error={rejection}
+					onsubmit={(text) => session.submit(text)}
+					ontyping={(text) => session.typing(text)}
+				/>
+			{/if}
+		</footer>
 	</div>
 
-	<footer class="foot">
-		{#if store.spectator}
-			<p class="watching">{t('game.spectating')}</p>
-		{:else}
-			<WordInput
-				bind:this={input}
-				fragment={store.turn?.fragment ?? ''}
-				active={store.isMyTurn && (store.me?.alive ?? false)}
-				{placeholder}
-				error={rejection}
-				onsubmit={(text) => session.submit(text)}
-				ontyping={(text) => session.typing(text)}
-			/>
-		{/if}
-	</footer>
+	<aside class="history" bind:this={listBox}>
+		<WordsList words={store.words} players={store.players} />
+	</aside>
 </section>
 
 <style>
 	.game {
-		display: flex;
-		flex-direction: column;
+		display: grid;
+		grid-template-rows: auto minmax(0, 1fr);
 		height: calc(var(--vvh, 100dvh) - var(--bar, 52px));
 		box-sizing: border-box;
-		padding: 0.5rem 0.75rem calc(0.6rem + env(safe-area-inset-bottom));
-		gap: 0.4rem;
-		max-width: 1180px;
+		padding: 0.3rem 0.7rem calc(0.6rem + env(safe-area-inset-bottom));
+		gap: 0.5rem;
+		max-width: 1240px;
 		margin-inline: auto;
 	}
-	.stage {
-		flex: 1;
-		min-height: 0;
+	.players {
 		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
+		gap: 0.35rem;
+		justify-content: center;
 	}
-	.arena {
-		flex: 1;
+	.slot {
+		flex: 1 1 0;
+		min-width: 0;
+		max-width: 5.4rem;
+	}
+	.main {
+		display: grid;
+		grid-template-rows: minmax(0, 1fr) auto auto;
+		gap: 0.5rem;
 		min-height: 0;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
+	}
+	.stage {
+		display: grid;
+		align-content: center;
+		justify-items: center;
 		gap: 0.6rem;
+		min-height: 0;
+		padding-top: calc(var(--bomb) * 0.4); /* room for the fuse above the bomb */
 	}
 	.center {
-		order: 1;
 		display: grid;
 		justify-items: center;
-		padding-top: 0.2rem;
-		z-index: 2;
 	}
-	/* mobile: players in a compact grid under the bomb */
-	.seat {
-		order: 2;
-	}
-	.arena:not(.arena-on) {
-		flex-direction: row;
+	.turnline {
+		margin: 0;
+		min-height: 2.2rem;
+		display: flex;
 		flex-wrap: wrap;
 		justify-content: center;
-		align-content: flex-start;
-		gap: 0.45rem;
-	}
-	.arena:not(.arena-on) .center {
-		flex: 0 0 100%;
-	}
-	.arena:not(.arena-on) .seat {
-		flex: 0 0 calc(25% - 0.4rem);
-		max-width: 6.5rem;
-	}
-	.live {
-		margin: 0.1rem 0 0;
-		min-height: 2.2rem;
-		display: grid;
-		justify-items: center;
-		font-family: var(--font-kana);
-		text-align: center;
-	}
-	.who {
-		font-size: 0.9rem;
+		align-items: baseline;
+		gap: 0.5rem;
 		font-weight: 700;
+		font-size: 1.05rem;
+		text-align: center;
 		color: var(--text-mute);
-		font-family: var(--font-ui);
 	}
-	.mine .who {
+	.turnline.mine {
+		color: var(--text);
+	}
+	.turnline strong {
 		color: var(--kinpaku);
-		font-size: 1.1rem;
+		font-size: 1.25rem;
+	}
+	.frag {
+		padding: 0 0.6rem 0.1rem;
+		background: var(--kinpaku);
+		color: var(--sumi);
+		border: var(--line) solid var(--sumi);
+		border-radius: 10px;
+		box-shadow: 0 3px 0 var(--sumi);
+		font-family: var(--font-kana);
+		font-size: 1.5rem;
 	}
 	.typed {
-		font-size: 1.7rem;
+		padding: 0 0.7rem 0.1rem;
+		background: var(--washi);
+		color: var(--sumi);
+		border: var(--line) solid var(--sumi);
+		border-radius: 10px;
+		font-family: var(--font-kana);
+		font-size: 1.4rem;
+	}
+	.last {
+		min-height: 3.8rem;
+		display: grid;
+		align-items: center;
+	}
+	.lastcard {
+		display: grid;
+		gap: 0.1rem;
+		padding: 0.45rem 0.9rem 0.55rem;
+		background: var(--matcha);
+		color: var(--sumi);
+		border: var(--line) solid var(--sumi);
+		border-radius: 14px;
+		box-shadow: var(--shadow-sm);
+		animation: card-pop var(--t-mid) var(--ease-pop) both;
+	}
+	.lead {
+		display: flex;
+		align-items: baseline;
+		gap: 0.6rem;
+	}
+	.lastcard .w {
+		font-family: var(--font-kana);
 		font-weight: 700;
-		min-height: 2rem;
+		font-size: 1.7rem;
+		line-height: 1.2;
 	}
-	.words {
-		min-width: 0;
+	.lastcard .r {
+		font-family: var(--font-kana);
+		font-size: 1rem;
+		opacity: 0.8;
 	}
-	.foot {
-		flex: none;
+	.hint {
+		margin: 0;
+		text-align: center;
+		color: var(--text-mute);
+		font-size: 0.95rem;
+	}
+	.history {
+		display: none;
 	}
 	.watching {
 		margin: 0;
@@ -303,42 +359,45 @@
 		font-weight: 700;
 		color: var(--text-mute);
 	}
+	@keyframes card-pop {
+		0% {
+			transform: scale(0.92) translateY(8px);
+			opacity: 0;
+		}
+		100% {
+			transform: scale(1);
+			opacity: 1;
+		}
+	}
 
+	/* desktop: players | stage and input | words with meanings */
 	@media (min-width: 900px) {
-		.stage {
-			flex-direction: row;
-			justify-content: center;
-			align-items: stretch;
-			gap: 1.2rem;
+		.game {
+			grid-template-columns: 17rem minmax(0, 1fr) 21rem;
+			grid-template-rows: minmax(0, 1fr);
+			gap: 1.4rem;
+			padding-top: 0.6rem;
 		}
-		.arena.arena-on {
-			position: relative;
+		.players {
+			flex-direction: column;
+			justify-content: flex-start;
+			gap: 0.6rem;
+			overflow-y: auto;
+			padding: 0.3rem 0.7rem 0.5rem 0.9rem;
+		}
+		.slot {
+			flex: none;
+			max-width: none;
+		}
+		.history {
 			display: block;
-			flex: none;
-			width: min(100%, calc(var(--vvh, 100dvh) - var(--bar, 52px) - 8rem));
-			aspect-ratio: 1;
-			margin: auto;
+			min-height: 0;
 		}
-		.arena.arena-on .center {
-			position: absolute;
-			left: 50%;
-			top: 50%;
-			transform: translate(-50%, -50%);
+		.hint {
+			display: none;
 		}
-		.arena.arena-on .seat {
-			position: absolute;
-			left: var(--x);
-			top: var(--y);
-			transform: translate(-50%, -50%);
-			width: 8.5rem;
-			z-index: 3;
-		}
-		.words {
-			flex: none;
-			width: 15rem;
-		}
-		.typed {
-			display: none; /* desktop shows the text beside the active avatar */
+		.last {
+			min-height: 5.4rem;
 		}
 	}
 </style>

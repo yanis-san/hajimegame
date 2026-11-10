@@ -50,6 +50,7 @@ deploy/       Caddyfile, exemples Fly.io
 | Critère | Résultat |
 | --- | --- |
 | Tests serveur | 181, couverture 93 %, `mypy --strict` et `ruff` propres |
+| Sens des mots | toujours en anglais, et en français en plus quand JMdict le fournit (environ 10 500 mots) |
 | Simulation | 10 000 parties de bots, invariants tenus (`make sim`) |
 | Validation d'un mot | environ 3 µs (budget : 50 µs) |
 | Charge | 200 salles x 6 joueurs, toutes les parties terminées, p95 de traitement environ 5 ms, mémoire stable |

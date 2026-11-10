@@ -89,3 +89,16 @@ def test_every_fragment_has_a_real_answer(dictionary: Dictionary, level: str) ->
     table = playable_table(dictionary.fragment_buckets, level)
     for fragment in table.fragments[:: max(1, len(table) // 60)]:
         assert dictionary.sample_words(fragment.text, level, 1), (level, fragment.text)
+
+
+def test_words_carry_both_meanings_when_available(dictionary: Dictionary) -> None:
+    result = dictionary.check("さくら", "さ", "n1")
+    assert isinstance(result, WordMatch)
+    assert result.meaning_en
+    entries = [dictionary.entry(i) for i in range(len(dictionary))]
+    english = [e for e in entries if e.meaning_en]
+    french = [e for e in entries if e.meaning_fr]
+    assert len(english) > 0.95 * len(entries)
+    assert len(french) > 5_000  # JMdict has French for a minority of entries; the rest is English only
+    both = [e for e in french if e.meaning_en]
+    assert len(both) > 0.5 * len(french)  # most French entries also carry the English meaning

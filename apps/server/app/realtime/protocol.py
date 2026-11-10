@@ -162,6 +162,8 @@ class WordView(Struct, frozen=True, omit_defaults=False):
     word: str
     reading: str
     turn: int
+    meaning_fr: str = ""
+    meaning_en: str = ""
 
 
 class ResultRow(Struct, frozen=True, omit_defaults=False):
@@ -249,6 +251,8 @@ class Accepted(_Event, tag_field="t", tag="accepted"):
     reading: str
     score_gain: int
     score: int
+    meaning_fr: str
+    meaning_en: str
     seq: int
     v: int = PROTOCOL_VERSION
 

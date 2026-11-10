@@ -30,8 +30,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "apps" / "server
 from app.japanese.fragments import count_fragments  # noqa: E402
 from app.japanese.levels import bucket_for_rank  # noqa: E402
 
-JMDICT_URL = "https://www.edrdg.org/pub/Nihongo/JMdict_e.gz"
-FORMAT_VERSION = 1
+JMDICT_URL = "https://www.edrdg.org/pub/Nihongo/JMdict.gz"  # full file: English plus other languages
+FORMAT_VERSION = 3
+XML_LANG = "{http://www.w3.org/XML/1998/namespace}lang"
+MEANING_MAX = 90
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_OUT = ROOT / "apps" / "server" / "app" / "japanese" / "data" / "dictionary.json.gz"
 
@@ -85,6 +87,30 @@ def rank_from_priorities(tags: list[str]) -> int:
 
 def clean_tag(text: str | None) -> str:
     return (text or "").strip("@")
+
+
+def build_meaning(senses: list[ET.Element]) -> tuple[str, str]:
+    """Short meanings for an entry: (French, English). Either may be empty; JMdict has little French."""
+    best: dict[str, list[str]] = {"fre": [], "eng": []}
+    for sense in senses[:4]:
+        misc = {clean_tag(m.text) for m in sense.findall("misc")}
+        if misc & EXCLUDED_MISC:
+            continue
+        for lang in best:
+            glosses = [
+                (g.text or "").strip()
+                for g in sense.findall("gloss")
+                if g.get(XML_LANG, "eng") == lang and (g.text or "").strip()
+            ]
+            if glosses:
+                best[lang].append(", ".join(glosses[:2]))
+    out = []
+    for lang in ("fre", "eng"):
+        text = "; ".join(best[lang][:3])
+        if len(text) > MEANING_MAX:
+            text = text[: MEANING_MAX - 1].rstrip(" ,;") + "…"
+        out.append(text)
+    return out[0], out[1]
 
 
 def convert(root: ET.Element) -> tuple[list[dict[str, object]], Counter[str]]:
@@ -141,12 +167,17 @@ def convert(root: ET.Element) -> tuple[list[dict[str, object]], Counter[str]]:
                 stats["drop_long"] += 1
                 continue
         forms = [f for f in dict.fromkeys(forms) if len(f) <= 20]
+        meaning = build_meaning(senses)
+        stats["meaning_fr"] += 1 if meaning[0] else 0
+        stats["meaning_en"] += 1 if meaning[1] else 0
         entries.append(
             {
                 "w": forms,
                 "r": readings,
                 "k": rank_from_priorities(priorities),
                 "p": sorted(all_pos - EXCLUDED_POS - {""})[:3],
+                "f": meaning[0],
+                "g": meaning[1],
             }
         )
         stats["kept"] += 1
@@ -156,7 +187,7 @@ def convert(root: ET.Element) -> tuple[list[dict[str, object]], Counter[str]]:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source", type=Path, help="local JMdict_e.gz (skips download)")
-    parser.add_argument("--cache", type=Path, default=ROOT / "tools" / ".cache" / "JMdict_e.gz")
+    parser.add_argument("--cache", type=Path, default=ROOT / "tools" / ".cache" / "JMdict.gz")
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
     args = parser.parse_args()
 
@@ -171,7 +202,7 @@ def main() -> None:
     ranks = Counter(int(e["k"]) for e in entries)  # type: ignore[call-overload]
     meta = {
         "format": FORMAT_VERSION,
-        "source": "JMdict_e (EDRDG)",
+        "source": "JMdict (EDRDG), French and English glosses",
         "licence": "CC BY-SA 4.0, https://www.edrdg.org/edrdg/licence.html",
         "attribution": "This dictionary uses the JMdict file, (c) the Electronic Dictionary Research and "
         "Development Group, used in conformance with the Group's licence.",
@@ -192,7 +223,7 @@ def main() -> None:
     print(f"  rank<=6: {sum(v for k, v in ranks.items() if k <= 6)}")
     print(f"  rank<=12: {sum(v for k, v in ranks.items() if k <= 12)}")
     print(f"  rank<=24: {sum(v for k, v in ranks.items() if k <= 24)}")
-    print(f"  rank<=60: {sum(v for k, v in ranks.items() if k <= 60)}")
+    print(f"  rank<=40: {sum(v for k, v in ranks.items() if k <= 40)}")
     print(f"  rank 99 (other): {ranks[RANK_OTHER]}")
 
 

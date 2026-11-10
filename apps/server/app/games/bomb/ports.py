@@ -19,6 +19,12 @@ class WordHit(Protocol):
     @property
     def text(self) -> str: ...
 
+    @property
+    def meaning_fr(self) -> str: ...
+
+    @property
+    def meaning_en(self) -> str: ...
+
 
 class WordValidator(Protocol):
     def matches(self, text: str, fragment: str, level: str = ...) -> Sequence[WordHit]:

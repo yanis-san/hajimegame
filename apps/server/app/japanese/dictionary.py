@@ -29,6 +29,8 @@ class Entry:
     readings: tuple[str, ...]
     rank: int
     pos: tuple[str, ...]
+    meaning_fr: str = ""  # JMdict has French for a minority of entries
+    meaning_en: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -36,6 +38,8 @@ class WordMatch:
     entry_id: int
     reading: str  # first reading containing the fragment
     text: str  # normalized text as typed (hiragana or kanji form)
+    meaning_fr: str = ""
+    meaning_en: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -96,7 +100,7 @@ class Dictionary:
             found = True
             for reading in entry.readings:
                 if contains_fragment(reading, fragment):
-                    return WordMatch(entry_id, reading, text)
+                    return WordMatch(entry_id, reading, text, entry.meaning_fr, entry.meaning_en)
         return WordRejected("missing_fragment" if found else "not_in_dictionary")
 
     def reject_reason(self, text: str, fragment: str, level: str = "n1") -> Reject:
@@ -115,7 +119,7 @@ class Dictionary:
                 continue
             for reading in entry.readings:
                 if contains_fragment(reading, fragment):
-                    result.append(WordMatch(entry_id, reading, text))
+                    result.append(WordMatch(entry_id, reading, text, entry.meaning_fr, entry.meaning_en))
                     break
         return tuple(result)
 
@@ -139,7 +143,8 @@ class Dictionary:
         with gzip.open(path, "rt", encoding="utf-8") as fh:
             raw = json.load(fh)
         entries = tuple(
-            Entry(tuple(e["w"]), tuple(e["r"]), int(e["k"]), tuple(e["p"])) for e in raw["entries"]
+            Entry(tuple(e["w"]), tuple(e["r"]), int(e["k"]), tuple(e["p"]), e.get("f", ""), e.get("g", ""))
+            for e in raw["entries"]
         )
         buckets = {frag: tuple(counts) for frag, counts in raw["fragments"].items()}
         return cls(entries, buckets, raw["meta"])

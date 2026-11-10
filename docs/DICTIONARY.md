@@ -1,6 +1,6 @@
 # Dictionary and difficulty levels
 
-Source: JMdict_e from the EDRDG, licence CC BY-SA 4.0 (https://www.edrdg.org/edrdg/licence.html).
+Source: the full JMdict file from the EDRDG (English plus French and other glosses), licence CC BY-SA 4.0 (https://www.edrdg.org/edrdg/licence.html).
 Rebuild with `make dictionary` (downloads the file, filters, writes `apps/server/app/japanese/data/dictionary.json.gz`).
 The compiled file is committed so the game works right after cloning.
 
@@ -36,3 +36,9 @@ Units are a kana plus its trailing small kana (ゃゅょぁぃぅぇぉゎっ). 
 substrings that never cut a unit. A fragment is playable for a level if at least N words (default 80) contain it;
 small levels halve N until 30 fragments exist (the effective N is reported by `FragmentTable.min_words`).
 Tier easy/medium/hard splits playable fragments by word count into thirds.
+
+## Meanings
+
+Each entry keeps a short meaning in both languages (up to 3 senses, 2 glosses each, 90 characters): French (`f`) and
+English (`g`). The game always shows both with FR and EN badges, and only English when JMdict has no French.
+Limit: JMdict has French glosses for only about 10 500 of the 211 000 kept entries. Nothing is machine translated.

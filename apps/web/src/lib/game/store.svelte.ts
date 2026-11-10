@@ -20,6 +20,8 @@ export interface AcceptedEvent extends GameEvent {
 	word: string;
 	reading: string;
 	gain: number;
+	meaning_fr: string;
+	meaning_en: string;
 }
 export interface RejectedEvent extends GameEvent {
 	reason: RejectCode;
@@ -164,14 +166,23 @@ export class GameStore {
 				this.#patchPlayer(msg.player_id, { score: msg.score });
 				this.words = [
 					...this.words.slice(-39),
-					{ player_id: msg.player_id, word: msg.word, reading: msg.reading, turn: msg.turn }
+					{
+						player_id: msg.player_id,
+						word: msg.word,
+						reading: msg.reading,
+						turn: msg.turn,
+						meaning_fr: msg.meaning_fr,
+						meaning_en: msg.meaning_en
+					}
 				];
 				this.accepted = {
 					id: this.#id(),
 					playerId: msg.player_id,
 					word: msg.word,
 					reading: msg.reading,
-					gain: msg.score_gain
+					gain: msg.score_gain,
+					meaning_fr: msg.meaning_fr,
+					meaning_en: msg.meaning_en
 				};
 				break;
 			case 'rejected':

@@ -726,7 +726,16 @@ class Room:
                     fuse_ms=self._turn.fuse_ms,
                 )
             elif isinstance(event, ev.WordAccepted):
-                self._words.append(pr.WordView(event.player_id, event.word, event.reading, event.turn))
+                self._words.append(
+                    pr.WordView(
+                        event.player_id,
+                        event.word,
+                        event.reading,
+                        event.turn,
+                        event.meaning_fr,
+                        event.meaning_en,
+                    )
+                )
                 del self._words[:-WORD_HISTORY]
                 self._emit(
                     pr.Accepted,
@@ -736,6 +745,8 @@ class Room:
                     reading=event.reading,
                     score_gain=event.score_gain,
                     score=event.score,
+                    meaning_fr=event.meaning_fr,
+                    meaning_en=event.meaning_en,
                 )
             elif isinstance(event, ev.WordRejected):
                 member = self._members.get(event.player_id)

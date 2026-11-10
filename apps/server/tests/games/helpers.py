@@ -15,6 +15,8 @@ class FakeHit:
     entry_id: int
     reading: str
     text: str
+    meaning_fr: str = ""
+    meaning_en: str = "test"
 
 
 class FakeValidator:

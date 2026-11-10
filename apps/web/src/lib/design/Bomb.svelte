@@ -112,14 +112,6 @@
 </script>
 
 <div class="bomb" style:--size="{size}px">
-	{#if fragment}
-		{#key `${turn}:${fragment}`}
-			<div class="plaque" aria-hidden="true">
-				<span class="kana">{fragment}</span>
-			</div>
-		{/key}
-	{/if}
-
 	<div class="body">
 		<svg
 			class="fuse"
@@ -160,42 +152,56 @@
 			</g>
 		</svg>
 		<Mascot mood={shown} {size} />
+		{#if fragment}
+			{#key `${turn}:${fragment}`}
+				<div class="plaque" aria-hidden="true">
+					<span class="kana">{fragment}</span>
+				</div>
+			{/key}
+		{/if}
+		{#if showTimer}
+			<div class="seconds" aria-hidden="true">
+				<span class="digits" class:hot={running && fraction < 0.3}
+					>{running ? seconds : '--.-'}</span
+				>
+			</div>
+		{/if}
 	</div>
-
-	{#if showTimer}
-		<div class="seconds" aria-hidden="true">
-			<span class="digits" class:hot={running && fraction < 0.3}>{running ? seconds : '--.-'}</span>
-		</div>
-	{/if}
 </div>
 
 <style>
 	.bomb {
 		display: grid;
 		justify-items: center;
-		gap: 0.2rem;
 		width: var(--size);
 		margin-inline: auto;
+		padding-bottom: calc(var(--size) * 0.34);
 	}
+	/* the fragment hangs on the bomb like a wooden tag */
 	.plaque {
+		position: absolute;
+		left: 50%;
+		bottom: calc(var(--size) * -0.3);
+		z-index: 3;
 		display: grid;
 		place-items: center;
-		min-width: calc(var(--size) * 0.8);
-		padding: 0.1rem 1.1rem 0.35rem;
+		min-width: calc(var(--size) * 0.62);
+		padding: 0 calc(var(--size) * 0.09) calc(var(--size) * 0.02);
 		background: var(--washi);
 		color: var(--sumi);
 		border: var(--line-thick) solid var(--sumi);
-		border-radius: 18px 18px 8px 8px;
+		border-radius: 14px;
 		box-shadow: 4px 6px 0 var(--sumi);
-		margin-bottom: calc(var(--size) * 0.3);
+		transform: translateX(-50%);
 		animation: plaque-pop var(--t-mid) var(--ease-pop) both;
 	}
 	.kana {
 		font-family: var(--font-kana);
 		font-weight: 700;
-		font-size: clamp(3rem, 14vw, 4.6rem);
+		font-size: calc(var(--size) * 0.3);
 		line-height: 1.15;
 		letter-spacing: 0.04em;
+		white-space: nowrap;
 	}
 	.body {
 		position: relative;
@@ -213,7 +219,10 @@
 		pointer-events: none;
 	}
 	.seconds {
-		margin-top: 0.25rem;
+		position: absolute;
+		left: calc(var(--size) * -0.1);
+		top: calc(var(--size) * 0.16);
+		z-index: 3;
 	}
 	.digits {
 		display: inline-block;
@@ -236,15 +245,15 @@
 	}
 	@keyframes plaque-pop {
 		0% {
-			transform: scale(0.6) translateY(10px);
+			transform: translateX(-50%) scale(0.6);
 			opacity: 0;
 		}
 		60% {
-			transform: scale(1.1);
+			transform: translateX(-50%) scale(1.12);
 			opacity: 1;
 		}
 		100% {
-			transform: scale(1);
+			transform: translateX(-50%) scale(1);
 		}
 	}
 </style>

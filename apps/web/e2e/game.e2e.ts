@@ -44,7 +44,7 @@ test('two players play a full game: refused word, accepted word, reload mid-game
 	await input.fill('');
 	await input.pressSequentially(answerFor(fragment, used));
 	await input.press('Enter');
-	await expect(host.page.locator('.words li').first()).toBeVisible({ timeout: 5000 });
+	await expect(host.page.locator('.lastcard').first()).toBeVisible({ timeout: 5000 });
 
 	// reload the guest's page: the session token brings them back into the same game
 	await guest.page.reload();

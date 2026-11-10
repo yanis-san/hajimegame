@@ -180,6 +180,11 @@
 		overflow: hidden;
 		white-space: nowrap;
 	}
+	@media (max-width: 899px) {
+		.preview.empty {
+			display: none;
+		}
+	}
 	.preview.empty {
 		font-size: 1rem;
 		font-family: var(--font-ui);

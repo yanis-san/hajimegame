@@ -737,6 +737,14 @@
           },
           "turn": {
             "type": "integer"
+          },
+          "meaning_fr": {
+            "type": "string",
+            "default": ""
+          },
+          "meaning_en": {
+            "type": "string",
+            "default": ""
           }
         },
         "required": [
@@ -962,6 +970,12 @@
           "score": {
             "type": "integer"
           },
+          "meaning_fr": {
+            "type": "string"
+          },
+          "meaning_en": {
+            "type": "string"
+          },
           "seq": {
             "type": "integer"
           },
@@ -978,6 +992,8 @@
           "reading",
           "score_gain",
           "score",
+          "meaning_fr",
+          "meaning_en",
           "seq"
         ]
       },
@@ -1914,6 +1930,14 @@
         },
         "turn": {
           "type": "integer"
+        },
+        "meaning_fr": {
+          "type": "string",
+          "default": ""
+        },
+        "meaning_en": {
+          "type": "string",
+          "default": ""
         }
       },
       "required": [
@@ -2139,6 +2163,12 @@
         "score": {
           "type": "integer"
         },
+        "meaning_fr": {
+          "type": "string"
+        },
+        "meaning_en": {
+          "type": "string"
+        },
         "seq": {
           "type": "integer"
         },
@@ -2155,6 +2185,8 @@
         "reading",
         "score_gain",
         "score",
+        "meaning_fr",
+        "meaning_en",
         "seq"
       ]
     },

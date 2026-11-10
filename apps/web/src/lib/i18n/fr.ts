@@ -67,6 +67,11 @@ export const fr = {
 	'game.spectating': 'Tu regardes la partie',
 	'game.wordsEmpty': 'Aucun mot pour l’instant',
 	'game.kanaInput': 'Romaji ou kana',
+	'game.you': 'toi',
+	'game.lastWord': 'Dernier mot',
+	'game.noMeaning': 'Sens non disponible',
+	'game.meaningFr': 'Sens en français',
+	'game.meaningEn': 'Sens en anglais (pas de version française)',
 
 	'reject.not_in_dictionary': 'Ce mot n’est pas dans le dictionnaire.',
 	'reject.missing_fragment': 'Il manque « {fragment} » dans ce mot.',
