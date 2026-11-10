@@ -76,6 +76,10 @@ class FragmentTable:
             pool = [f for f in self._fragments if f.text not in recent] or list(self._fragments)
         return pool[rng.randrange(len(pool))]
 
+    def pick_text(self, rng: random.Random, tier: int, recent: Sequence[str]) -> str:
+        """FragmentPicker port used by the game engine."""
+        return self.pick(rng, tier, recent).text
+
 
 MIN_FRAGMENTS = 30
 

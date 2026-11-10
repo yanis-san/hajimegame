@@ -24,9 +24,11 @@ MAX_WORD_LENGTH = 32
 def normalize_text(text: str) -> str:
     """NFKC, strip whitespace, fold katakana to hiragana. Keeps the long mark and kanji."""
     folded = unicodedata.normalize("NFKC", text)
-    # Removing whitespace can bring combining marks next to a new base, so compose again.
-    folded = unicodedata.normalize("NFKC", _WHITESPACE_RE.sub("", folded))
-    return unicodedata.normalize("NFKC", jaconv.kata2hira(folded))
+    if _WHITESPACE_RE.search(folded):
+        # Removing whitespace can bring combining marks next to a new base, so compose again.
+        folded = unicodedata.normalize("NFKC", _WHITESPACE_RE.sub("", folded))
+    hira = jaconv.kata2hira(folded)
+    return hira if hira == folded else unicodedata.normalize("NFKC", hira)
 
 
 def looks_like_romaji(text: str) -> bool:

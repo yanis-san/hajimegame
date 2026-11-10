@@ -99,6 +99,11 @@ class Dictionary:
                     return WordMatch(entry_id, reading, text)
         return WordRejected("missing_fragment" if found else "not_in_dictionary")
 
+    def reject_reason(self, text: str, fragment: str, level: str = "n1") -> Reject:
+        """Why ``text`` cannot be played for ``fragment`` (``not_in_dictionary`` or ``missing_fragment``)."""
+        result = self.check(text, fragment, level)
+        return result.reason if isinstance(result, WordRejected) else "missing_fragment"
+
     def matches(self, text: str, fragment: str, level: str = "n1") -> tuple[WordMatch, ...]:
         """All entries matching (used by the engine to reject already played words)."""
         text = self.canonical(text)
