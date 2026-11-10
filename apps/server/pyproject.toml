@@ -44,7 +44,7 @@ extend-exclude = ["app/db/migrations"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "SIM", "RUF", "ASYNC", "S", "PT"]
-ignore = ["S101", "RUF001", "RUF002", "RUF003", "PT011", "PT018"]
+ignore = ["S101", "RUF001", "RUF002", "RUF003", "PT011", "PT018", "ASYNC109"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S", "RUF012"]
@@ -59,6 +59,11 @@ exclude = ["app/db/migrations"]
 [[tool.mypy.overrides]]
 module = ["jaconv", "locust.*", "fakeredis.*", "httpx_ws.*"]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# msgspec inherits frozen/forbid_unknown_fields from the base Struct at runtime; mypy cannot see that.
+module = ["app.realtime.protocol"]
+disable_error_code = ["misc"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

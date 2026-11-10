@@ -1,0 +1,95 @@
+"""REST routes: health, metrics and room creation."""
+
+from __future__ import annotations
+
+from typing import Any
+
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+
+from app.core import metrics
+from app.core.config import AppSettings
+from app.core.ratelimit import WindowLimiter
+from app.core.security import require_same_site_request
+from app.realtime.manager import CapacityError, RoomManager
+
+router = APIRouter()
+
+
+class CreatedRoom(BaseModel):
+    code: str
+    ws_path: str
+
+
+def _ip(request: Request) -> str:
+    settings: AppSettings = request.app.state.settings
+    if settings.trust_proxy_headers:
+        for header in ("fly-client-ip", "x-forwarded-for"):
+            value = request.headers.get(header)
+            if value:
+                return value.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
+@router.get("/healthz")
+async def healthz() -> dict[str, str]:
+    return {"status": "ok"}
+
+
+@router.get("/readyz")
+async def readyz(request: Request) -> JSONResponse:
+    checks: dict[str, bool] = {"dictionary": request.app.state.dictionary is not None}
+    redis = request.app.state.redis
+    if redis is not None:
+        try:
+            checks["redis"] = bool(await redis.ping())
+        except Exception:
+            checks["redis"] = False
+    ok = all(checks.values())
+    return JSONResponse(
+        {"status": "ready" if ok else "not_ready", "checks": checks}, status_code=200 if ok else 503
+    )
+
+
+@router.get("/metrics")
+async def prometheus() -> Response:
+    return Response(metrics.render(), media_type="text/plain; version=0.0.4")
+
+
+@router.post(
+    "/api/rooms",
+    response_model=CreatedRoom,
+    status_code=201,
+    dependencies=[Depends(require_same_site_request)],
+)
+async def create_room(request: Request) -> CreatedRoom:
+    settings: AppSettings = request.app.state.settings
+    manager: RoomManager = request.app.state.manager
+    limiter: WindowLimiter = request.app.state.limiter
+    ip = _ip(request)
+    if not await limiter.allow(f"create:{ip}", settings.room_creations_per_minute, 60):
+        metrics.RATE_LIMITED.labels("create_room").inc()
+        raise HTTPException(status_code=429, detail="rate_limited")
+    try:
+        room = await manager.create(ip)
+    except CapacityError as exc:
+        raise HTTPException(
+            status_code=429 if exc.kind == "too_many_rooms" else 503, detail=exc.kind
+        ) from exc
+    return CreatedRoom(code=room.code, ws_path=f"/ws/{room.code}")
+
+
+@router.get("/api/rooms/{code}")
+async def room_info(code: str, request: Request) -> dict[str, Any]:
+    manager: RoomManager = request.app.state.manager
+    settings: AppSettings = request.app.state.settings
+    limiter: WindowLimiter = request.app.state.limiter
+    if not await limiter.allow(f"lookup:{_ip(request)}", settings.join_attempts_per_minute * 2, 60):
+        raise HTTPException(status_code=429, detail="rate_limited")
+    resolved = await manager.resolve(code)
+    if resolved is None:
+        raise HTTPException(status_code=404, detail="room_not_found")
+    if isinstance(resolved, str):
+        return {"code": code.upper(), "remote": True}
+    return resolved.summary()
