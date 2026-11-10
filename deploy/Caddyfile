@@ -1,0 +1,5 @@
+:8080 {
+	@game path /api/* /ws/* /healthz /readyz
+	reverse_proxy @game server:8000
+	reverse_proxy web:3000
+}

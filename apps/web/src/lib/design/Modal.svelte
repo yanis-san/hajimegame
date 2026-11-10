@@ -77,7 +77,7 @@
 		height: 44px;
 		border: var(--line) solid var(--sumi);
 		border-radius: 10px;
-		background: var(--shu);
+		background: var(--shu-btn);
 		color: #fff8ef;
 		cursor: pointer;
 	}

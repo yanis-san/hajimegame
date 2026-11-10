@@ -1,0 +1,59 @@
+name: CI
+on:
+  push: { branches: [main] }
+  pull_request:
+
+jobs:
+  server:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with: { enable-cache: true }
+      - run: uv sync --frozen
+        working-directory: apps/server
+      - run: uv run ruff check . && uv run ruff format --check .
+        working-directory: apps/server
+      - run: uv run mypy .
+        working-directory: apps/server
+      - run: uv run pytest --cov=app
+        working-directory: apps/server
+        env: { HAJIME_SIM_GAMES: "10000" }
+      - run: uv run --project apps/server python tools/gen_protocol.py --check
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter web exec prettier --check . && pnpm --filter web exec eslint .
+      - run: pnpm --filter web exec svelte-check --tsconfig ./tsconfig.json
+      - run: pnpm --filter web exec vitest run --project server
+      - run: pnpm --filter web build
+
+  e2e:
+    runs-on: ubuntu-latest
+    needs: [server, web]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with: { enable-cache: true }
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: pnpm }
+      - run: uv sync --frozen
+        working-directory: apps/server
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter web exec playwright install --with-deps chromium webkit
+      - run: pnpm --filter web exec playwright test
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - run: docker build -f apps/server/Dockerfile -t hajime-server .
+      - run: docker build -f apps/web/Dockerfile -t hajime-web .

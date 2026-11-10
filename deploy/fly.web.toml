@@ -1,0 +1,18 @@
+# Example Fly.io config for the web app. Build with the API origin baked in:
+#   fly deploy -c deploy/fly.web.toml --build-arg VITE_API_URL=https://hajime-server.fly.dev
+app = "hajime-web"
+primary_region = "cdg"
+
+[build]
+  dockerfile = "../apps/web/Dockerfile"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"

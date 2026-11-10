@@ -108,12 +108,13 @@
 		place-items: center;
 		width: 34px;
 		height: 34px;
-		background: var(--shu);
+		background: var(--shu-btn);
 		color: #fff8ef;
 		border: var(--line) solid var(--sumi);
 		border-radius: 8px;
 		box-shadow: 2px 3px 0 var(--sumi);
 		font-size: 1.2rem;
+		font-family: var(--font-kana);
 		transform: rotate(-4deg);
 	}
 	.tools {

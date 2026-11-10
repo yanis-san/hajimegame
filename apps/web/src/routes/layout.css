@@ -1,12 +1,10 @@
 @import 'tailwindcss';
 
-/* Fonts are self-hosted by fontsource and split by unicode-range: only the glyph chunks a page needs are fetched. */
+/* Fonts are self-hosted by fontsource. Only the kana font ships its Japanese subset (hundreds of unicode-range
+   rules): the interface text is Latin, and kana only ever appear in Zen Kaku Gothic New. */
 @import '@fontsource/shippori-mincho/latin-800.css';
-@import '@fontsource/shippori-mincho/japanese-800.css';
 @import '@fontsource/zen-maru-gothic/latin-500.css';
-@import '@fontsource/zen-maru-gothic/japanese-500.css';
 @import '@fontsource/zen-maru-gothic/latin-700.css';
-@import '@fontsource/zen-maru-gothic/japanese-700.css';
 @import '@fontsource/zen-kaku-gothic-new/latin-700.css';
 @import '@fontsource/zen-kaku-gothic-new/japanese-700.css';
 @import '@fontsource/jetbrains-mono/latin-700.css';
@@ -22,7 +20,8 @@
 	--washi-dim: #e4dbc8;
 	--sumi: #14110f;
 	--shu: #e8412d;
-	--shu-dark: #a9291a;
+	--shu-dark: #8c2114;
+	--shu-btn: #c63220; /* white text on this reaches 5:1 (WCAG AA) */
 	--kinpaku: #e7b94a;
 	--kinpaku-dark: #a87d1c;
 	--sakura: #f4a6b8;

@@ -13,6 +13,6 @@
 		"protocol": "node tools/tasks.mjs protocol",
 		"dictionary": "node tools/tasks.mjs dictionary",
 		"load": "node tools/tasks.mjs load",
-		"setup": "node tools/tasks.mjs setup"
+		"bootstrap": "node tools/tasks.mjs bootstrap"
 	}
 }

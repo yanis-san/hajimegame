@@ -112,7 +112,7 @@
 	}
 
 	.primary {
-		--face: var(--shu);
+		--face: var(--shu-btn);
 		--lip: var(--shu-dark);
 		--fg: #fff8ef;
 	}

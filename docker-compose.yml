@@ -1,0 +1,53 @@
+# Development services (Postgres, Redis) and a full local stack.
+#   docker compose up -d postgres redis      # only the backing services, run the apps with `pnpm dev`
+#   docker compose up --build                # everything in containers: http://localhost:8080
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: hajime
+      POSTGRES_PASSWORD: hajime
+      POSTGRES_DB: hajime
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hajime"]
+      interval: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+
+  server:
+    build: { context: ., dockerfile: apps/server/Dockerfile }
+    environment:
+      HAJIME_ENV: dev
+      HAJIME_DATABASE_URL: postgresql+asyncpg://hajime:hajime@postgres:5432/hajime
+      HAJIME_REDIS_URL: redis://redis:6379/0
+      HAJIME_ALLOWED_ORIGINS: '["http://localhost:8080"]'
+      HAJIME_TRUST_PROXY_HEADERS: "true"
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    ports: ["8000:8000"]
+
+  web:
+    build: { context: ., dockerfile: apps/web/Dockerfile }
+    environment:
+      PORT: "3000"
+    ports: ["3000:3000"]
+
+  # One origin for the browser: /api and /ws go to the game server, everything else to the web app.
+  proxy:
+    image: caddy:2-alpine
+    ports: ["8080:8080"]
+    volumes: ["./deploy/Caddyfile:/etc/caddy/Caddyfile:ro"]
+    depends_on: [server, web]
+
+volumes:
+  pgdata:

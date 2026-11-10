@@ -1,0 +1,22 @@
+# Same checks as CI. Install: pip install pre-commit && pre-commit install
+repos:
+  - repo: local
+    hooks:
+      - id: server-lint
+        name: server ruff + mypy
+        entry: bash -c 'cd apps/server && uv run ruff check . && uv run ruff format --check . && uv run mypy .'
+        language: system
+        pass_filenames: false
+        files: ^(apps/server|tools)/
+      - id: protocol
+        name: protocol types are up to date
+        entry: uv run --project apps/server python tools/gen_protocol.py --check
+        language: system
+        pass_filenames: false
+        files: ^(apps/server/app/realtime/protocol.py|packages/protocol)/
+      - id: web-lint
+        name: web prettier + eslint + svelte-check
+        entry: bash -c 'cd apps/web && pnpm exec prettier --check . && pnpm exec eslint . && pnpm exec svelte-check --tsconfig ./tsconfig.json'
+        language: system
+        pass_filenames: false
+        files: ^apps/web/

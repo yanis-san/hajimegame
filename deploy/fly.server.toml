@@ -1,0 +1,30 @@
+# Example Fly.io config for the game server: fly deploy -c deploy/fly.server.toml --dockerfile apps/server/Dockerfile
+# Several instances are fine as long as HAJIME_REDIS_URL is set (room ownership lives in Redis, and Fly replays
+# a websocket to the owning instance through the `fly-replay` header the server sends).
+app = "hajime-server"
+primary_region = "cdg"
+
+[build]
+  dockerfile = "../apps/server/Dockerfile"
+
+[env]
+  HAJIME_ENV = "prod"
+  HAJIME_ALLOW_MISSING_ORIGIN = "false"
+  HAJIME_ALLOWED_ORIGINS = '["https://hajime.example"]'
+  HAJIME_TRUST_PROXY_HEADERS = "true"
+  # Secrets: fly secrets set HAJIME_DATABASE_URL=... HAJIME_REDIS_URL=... HAJIME_SENTRY_DSN=...
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = "off"   # rooms live in memory: never stop a machine that holds games
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    path = "/readyz"
+    interval = "15s"
+    timeout = "3s"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "1gb"   # the dictionary alone uses about 350 MB

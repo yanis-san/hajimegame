@@ -226,7 +226,7 @@
 		min-height: 56px;
 		border: var(--line) solid var(--sumi);
 		border-radius: var(--radius-sm);
-		background: var(--shu);
+		background: var(--shu-btn);
 		color: #fff8ef;
 		cursor: pointer;
 		box-shadow:
