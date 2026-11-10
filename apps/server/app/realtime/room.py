@@ -172,12 +172,15 @@ class Room:
                 except TimeoutError:
                     cmd = None
                 if cmd is not None:
+                    began = time.monotonic()
                     try:
                         self._handle(cmd)
                     except Exception:
                         log.exception("room_command_failed", room=self.code, kind=cmd.kind)
+                    finished = time.monotonic()
+                    metrics.HANDLE_LATENCY.observe(finished - began)
                     if cmd.received:
-                        metrics.MESSAGE_LATENCY.observe(time.monotonic() - cmd.received)
+                        metrics.MESSAGE_LATENCY.observe(finished - cmd.received)
                 self._fire_timers()
         finally:
             self._finalize()

@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from redis.asyncio import Redis
 
 from app.api.routes import router as api_router
+from app.core import metrics
 from app.core.config import AppSettings, get_settings
 from app.core.logging import configure_logging, get_logger
 from app.core.ratelimit import MemoryWindowLimiter, RedisWindowLimiter, WindowLimiter
@@ -30,6 +31,15 @@ log = get_logger("app")
 @lru_cache
 def load_dictionary() -> Dictionary:
     return Dictionary.load()
+
+
+async def _watch_loop_lag(interval: float = 0.01) -> None:
+    """Record how late a short timer fires: the cheapest reliable sign of an overloaded event loop."""
+    loop = asyncio.get_running_loop()
+    while True:
+        expected = loop.time() + interval
+        await asyncio.sleep(interval)
+        metrics.LOOP_LAG.observe(max(0.0, loop.time() - expected))
 
 
 def build_tables(dictionary: Dictionary, min_words: int) -> dict[str, FragmentTable]:
@@ -59,6 +69,7 @@ def create_app(
         the_limiter = limiter or (RedisWindowLimiter(client) if client is not None else MemoryWindowLimiter())
         manager = RoomManager(cfg, words, tables, the_registry, clock or SystemClock())
         manager.start()
+        lag_task = asyncio.get_running_loop().create_task(_watch_loop_lag())
         app.state.settings = cfg
         app.state.dictionary = words
         app.state.manager = manager
@@ -68,6 +79,7 @@ def create_app(
         try:
             yield
         finally:
+            lag_task.cancel()
             await manager.shutdown()
             if client is not None and redis is None:
                 await client.aclose()

@@ -11,7 +11,19 @@ PLAYERS_CONNECTED = Gauge("hajime_players_connected", "Connected websocket clien
 MESSAGE_LATENCY = Histogram(
     "hajime_message_processing_seconds",
     "Time between websocket receive and room processing completion",
-    buckets=(0.0005, 0.001, 0.0025, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 1.0),
+    buckets=(0.0005, 0.001, 0.0025, 0.005, 0.01, 0.02, 0.03, 0.04, 0.05, 0.075, 0.1, 0.25, 1.0),
+    registry=REGISTRY,
+)
+HANDLE_LATENCY = Histogram(
+    "hajime_room_handle_seconds",
+    "CPU time spent handling one command inside a room (excludes queue wait)",
+    buckets=(0.0001, 0.00025, 0.0005, 0.001, 0.0025, 0.005, 0.01, 0.025, 0.05, 0.1),
+    registry=REGISTRY,
+)
+LOOP_LAG = Histogram(
+    "hajime_event_loop_lag_seconds",
+    "How late the event loop wakes a 10 ms timer (saturation indicator)",
+    buckets=(0.001, 0.0025, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0),
     registry=REGISTRY,
 )
 EXPLOSIONS = Counter("hajime_explosions_total", "Bomb explosions", registry=REGISTRY)
