@@ -117,3 +117,23 @@ def test_clocks() -> None:
     first = fast.now()
     assert fast.now() >= first
     assert to_ms(1.23456) == 1234.6
+
+
+def test_dev_accepts_local_network_origins_on_any_port_but_prod_does_not() -> None:
+    dev = AppSettings(env="dev", allowed_origins=[], allow_missing_origin=False)
+    for origin in (
+        "http://localhost:5174",
+        "http://127.0.0.1:3000",
+        "http://192.168.100.25:5173",
+        "http://100.121.20.68:5173",
+    ):
+        assert is_origin_allowed(origin, dev), origin
+    for origin in (
+        "https://evil.example",
+        "http://192.169.0.1:5173",
+        "http://localhost.evil.example",
+        "http://8.8.8.8:5173",
+    ):
+        assert not is_origin_allowed(origin, dev), origin
+    prod = AppSettings(env="prod", allowed_origins=[], allow_missing_origin=False)
+    assert not is_origin_allowed("http://localhost:5174", prod)

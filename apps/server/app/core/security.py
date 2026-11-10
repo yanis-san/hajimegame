@@ -85,10 +85,21 @@ def sanitize_chat(raw: str) -> str | None:
     return text
 
 
+# Development only: the web app may run on any port (Vite moves to 5174 when 5173 is busy) and be opened
+# from a phone on the LAN. Private ranges: 10/8, 172.16/12, 192.168/16, Tailscale 100.64/10.
+_LOCAL_ORIGIN = re.compile(
+    r"^https?://(localhost|127\.0\.0\.1|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+"
+    r"|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+|100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.\d+\.\d+)(:\d+)?$"
+)
+
+
 def is_origin_allowed(origin: str | None, settings: AppSettings) -> bool:
     if origin is None:
         return settings.allow_missing_origin
-    return origin.rstrip("/") in settings.allowed_origins
+    clean = origin.rstrip("/")
+    if clean in settings.allowed_origins:
+        return True
+    return settings.env == "dev" and _LOCAL_ORIGIN.match(clean) is not None
 
 
 async def require_same_site_request(request: Request) -> None:
