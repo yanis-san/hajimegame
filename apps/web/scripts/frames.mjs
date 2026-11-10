@@ -1,0 +1,31 @@
+// Debug helper: prints the `accepted` frames a browser receives.   node scripts/frames.mjs
+import { chromium } from '@playwright/test';
+import { readFileSync } from 'node:fs';
+
+const BASE = process.env.BASE_URL ?? 'http://localhost:5173';
+const answers = JSON.parse(readFileSync(new URL('../e2e/.cache/answers.json', import.meta.url), 'utf8'));
+const browser = await chromium.launch();
+const a = await (await browser.newContext()).newPage();
+const b = await (await browser.newContext()).newPage();
+a.on('websocket', (ws) => ws.on('framereceived', (f) => String(f.payload).includes('"accepted"') && console.log(f.payload)));
+await a.goto(BASE);
+await a.waitForLoadState('networkidle');
+await a.getByLabel('Ton pseudo').fill('Yanis');
+await a.getByRole('button', { name: 'Créer une partie' }).click();
+await a.waitForURL(/\/r\//);
+await b.goto(a.url());
+await b.waitForLoadState('networkidle');
+await b.getByLabel('Ton pseudo').fill('Aya');
+await b.getByRole('button', { name: 'Entrer' }).click();
+await b.getByRole('button', { name: 'Pas prêt' }).click();
+await a.waitForTimeout(600);
+await a.getByRole('button', { name: 'Lancer la partie' }).click();
+await a.locator('.game').waitFor({ timeout: 15000 });
+await a.waitForTimeout(700);
+const active = (await a.getByLabel('Un mot avec').getAttribute('placeholder')) === 'À toi !' ? a : b;
+const fragment = (await active.locator('.plaque .kana').innerText()).trim();
+const input = active.getByLabel('Un mot avec');
+await input.pressSequentially(answers[fragment][0], { delay: 20 });
+await input.press('Enter');
+await a.waitForTimeout(1500);
+await browser.close();

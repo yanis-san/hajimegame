@@ -82,3 +82,7 @@ branch = true
 [tool.coverage.report]
 fail_under = 85
 exclude_also = ["if TYPE_CHECKING:", "raise NotImplementedError", '^\s+\.\.\.$']
+
+[tool.uv]
+# Run the code straight from this folder: an installed copy in .venv would go stale after every edit.
+package = false
