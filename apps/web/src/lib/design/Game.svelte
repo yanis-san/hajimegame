@@ -87,7 +87,10 @@
 		haptic('reject');
 		input?.shake();
 		const fragment = store.turn?.fragment ?? '';
-		rejection = t(`reject.${event.reason}` as const, { fragment });
+		rejection = t(`reject.${event.reason}` as const, {
+			fragment,
+			level: store.settings.level.toUpperCase()
+		});
 		clearTimeout(rejectTimer);
 		rejectTimer = setTimeout(() => (rejection = ''), 3200);
 	});

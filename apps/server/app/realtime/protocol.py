@@ -16,7 +16,9 @@ PROTOCOL_VERSION = 1
 
 Level = Literal["n5", "n4", "n3", "n2", "n1"]
 RoomPhase = Literal["lobby", "countdown", "playing", "finished"]
-RejectCode = Literal["not_in_dictionary", "missing_fragment", "already_used", "not_your_turn", "too_late"]
+RejectCode = Literal[
+    "not_in_dictionary", "missing_fragment", "already_used", "not_your_turn", "too_late", "above_level"
+]
 ErrorCode = Literal[
     "bad_version",
     "bad_message",

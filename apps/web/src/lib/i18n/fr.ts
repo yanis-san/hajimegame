@@ -78,6 +78,7 @@ export const fr = {
 	'reject.already_used': 'Ce mot a déjà été joué.',
 	'reject.not_your_turn': 'Ce n’est pas ton tour.',
 	'reject.too_late': 'Trop tard.',
+	'reject.above_level': 'Ce mot existe, mais il est trop avancé pour le niveau {level}.',
 
 	'results.title': 'Résultats',
 	'results.winner': '{name} gagne',

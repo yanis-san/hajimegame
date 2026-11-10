@@ -41,8 +41,14 @@ def test_level_filters_rare_words(dictionary: Dictionary) -> None:
         e for e in (dictionary.entry(i) for i in range(len(dictionary) - 1, 0, -1)) if len(e.readings[0]) >= 4
     )
     reading = rare.readings[0]
-    assert dictionary.check(reading, reading[:2], "n5") == WordRejected("not_in_dictionary")
+    assert dictionary.check(reading, reading[:2], "n5") == WordRejected("above_level")
     assert isinstance(dictionary.check(reading, reading[:2], "n1"), WordMatch)
+
+
+def test_real_word_above_the_level_gets_its_own_reason(dictionary: Dictionary) -> None:
+    assert dictionary.check("sakki", "き", "n5") == WordRejected("above_level")
+    assert isinstance(dictionary.check("sakki", "き", "n4"), WordMatch)
+    assert dictionary.check("zzzz", "き", "n5") == WordRejected("not_in_dictionary")
 
 
 def test_single_kana_words_are_excluded(dictionary: Dictionary) -> None:

@@ -20,7 +20,7 @@ from app.japanese.romaji import romaji_to_hiragana
 
 DEFAULT_PATH: Final = Path(__file__).parent / "data" / "dictionary.json.gz"
 
-Reject = Literal["not_in_dictionary", "missing_fragment"]
+Reject = Literal["not_in_dictionary", "missing_fragment", "above_level"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -101,7 +101,11 @@ class Dictionary:
             for reading in entry.readings:
                 if contains_fragment(reading, fragment):
                     return WordMatch(entry_id, reading, text, entry.meaning_fr, entry.meaning_en)
-        return WordRejected("missing_fragment" if found else "not_in_dictionary")
+        if found:
+            return WordRejected("missing_fragment")
+        if level != "n1" and isinstance(self.check(raw, fragment, "n1"), WordMatch):
+            return WordRejected("above_level")  # a real word, but too advanced for the chosen level
+        return WordRejected("not_in_dictionary")
 
     def reject_reason(self, text: str, fragment: str, level: str = "n1") -> Reject:
         """Why ``text`` cannot be played for ``fragment`` (``not_in_dictionary`` or ``missing_fragment``)."""

@@ -16,7 +16,7 @@ TENSION_FUSE_FLOOR = 3.0
 class BombSettings:
     lives: int = LIVES_DEFAULT
     fuse_seconds: float = FUSE_DEFAULT
-    level: str = "n4"
+    level: str = "n1"
     max_players: int = PLAYERS_DEFAULT
     bonus_kana: bool = False
     tension: bool = False

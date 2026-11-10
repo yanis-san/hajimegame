@@ -45,7 +45,7 @@ export interface ChatLine {
 const DEFAULT_SETTINGS: SettingsView = {
 	lives: 3,
 	fuse_seconds: 10,
-	level: 'n4',
+	level: 'n1',
 	max_players: 8,
 	bonus_kana: false,
 	tension: false

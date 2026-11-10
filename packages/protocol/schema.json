@@ -1008,6 +1008,7 @@
           },
           "reason": {
             "enum": [
+              "above_level",
               "already_used",
               "missing_fragment",
               "not_in_dictionary",
@@ -2201,6 +2202,7 @@
         },
         "reason": {
           "enum": [
+            "above_level",
             "already_used",
             "missing_fragment",
             "not_in_dictionary",
