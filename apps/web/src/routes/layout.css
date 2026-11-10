@@ -1,0 +1,188 @@
+@import 'tailwindcss';
+
+/* Fonts are self-hosted by fontsource and split by unicode-range: only the glyph chunks a page needs are fetched. */
+@import '@fontsource/shippori-mincho/latin-800.css';
+@import '@fontsource/shippori-mincho/japanese-800.css';
+@import '@fontsource/zen-maru-gothic/latin-500.css';
+@import '@fontsource/zen-maru-gothic/japanese-500.css';
+@import '@fontsource/zen-maru-gothic/latin-700.css';
+@import '@fontsource/zen-maru-gothic/japanese-700.css';
+@import '@fontsource/zen-kaku-gothic-new/latin-700.css';
+@import '@fontsource/zen-kaku-gothic-new/japanese-700.css';
+@import '@fontsource/jetbrains-mono/latin-700.css';
+
+/* ---------------------------------------------------------------- design tokens */
+:root {
+	/* palette: night festival */
+	--ai: #0f1b2d;
+	--ai-deep: #0a1320;
+	--ai-surface: #1b2a44;
+	--ai-raised: #263a5c;
+	--washi: #f5efe3;
+	--washi-dim: #e4dbc8;
+	--sumi: #14110f;
+	--shu: #e8412d;
+	--shu-dark: #a9291a;
+	--kinpaku: #e7b94a;
+	--kinpaku-dark: #a87d1c;
+	--sakura: #f4a6b8;
+	--sakura-dark: #c9708a;
+	--matcha: #7fb069;
+	--matcha-dark: #476e38;
+
+	/* semantic (dark theme is the main one) */
+	--bg: var(--ai);
+	--surface: var(--ai-surface);
+	--surface-2: var(--ai-raised);
+	--text: var(--washi);
+	--text-mute: #c4cbd8;
+	--on-accent: var(--washi);
+	--ink: var(--sumi);
+	--focus: var(--kinpaku);
+
+	/* shape language */
+	--line: 3px;
+	--line-thick: 4px;
+	--shadow-x: 4px;
+	--shadow-y: 5px;
+	--shadow: var(--shadow-x) var(--shadow-y) 0 var(--ink);
+	--shadow-sm: 2px 3px 0 var(--ink);
+	--radius: 14px;
+	--radius-sm: 9px;
+
+	/* type */
+	--font-display: 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+	--font-ui: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', system-ui, sans-serif;
+	--font-kana: 'Zen Kaku Gothic New', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+	--font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+	/* motion */
+	--ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
+	--ease-snap: cubic-bezier(0.2, 0.9, 0.3, 1);
+	--t-fast: 120ms;
+	--t-mid: 180ms;
+	--t-slow: 250ms;
+
+	color-scheme: dark;
+}
+
+:root[data-theme='light'] {
+	--bg: var(--washi);
+	--surface: #fffaf0;
+	--surface-2: var(--washi-dim);
+	--text: var(--sumi);
+	--text-mute: #4d463f;
+	--shu: #d93a26;
+	--matcha: #5e9448;
+	color-scheme: light;
+}
+
+@theme {
+	--color-ai: var(--ai);
+	--color-surface: var(--surface);
+	--color-washi: var(--washi);
+	--color-sumi: var(--sumi);
+	--color-shu: var(--shu);
+	--color-kinpaku: var(--kinpaku);
+	--color-sakura: var(--sakura);
+	--color-matcha: var(--matcha);
+	--font-display: var(--font-display);
+	--font-ui: var(--font-ui);
+	--font-kana: var(--font-kana);
+	--font-mono: var(--font-mono);
+}
+
+/* ---------------------------------------------------------------- base */
+html {
+	background: var(--bg);
+	color: var(--text);
+	font-family: var(--font-ui);
+	font-weight: 500;
+	-webkit-text-size-adjust: 100%;
+	text-size-adjust: 100%;
+	-webkit-tap-highlight-color: transparent;
+}
+
+body {
+	margin: 0;
+	min-height: 100dvh;
+	overscroll-behavior: none;
+	touch-action: manipulation;
+	font-size: 1rem;
+	line-height: 1.45;
+}
+
+h1,
+h2,
+h3 {
+	font-family: var(--font-display);
+	font-weight: 800;
+	line-height: 1.1;
+	margin: 0;
+}
+
+button,
+input,
+select,
+textarea {
+	font: inherit;
+	color: inherit;
+}
+
+/* iOS zooms into inputs under 16px */
+input,
+textarea,
+select {
+	font-size: max(16px, 1rem);
+}
+
+:focus-visible {
+	outline: var(--line) solid var(--focus);
+	outline-offset: 3px;
+}
+
+::selection {
+	background: var(--kinpaku);
+	color: var(--sumi);
+}
+
+a {
+	color: inherit;
+}
+
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+	border: 0;
+}
+
+/* Cards: thick ink outline and a hard offset shadow, never a blur. */
+.card {
+	background: var(--surface);
+	border: var(--line) solid var(--ink);
+	border-radius: var(--radius);
+	box-shadow: var(--shadow);
+}
+
+.washi-paper {
+	background-color: var(--washi);
+	background-image: url('/washi.svg');
+	color: var(--sumi);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
+}

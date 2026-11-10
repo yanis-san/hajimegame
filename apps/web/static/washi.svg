@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240">
+	<!-- sparse short fibres, very low contrast: a hint of paper, never behind important text -->
+	<g stroke="#b9ad92" stroke-width="1" stroke-linecap="round" opacity="0.28" fill="none">
+		<path d="M12 22l14 4M70 8l10 9M118 40l15-3M190 18l9 12M32 74l11-6M96 90l14 7M164 66l12-9M214 104l-10 8" />
+		<path d="M20 140l13-2M80 126l9 11M142 150l15 3M200 142l11-8M52 196l12 6M112 206l14-5M176 214l10-9M226 190l-12-4" />
+		<path d="M6 108l8 9M150 104l9 6M62 164l-11 5M236 52l-9 7M130 232l-4-12M44 38l-3 12" />
+	</g>
+</svg>

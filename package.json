@@ -1,0 +1,18 @@
+{
+	"name": "hajime-game",
+	"private": true,
+	"type": "module",
+	"packageManager": "pnpm@12.18.0",
+	"scripts": {
+		"dev": "node tools/tasks.mjs dev",
+		"test": "node tools/tasks.mjs test",
+		"lint": "node tools/tasks.mjs lint",
+		"typecheck": "node tools/tasks.mjs typecheck",
+		"build": "node tools/tasks.mjs build",
+		"e2e": "node tools/tasks.mjs e2e",
+		"protocol": "node tools/tasks.mjs protocol",
+		"dictionary": "node tools/tasks.mjs dictionary",
+		"load": "node tools/tasks.mjs load",
+		"setup": "node tools/tasks.mjs setup"
+	}
+}
