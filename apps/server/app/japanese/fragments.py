@@ -14,8 +14,8 @@ from app.japanese.levels import LEVELS, level_index
 DEFAULT_MIN_WORDS = 80
 STORE_MIN_TOTAL = 20  # fragments below this total are not worth storing
 _UNPLAYABLE_SINGLES = frozenset({"ん", "を", "ゔ"})
-# Share of each fragment length among the prompts: mostly 2 kana, often 3, rarely 1 or 4+.
-LENGTH_WEIGHTS = {1: 0.06, 2: 0.58, 3: 0.33, 4: 0.03}
+# Share of each fragment length among the prompts: a fifth single kana, mostly 2 and 3, rarely 4+.
+LENGTH_WEIGHTS = {1: 0.20, 2: 0.45, 3: 0.32, 4: 0.03}
 RECENT_FIRSTS = 4  # the first kana of the last prompts is avoided, so prompts do not feel repetitive
 N_WEIGHT = 0.2  # ん-initial fragments are legal but awkward; keep them uncommon
 
