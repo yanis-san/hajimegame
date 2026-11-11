@@ -86,7 +86,6 @@ export interface SetSettings {
   t: "settings";
   lives?: number;
   fuse_seconds?: number;
-  mode?: Mode;
   max_players?: number;
   n_penalty?: boolean;
   bonus_kana?: boolean;

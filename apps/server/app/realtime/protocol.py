@@ -80,7 +80,6 @@ class Start(_Msg, tag_field="t", tag="start"):
 class SetSettings(_Msg, tag_field="t", tag="settings"):
     lives: Annotated[int, Meta(ge=1, le=5)] | UnsetType = UNSET
     fuse_seconds: Annotated[float, Meta(ge=5, le=20)] | UnsetType = UNSET
-    mode: Mode | UnsetType = UNSET
     max_players: Annotated[int, Meta(ge=2, le=8)] | UnsetType = UNSET
     n_penalty: bool | UnsetType = UNSET
     bonus_kana: bool | UnsetType = UNSET

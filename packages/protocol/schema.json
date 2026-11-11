@@ -190,12 +190,6 @@
             "minimum": 5,
             "maximum": 20
           },
-          "mode": {
-            "enum": [
-              "classic",
-              "shiritori"
-            ]
-          },
           "max_players": {
             "type": "integer",
             "minimum": 2,
@@ -1459,12 +1453,6 @@
           "type": "number",
           "minimum": 5,
           "maximum": 20
-        },
-        "mode": {
-          "enum": [
-            "classic",
-            "shiritori"
-          ]
         },
         "max_players": {
           "type": "integer",

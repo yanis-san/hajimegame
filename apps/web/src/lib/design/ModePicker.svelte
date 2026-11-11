@@ -44,6 +44,8 @@
 	<!-- the rule, drawn with kana tiles -->
 	<span class="art" aria-hidden="true">
 		{#if mode === 'classic'}
+			<span class="tile hot">べ</span>
+			<span class="link"><Icon name="back" size={20} /></span>
 			<span class="tile">た</span><span class="tile hot">べ</span><span class="tile">もの</span>
 		{:else}
 			<span class="tile">くる</span><span class="tile hot">ま</span>

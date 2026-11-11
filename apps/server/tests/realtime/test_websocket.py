@@ -150,10 +150,11 @@ async def test_start_requires_players_ready_and_two_players(server: RunningServe
 
 async def test_settings_are_validated_and_broadcast(server: RunningServer) -> None:
     _, (a, b) = await lobby(server)
-    await a.send(t="settings", lives=5, mode="shiritori")
+    await a.send(t="settings", lives=5, bonus_kana=True)
     patch = await b.wait("patch", lambda m: "settings" in m)
     assert patch["settings"]["lives"] == 5
-    assert patch["settings"]["mode"] == "shiritori"
+    assert patch["settings"]["bonus_kana"] is True
+    assert patch["settings"]["mode"] == "classic"
     await a.send(t="settings", lives=9)
     assert (await a.wait("error"))["code"] == "bad_message"
     await a.send(t="settings", max_players=2)
@@ -521,3 +522,17 @@ async def test_slow_consumer_is_disconnected(dictionary: Dictionary) -> None:
     assert isinstance(items[-1], CloseRequest)
     assert items[-1].code == 1013
     assert conn.offer("later") is False
+
+
+async def test_mode_is_fixed_when_the_room_is_created(server: RunningServer) -> None:
+    created = await server.http.post("/api/rooms", headers=CSRF, json={"mode": "shiritori"})
+    code = created.json()["code"]
+    async with server.client(code) as host:
+        snap = await host.join(code, "Aya")
+        assert snap["settings"]["mode"] == "shiritori"
+        await host.send(t="settings", mode="classic")  # no such field: refused as an invalid message
+        assert (await host.wait("error"))["code"] == "bad_message"
+        await host.send(t="settings", lives=2)
+        patch = await host.wait("patch", lambda m: "settings" in m)
+        assert patch["settings"]["mode"] == "shiritori"
+        assert patch["settings"]["lives"] == 2

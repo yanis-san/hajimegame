@@ -7,7 +7,6 @@
 	import Button from './Button.svelte';
 	import Icon from './Icon.svelte';
 	import PlayerChip from './PlayerChip.svelte';
-	import ModePicker from './ModePicker.svelte';
 	import Segmented from './Segmented.svelte';
 	import TextField from './TextField.svelte';
 	import Toggle from './Toggle.svelte';
@@ -134,11 +133,12 @@
 				{/if}
 			</div>
 		</div>
-	</div>
-
-	<!-- the mode was chosen on the home page: shown here as information only -->
-	<div class="modecard">
-		<ModePicker value={store.settings.mode} fixed />
+		<!-- the mode was chosen on the home page: a title here, not something to pick -->
+		<p class="modeline">
+			<span class="tag-mode">{t('lobby.mode')}</span>
+			<strong>{t(`mode.${store.settings.mode}.title` as const)}</strong>
+			<span class="why">{t(`mode.${store.settings.mode}.desc` as const)}</span>
+		</p>
 	</div>
 
 	<div class="cols">
@@ -334,6 +334,37 @@
 		letter-spacing: 0.2em;
 		line-height: 1.1;
 		color: var(--kinpaku);
+	}
+	.modeline {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: 0.3rem 0.8rem;
+		margin: 0.8rem 0 0;
+		padding-top: 0.7rem;
+		border-top: var(--line) dashed var(--text-mute);
+	}
+	.tag-mode {
+		padding: 0 0.5rem;
+		background: var(--shu-btn);
+		color: #fff8ef;
+		border: 2px solid var(--sumi);
+		border-radius: 6px;
+		font-size: 0.72rem;
+		font-weight: 700;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+	}
+	.modeline strong {
+		font-family: var(--font-display);
+		font-weight: 800;
+		font-size: 1.5rem;
+		color: var(--kinpaku);
+	}
+	.why {
+		flex: 1 1 18rem;
+		font-size: 0.95rem;
+		color: var(--text-mute);
 	}
 	.actions {
 		display: flex;

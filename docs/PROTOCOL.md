@@ -35,7 +35,7 @@ the current `seq` without advancing it, so they never create gaps.
 | `rejoin` | `room`, `token` | Replaces an older connection of the same player (old one gets `error: replaced`, closes 4000). |
 | `ready` | `ready` | Lobby only. |
 | `start` | | Host only, needs 2+ connected players, all non-host players ready. Starts the countdown. |
-| `settings` | any of `lives` 1-5, `fuse_seconds` 5-20, `mode` classic or shiritori, `max_players` 2-8, `bonus_kana`, `n_penalty` | Host only, lobby only. Partial update. |
+| `settings` | any of `lives` 1-5, `fuse_seconds` 5-20, `max_players` 2-8, `bonus_kana`, `n_penalty` | Host only, lobby only. Partial update. |
 | `typing` | `text` (max 32) | Active player only. Relayed to others, max 10 per second, never used for validation. |
 | `submit` | `text` (max 32) | Kana, kanji or raw romaji. The server normalizes everything. |
 | `ping` | `n`, `t0` | Answered at once, outside the room queue. |
@@ -95,3 +95,9 @@ close code 1012: reconnect after a short delay.
 | 4404 | Room not found |
 | 4408 | No join within 15 s |
 | 4429 | Rate limited |
+
+## Game mode
+
+The mode (`classic` or `shiritori`) is chosen once, in the body of `POST /api/rooms` (`{"mode": "shiritori"}`), and never changes
+afterwards: `settings` has no `mode` field, so a client that sends one gets `error: bad_message`. The mode is visible in
+`snapshot.settings.mode`.

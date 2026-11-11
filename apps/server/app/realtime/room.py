@@ -550,7 +550,7 @@ class Room:
             new = BombSettings(
                 lives=current.lives if msg.lives is UNSET else msg.lives,
                 fuse_seconds=current.fuse_seconds if msg.fuse_seconds is UNSET else msg.fuse_seconds,
-                mode=current.mode if msg.mode is UNSET else msg.mode,
+                mode=current.mode,  # chosen when the room is created, never changed afterwards
                 n_penalty=current.n_penalty if msg.n_penalty is UNSET else msg.n_penalty,
                 max_players=current.max_players if msg.max_players is UNSET else msg.max_players,
                 bonus_kana=current.bonus_kana if msg.bonus_kana is UNSET else msg.bonus_kana,
