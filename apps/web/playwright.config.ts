@@ -4,6 +4,10 @@ const reuse = !process.env.CI;
 // Ports can be changed when the defaults are taken: E2E_API_PORT=8100 E2E_WEB_PORT=5273 pnpm e2e
 const apiPort = process.env.E2E_API_PORT ?? '8000';
 const webPort = process.env.E2E_WEB_PORT ?? '5173';
+// E2E_PREVIEW=1 tests the production build (run `pnpm build` first): same code and headers as a deployment.
+const webCommand = process.env.E2E_PREVIEW
+	? `pnpm exec vite preview --port ${webPort} --strictPort`
+	: `pnpm exec vite dev --port ${webPort}`;
 
 export default defineConfig({
 	testDir: 'e2e',
@@ -44,7 +48,7 @@ export default defineConfig({
 			}
 		},
 		{
-			command: `pnpm exec vite dev --port ${webPort}`,
+			command: webCommand,
 			url: `http://localhost:${webPort}`,
 			env: { HAJIME_API_TARGET: `http://127.0.0.1:${apiPort}` },
 			reuseExistingServer: reuse,
