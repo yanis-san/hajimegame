@@ -35,6 +35,7 @@
 		const timer = setTimeout(() => (ordered = true), 700);
 		const show = setTimeout(() => {
 			sfx.play(iWon ? 'win' : 'lose');
+			window.setTimeout(() => sfx.voice(iWon ? 'shouri' : 'zannen'), iWon ? 900 : 250);
 			haptic('win');
 			particles?.hanabi();
 		}, 900);

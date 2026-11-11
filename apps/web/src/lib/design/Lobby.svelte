@@ -50,7 +50,12 @@
 				seconds = left;
 				if (left > 0) {
 					sfx.play('tick');
+					sfx.voice(left === 3 ? 'san' : left === 2 ? 'ni' : left === 1 ? 'ichi' : 'hajime');
 					haptic('tap');
+				} else {
+					sfx.play('go');
+					sfx.voice('hajime');
+					haptic('boom');
 				}
 			}
 		};

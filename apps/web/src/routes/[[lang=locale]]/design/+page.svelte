@@ -78,7 +78,10 @@
 		'lose',
 		'boom',
 		'out',
-		'warn'
+		'warn',
+		'go',
+		'don',
+		'ka'
 	];
 	const iconNames = Object.keys(ICONS) as IconName[];
 </script>

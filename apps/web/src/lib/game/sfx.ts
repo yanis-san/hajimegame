@@ -18,7 +18,33 @@ export type SfxName =
 	| 'lose'
 	| 'out'
 	| 'warn'
+	| 'go'
+	| 'don'
+	| 'ka'
 	| 'crackle';
+
+/** Spoken cues: recordings dropped in `src/lib/audio/voice/` (see the README there). Missing ones are skipped. */
+export type VoiceCue = 'hajime' | 'san' | 'ni' | 'ichi' | 'nice' | 'boom' | 'shouri' | 'zannen';
+export const VOICE_CUES: readonly VoiceCue[] = [
+	'hajime',
+	'san',
+	'ni',
+	'ichi',
+	'nice',
+	'boom',
+	'shouri',
+	'zannen'
+];
+
+// Vite lists the recordings that exist at build time, so a missing file never causes a failed request.
+const voiceFiles = import.meta.glob('../audio/voice/*.{mp3,ogg,wav,m4a,webm}', {
+	eager: true,
+	query: '?url',
+	import: 'default'
+}) as Record<string, string>;
+
+/** Minimum seconds between two plays of the same cue, so praise never becomes a nag. */
+const VOICE_GAP: Partial<Record<VoiceCue, number>> = { nice: 6 };
 
 /** MIDI note number to frequency. */
 const hz = (note: number): number => 440 * 2 ** ((note - 69) / 12);
@@ -72,8 +98,11 @@ const LEVEL: Record<SfxName, number> = {
 	life: 1.3,
 	out: 2.8,
 	boom: 2.8,
-	win: 2.8,
+	win: 1.9,
 	lose: 2.2,
+	go: 1.6,
+	don: 1.7,
+	ka: 2.4,
 	crackle: 3
 };
 
@@ -87,6 +116,8 @@ class SfxEngine {
 	#muted = false;
 	#volume = 0.7;
 	#loaded = false;
+	#voices = new Map<string, AudioBuffer[]>();
+	#voiceLast = new Map<string, { at: number; index: number }>();
 	#scale = 1; // gain multiplier of the sound being scheduled (see LEVEL)
 
 	load(): void {
@@ -156,6 +187,7 @@ class SfxEngine {
 		this.#reverb.buffer = this.#impulse(ctx, 0.55);
 		this.#reverb.connect(compressor);
 		this.#applyVolume();
+		void this.#loadVoices(ctx);
 	}
 
 	/** A small bright room: decaying noise, a little darker toward the end. */
@@ -217,17 +249,30 @@ class SfxEngine {
 				break;
 			}
 			case 'tick':
-				this.#wood(hz(G5), t, 0.2);
+				this.#don(t, 0.4, 1.5); // a small drum counts the seconds
+				break;
+			case 'go':
+				// start of the game: the big drum and a wooden clack on top
+				this.#odaiko(t);
+				this.#hyoshigi(t, 1);
+				this.#bell(hz(C6), t + 0.02, 1.2, 0.12, 0.4);
+				break;
+			case 'don':
+				this.#don(t, 1, 1);
+				break;
+			case 'ka':
+				this.#ka(t, 1);
 				break;
 			case 'warn': {
 				// last seconds of your turn: three rising wood ticks, the last one a little louder
 				const level = Math.min(2, Math.max(0, step));
-				this.#wood(hz(G5 + level * 2), t, 0.22 + level * 0.05);
-				this.#noiseHit({ start: t, dur: 0.03, gain: 0.05, type: 'highpass', from: 4000, to: 4000 });
+				this.#ka(t, 0.8 + level * 0.15);
+				this.#don(t, 0.35 + level * 0.1, 1.5 + level * 0.12);
 				break;
 			}
 			case 'turn':
 				// "ding-dong": two bells, rising
+				this.#don(t, 0.3, 1.4);
 				this.#bell(hz(G5), t, 0.9, 0.2, 0.28);
 				this.#bell(hz(C6), t + 0.12, 1.1, 0.22, 0.3);
 				break;
@@ -335,10 +380,11 @@ class SfxEngine {
 				}); // cartoon fall
 				break;
 			case 'win':
-				this.#fanfare(t);
+				this.#winPattern(t);
 				break;
 			case 'lose':
-				// a gentle "wah wah wah wahhh", never cruel
+				// a gentle "wah wah wah wahhh", never cruel, over one low drum beat
+				this.#don(t, 0.5, 0.75);
 				[G4, G4 - 1, G4 - 2].forEach((n, i) =>
 					this.#note({
 						freq: hz(n),
@@ -369,7 +415,20 @@ class SfxEngine {
 		}
 	}
 
-	/** Short victory tune: triplet run up to a held high C over a brass chord, a timpani hit and a cymbal wash. */
+	/** Matsuri-style: a taiko pattern (don ka don ka, don don) into the big drum, then the brass fanfare. */
+	#winPattern(t: number): void {
+		this.#don(t, 0.9, 1);
+		this.#ka(t + 0.12, 0.8);
+		this.#don(t + 0.24, 0.8, 1.12);
+		this.#ka(t + 0.36, 0.8);
+		this.#don(t + 0.48, 0.95, 1);
+		this.#don(t + 0.6, 1, 1.12);
+		this.#odaiko(t + 0.78);
+		this.#hyoshigi(t + 0.78, 0.8);
+		this.#fanfare(t + 0.78);
+	}
+
+	/** Short victory tune: triplet run up to a held high C over a brass chord and a cymbal wash. */
 	#fanfare(t: number): void {
 		const run = [G4, C5, E5, G5];
 		run.forEach((n, i) => this.#brass(hz(n), t + i * 0.1, 0.16, 0.09));
@@ -378,15 +437,6 @@ class SfxEngine {
 		[C6, E6, G6, C7, G6, E6, C7].forEach((n, i) =>
 			this.#bell(hz(n), t + 0.55 + i * 0.075, 0.9, 0.08, 0.45)
 		);
-		this.#note({
-			freq: 130,
-			slideTo: 70,
-			start: t,
-			dur: 0.4,
-			gain: 0.35,
-			type: 'sine',
-			attack: 0.004
-		});
 		this.#noiseHit({
 			start: t + 0.4,
 			dur: 1.1,
@@ -398,10 +448,113 @@ class SfxEngine {
 		});
 	}
 
-	/** Round wooden tick, used for countdowns and the last-seconds warning. */
-	#wood(freq: number, t: number, gain: number): void {
-		this.#note({ freq, start: t, dur: 0.07, gain, attack: 0.001, wet: 0.12 });
-		this.#note({ freq: freq * 2.4, start: t, dur: 0.035, gain: gain * 0.35, attack: 0.001 });
+	/** Taiko, centre hit: a falling sine body, a longer low partner, a skin overtone and a slap of noise. */
+	#don(t: number, power: number, pitch: number): void {
+		this.#note({
+			freq: 170 * pitch,
+			slideTo: 68 * pitch,
+			start: t,
+			dur: 0.38,
+			gain: 0.9 * power,
+			attack: 0.002,
+			wet: 0.3
+		});
+		this.#note({
+			freq: 108 * pitch,
+			slideTo: 60 * pitch,
+			start: t,
+			dur: 0.55,
+			gain: 0.5 * power,
+			attack: 0.003,
+			wet: 0.3
+		});
+		this.#note({
+			freq: 340 * pitch,
+			slideTo: 150 * pitch,
+			start: t,
+			dur: 0.12,
+			gain: 0.2 * power,
+			type: 'triangle',
+			attack: 0.001
+		});
+		this.#noiseHit({
+			start: t,
+			dur: 0.05,
+			gain: 0.25 * power,
+			type: 'bandpass',
+			from: 2200,
+			to: 700
+		});
+	}
+
+	/** Taiko, rim hit ("ka"): a dry, bright knock. */
+	#ka(t: number, power: number): void {
+		this.#noiseHit({
+			start: t,
+			dur: 0.045,
+			gain: 0.3 * power,
+			type: 'bandpass',
+			from: 3800,
+			to: 2200,
+			wet: 0.12
+		});
+		this.#note({
+			freq: 520,
+			slideTo: 400,
+			start: t,
+			dur: 0.06,
+			gain: 0.3 * power,
+			type: 'triangle',
+			attack: 0.001
+		});
+	}
+
+	/** Odaiko: the huge drum. Deep, long, with a rumble. */
+	#odaiko(t: number): void {
+		this.#note({ freq: 125, slideTo: 42, start: t, dur: 1.0, gain: 1.1, attack: 0.003, wet: 0.35 });
+		this.#note({ freq: 72, slideTo: 36, start: t, dur: 1.3, gain: 0.6, attack: 0.004, wet: 0.35 });
+		this.#note({
+			freq: 300,
+			slideTo: 120,
+			start: t,
+			dur: 0.14,
+			gain: 0.25,
+			type: 'triangle',
+			attack: 0.001
+		});
+		this.#noiseHit({ start: t, dur: 0.07, gain: 0.35, type: 'bandpass', from: 2000, to: 600 });
+		this.#noiseHit({
+			start: t,
+			dur: 0.7,
+			gain: 0.25,
+			type: 'lowpass',
+			from: 600,
+			to: 60,
+			wet: 0.45
+		});
+	}
+
+	/** Hyoshigi: two wooden clappers struck together, the sharp "clack" that opens a kabuki scene. */
+	#hyoshigi(t: number, power: number): void {
+		this.#note({
+			freq: 1900,
+			slideTo: 1500,
+			start: t,
+			dur: 0.04,
+			gain: 0.3 * power,
+			type: 'triangle',
+			attack: 0.001,
+			wet: 0.15
+		});
+		this.#note({ freq: 3300, start: t, dur: 0.02, gain: 0.12 * power, attack: 0.001 });
+		this.#noiseHit({
+			start: t,
+			dur: 0.018,
+			gain: 0.2 * power,
+			type: 'highpass',
+			from: 5000,
+			to: 5000
+		});
 	}
 
 	/** Marimba-like pluck: a sine plus a quickly fading overtone. */
@@ -446,6 +599,45 @@ class SfxEngine {
 				wet: 0.25
 			});
 		}
+	}
+
+	/** Decodes the recordings found at build time. Runs once, in the background, after the first user gesture. */
+	async #loadVoices(ctx: AudioContext): Promise<void> {
+		for (const [path, url] of Object.entries(voiceFiles)) {
+			try {
+				const cue = (path.split('/').pop() ?? '').replace(/\.[^.]+$/, '').replace(/\d+$/, '');
+				const data = await (await fetch(url)).arrayBuffer();
+				const buffer = await ctx.decodeAudioData(data);
+				this.#voices.set(cue, [...(this.#voices.get(cue) ?? []), buffer]);
+			} catch {
+				/* a broken file only loses that one cue */
+			}
+		}
+	}
+
+	/** Plays one of the recordings for a cue (when there are several, never the same twice in a row). */
+	voice(cue: VoiceCue): boolean {
+		this.load();
+		const ctx = this.#ctx;
+		const takes = this.#voices.get(cue);
+		if (!ctx || this.#muted || ctx.state !== 'running' || !takes?.length) return false;
+		const last = this.#voiceLast.get(cue);
+		if (last && ctx.currentTime - last.at < (VOICE_GAP[cue] ?? 0)) return false;
+		let index = Math.floor(Math.random() * takes.length);
+		if (takes.length > 1 && last && index === last.index) index = (index + 1) % takes.length;
+		this.#voiceLast.set(cue, { at: ctx.currentTime, index });
+		const src = ctx.createBufferSource();
+		src.buffer = takes[index];
+		const gain = ctx.createGain();
+		src.connect(gain);
+		this.#route(gain, 0.12);
+		src.start();
+		return true;
+	}
+
+	/** Which cues have at least one recording (for the sound showcase page). */
+	hasVoice(cue: VoiceCue): boolean {
+		return (this.#voices.get(cue)?.length ?? 0) > 0;
 	}
 
 	#note(n: Note): void {

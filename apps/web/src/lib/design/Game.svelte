@@ -67,6 +67,7 @@
 		if (!event || event.id === lastAccepted) return;
 		lastAccepted = event.id;
 		sfx.play('accept');
+		if (event.playerId === store.you) sfx.voice('nice');
 		haptic('accept');
 		setMood('relief', 700);
 		const who = store.player(event.playerId);
@@ -105,6 +106,7 @@
 		if (!event || event.id === lastExplosion) return;
 		lastExplosion = event.id;
 		sfx.play('boom');
+		if (event.playerId === store.you) window.setTimeout(() => sfx.voice('boom'), 120);
 		haptic('boom');
 		setMood('boom', 800);
 		shake(root);
