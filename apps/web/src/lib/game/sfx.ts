@@ -1,29 +1,93 @@
 import { loadPref, savePref } from './session';
 
 /**
- * Synthesised interface sounds (no audio files, no licensing risk). One family: short square and triangle blips on
- * a pentatonic scale, plus noise for the bomb. Mixed at similar levels.
+ * Synthesised sounds (no audio files, no licensing risk), designed as one family in C major:
+ * marimba plucks and glockenspiel bells for feedback, a pulse "coin" for good answers, filtered brass for the
+ * fanfare, layered noise and a sub thump for the bomb. Everything goes through one small room reverb and a
+ * compressor so layered sounds stay clean and no two sounds differ wildly in loudness.
  */
 export type SfxName =
-	'click' | 'accept' | 'reject' | 'boom' | 'win' | 'tick' | 'turn' | 'life' | 'crackle';
+	| 'click'
+	| 'tick'
+	| 'turn'
+	| 'accept'
+	| 'reject'
+	| 'life'
+	| 'boom'
+	| 'win'
+	| 'lose'
+	| 'out'
+	| 'warn'
+	| 'crackle';
 
-// C D E G A: the yo pentatonic scale
-const C5 = 523.25;
-const D5 = 587.33;
-const E5 = 659.25;
-const G5 = 783.99;
-const A5 = 880;
-const C6 = 1046.5;
+/** MIDI note number to frequency. */
+const hz = (note: number): number => 440 * 2 ** ((note - 69) / 12);
 
-type Wave = OscillatorType;
+// C major landmarks used by the sounds below
+const C4 = 60;
+const E4 = 64;
+const G4 = 67;
+const C5 = 72;
+const E5 = 76;
+const G5 = 79;
+const B5 = 83;
+const C6 = 84;
+const E6 = 88;
+const G6 = 91;
+const C7 = 96;
+
+interface Note {
+	freq: number;
+	start: number;
+	dur: number;
+	gain: number;
+	type?: OscillatorType;
+	wave?: PeriodicWave;
+	slideTo?: number;
+	attack?: number;
+	wet?: number;
+	/** low-pass cutoff at the start and at the end of the note: a "wah" that makes brass and plucks */
+	lowpass?: [number, number];
+	detune?: number;
+}
+
+interface Noise {
+	start: number;
+	dur: number;
+	gain: number;
+	type: BiquadFilterType;
+	from: number;
+	to: number;
+	wet?: number;
+}
+
+/** Loudness balance, measured by rendering each sound offline: small cues quiet, the bomb and the fanfare big. */
+const LEVEL: Record<SfxName, number> = {
+	click: 3.2,
+	tick: 2.6,
+	warn: 2.4,
+	turn: 1.1,
+	accept: 2.6,
+	reject: 1.1,
+	life: 1.3,
+	out: 2.8,
+	boom: 2.8,
+	win: 2.8,
+	lose: 2.2,
+	crackle: 3
+};
 
 class SfxEngine {
 	#ctx: AudioContext | null = null;
 	#master: GainNode | null = null;
+	#dry: GainNode | null = null;
+	#reverb: ConvolverNode | null = null;
 	#noise: AudioBuffer | null = null;
+	#pulse: PeriodicWave | null = null;
 	#muted = false;
 	#volume = 0.7;
 	#loaded = false;
+	#scale = 1; // gain multiplier of the sound being scheduled (see LEVEL)
 
 	load(): void {
 		if (this.#loaded) return;
@@ -67,83 +131,356 @@ class SfxEngine {
 					window.AudioContext ??
 					(window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
 				if (!Ctor) return;
-				this.#ctx = new Ctor();
-				this.#master = this.#ctx.createGain();
-				this.#master.connect(this.#ctx.destination);
-				this.#applyVolume();
+				this.#build(new Ctor());
 			}
-			if (this.#ctx.state === 'suspended') void this.#ctx.resume();
+			if (this.#ctx?.state === 'suspended') void this.#ctx.resume();
 		} catch {
 			/* audio is optional */
 		}
 	}
 
-	play(name: SfxName): void {
+	/** voices -> dry bus + reverb send -> compressor -> master volume -> speakers */
+	#build(ctx: AudioContext): void {
+		this.#ctx = ctx;
+		const compressor = ctx.createDynamicsCompressor();
+		compressor.threshold.value = -16;
+		compressor.knee.value = 18;
+		compressor.ratio.value = 4;
+		compressor.attack.value = 0.003;
+		compressor.release.value = 0.15;
+		this.#master = ctx.createGain();
+		compressor.connect(this.#master).connect(ctx.destination);
+		this.#dry = ctx.createGain();
+		this.#dry.connect(compressor);
+		this.#reverb = ctx.createConvolver();
+		this.#reverb.buffer = this.#impulse(ctx, 0.55);
+		this.#reverb.connect(compressor);
+		this.#applyVolume();
+	}
+
+	/** A small bright room: decaying noise, a little darker toward the end. */
+	#impulse(ctx: AudioContext, seconds: number): AudioBuffer {
+		const length = Math.floor(ctx.sampleRate * seconds);
+		const buffer = ctx.createBuffer(2, length, ctx.sampleRate);
+		for (let channel = 0; channel < 2; channel++) {
+			const data = buffer.getChannelData(channel);
+			let smooth = 0;
+			for (let i = 0; i < length; i++) {
+				const decay = (1 - i / length) ** 2.6;
+				const white = Math.random() * 2 - 1;
+				smooth += (white - smooth) * (0.55 - 0.4 * (i / length)); // one-pole low-pass, darker over time
+				data[i] = smooth * decay;
+			}
+		}
+		return buffer;
+	}
+
+	/** 25% pulse wave: the classic "coin" timbre, softened by a low-pass at the note level. */
+	#pulseWave(ctx: AudioContext): PeriodicWave {
+		if (this.#pulse) return this.#pulse;
+		const harmonics = 40;
+		const duty = 0.25;
+		const real = new Float32Array(harmonics);
+		const imag = new Float32Array(harmonics);
+		for (let n = 1; n < harmonics; n++)
+			real[n] = (2 / (n * Math.PI)) * Math.sin(n * Math.PI * duty);
+		this.#pulse = ctx.createPeriodicWave(real, imag);
+		return this.#pulse;
+	}
+
+	play(name: SfxName, step = 0): void {
 		this.load();
 		const ctx = this.#ctx;
 		if (!ctx || this.#muted || ctx.state !== 'running') return;
-		const t = ctx.currentTime + 0.005;
+		const t = ctx.currentTime + 0.01;
+		this.#scale = LEVEL[name];
 		switch (name) {
-			case 'click':
-				this.#tone(1200, t, 0.04, 'square', 0.08);
+			case 'click': {
+				// a soft "pop" with a hair of random pitch so repeated presses never sound mechanical
+				const detune = 1 + (Math.random() - 0.5) * 0.06;
+				this.#note({
+					freq: 640 * detune,
+					slideTo: 1020 * detune,
+					start: t,
+					dur: 0.07,
+					gain: 0.16,
+					attack: 0.002
+				});
+				this.#note({
+					freq: hz(E6) * detune,
+					start: t,
+					dur: 0.05,
+					gain: 0.03,
+					type: 'triangle',
+					attack: 0.002
+				});
 				break;
+			}
 			case 'tick':
-				this.#tone(880, t, 0.05, 'triangle', 0.16);
+				this.#wood(hz(G5), t, 0.2);
 				break;
+			case 'warn': {
+				// last seconds of your turn: three rising wood ticks, the last one a little louder
+				const level = Math.min(2, Math.max(0, step));
+				this.#wood(hz(G5 + level * 2), t, 0.22 + level * 0.05);
+				this.#noiseHit({ start: t, dur: 0.03, gain: 0.05, type: 'highpass', from: 4000, to: 4000 });
+				break;
+			}
 			case 'turn':
-				this.#tone(E5, t, 0.08, 'triangle', 0.2);
-				this.#tone(A5, t + 0.08, 0.14, 'triangle', 0.2);
+				// "ding-dong": two bells, rising
+				this.#bell(hz(G5), t, 0.9, 0.2, 0.28);
+				this.#bell(hz(C6), t + 0.12, 1.1, 0.22, 0.3);
 				break;
 			case 'accept':
-				this.#tone(E5, t, 0.07, 'square', 0.11);
-				this.#tone(A5, t + 0.07, 0.16, 'square', 0.11);
+				// coin: a pulse note then a held pulse note a fourth above, with a bell sparkle on top
+				this.#note({
+					freq: hz(B5),
+					start: t,
+					dur: 0.07,
+					gain: 0.1,
+					wave: this.#pulseWave(ctx),
+					lowpass: [5200, 3000],
+					attack: 0.003
+				});
+				this.#note({
+					freq: hz(E6),
+					start: t + 0.07,
+					dur: 0.38,
+					gain: 0.1,
+					wave: this.#pulseWave(ctx),
+					lowpass: [5200, 1800],
+					attack: 0.003,
+					wet: 0.2
+				});
+				this.#bell(hz(C7 + 4), t + 0.07, 0.6, 0.06, 0.35);
+				this.#pluck(hz(E5), t, 0.2, 0.12);
 				break;
 			case 'reject':
-				this.#tone(196, t, 0.2, 'sawtooth', 0.13, 120);
+				// a friendly "bonk": two soft falling notes, no harshness
+				this.#note({
+					freq: hz(E4 + 1),
+					start: t,
+					dur: 0.11,
+					gain: 0.2,
+					type: 'triangle',
+					lowpass: [1500, 700],
+					attack: 0.004
+				});
+				this.#note({
+					freq: hz(C4 + 1),
+					slideTo: hz(C4 - 2),
+					start: t + 0.1,
+					dur: 0.26,
+					gain: 0.22,
+					type: 'triangle',
+					lowpass: [1400, 500],
+					attack: 0.004
+				});
+				this.#note({ freq: 120, slideTo: 60, start: t + 0.1, dur: 0.18, gain: 0.25, type: 'sine' });
 				break;
 			case 'life':
-				[C5, E5, G5, C6].forEach((f, i) => this.#tone(f, t + i * 0.06, 0.12, 'triangle', 0.18));
+				// a rising glockenspiel arpeggio
+				[C6, E6, G6, C7].forEach((n, i) => this.#bell(hz(n), t + i * 0.065, 0.7, 0.14, 0.4));
+				this.#pluck(hz(C5), t, 0.3, 0.12);
 				break;
-			case 'win':
-				[C5, E5, G5, C6, G5, C6].forEach((f, i) => this.#tone(f, t + i * 0.11, 0.2, 'square', 0.1));
-				this.#tone(D5, t + 0.7, 0.5, 'triangle', 0.14);
+			case 'out':
+				// eliminated: a falling whoosh
+				this.#note({
+					freq: 520,
+					slideTo: 90,
+					start: t,
+					dur: 0.45,
+					gain: 0.16,
+					type: 'triangle',
+					lowpass: [2400, 300]
+				});
+				this.#noiseHit({
+					start: t,
+					dur: 0.4,
+					gain: 0.12,
+					type: 'bandpass',
+					from: 3000,
+					to: 300,
+					wet: 0.2
+				});
 				break;
 			case 'boom':
-				this.#noiseBurst(t, 0.5, 900, 0.5);
-				this.#tone(140, t, 0.45, 'sine', 0.5, 38);
+				this.#noiseHit({ start: t, dur: 0.12, gain: 0.34, type: 'bandpass', from: 5500, to: 1400 }); // the crack
+				this.#note({
+					freq: 150,
+					slideTo: 32,
+					start: t,
+					dur: 0.7,
+					gain: 0.75,
+					type: 'sine',
+					attack: 0.004
+				}); // sub thump
+				this.#noiseHit({
+					start: t + 0.01,
+					dur: 1.0,
+					gain: 0.5,
+					type: 'lowpass',
+					from: 900,
+					to: 55,
+					wet: 0.45
+				}); // rumble
+				this.#note({
+					freq: 780,
+					slideTo: 90,
+					start: t + 0.05,
+					dur: 0.45,
+					gain: 0.08,
+					type: 'triangle',
+					lowpass: [3000, 400]
+				}); // cartoon fall
+				break;
+			case 'win':
+				this.#fanfare(t);
+				break;
+			case 'lose':
+				// a gentle "wah wah wah wahhh", never cruel
+				[G4, G4 - 1, G4 - 2].forEach((n, i) =>
+					this.#note({
+						freq: hz(n),
+						start: t + i * 0.2,
+						dur: 0.2,
+						gain: 0.14,
+						type: 'triangle',
+						lowpass: [1800, 700],
+						attack: 0.01,
+						wet: 0.2
+					})
+				);
+				this.#note({
+					freq: hz(G4 - 3),
+					slideTo: hz(G4 - 6),
+					start: t + 0.6,
+					dur: 0.6,
+					gain: 0.15,
+					type: 'triangle',
+					lowpass: [1800, 400],
+					attack: 0.01,
+					wet: 0.25
+				});
 				break;
 			case 'crackle':
-				this.#noiseBurst(t, 0.03, 4200, 0.05);
+				this.#noiseHit({ start: t, dur: 0.03, gain: 0.05, type: 'highpass', from: 4200, to: 4200 });
 				break;
 		}
 	}
 
-	#tone(
-		freq: number,
-		start: number,
-		duration: number,
-		type: Wave,
-		gain: number,
-		slideTo?: number
-	): void {
-		const ctx = this.#ctx;
-		if (!ctx || !this.#master) return;
-		const osc = ctx.createOscillator();
-		const env = ctx.createGain();
-		osc.type = type;
-		osc.frequency.setValueAtTime(freq, start);
-		if (slideTo) osc.frequency.exponentialRampToValueAtTime(slideTo, start + duration);
-		env.gain.setValueAtTime(0.0001, start);
-		env.gain.exponentialRampToValueAtTime(gain, start + 0.008);
-		env.gain.exponentialRampToValueAtTime(0.0001, start + duration);
-		osc.connect(env).connect(this.#master);
-		osc.start(start);
-		osc.stop(start + duration + 0.02);
+	/** Short victory tune: triplet run up to a held high C over a brass chord, a timpani hit and a cymbal wash. */
+	#fanfare(t: number): void {
+		const run = [G4, C5, E5, G5];
+		run.forEach((n, i) => this.#brass(hz(n), t + i * 0.1, 0.16, 0.09));
+		this.#brass(hz(C6), t + 0.4, 1.0, 0.1);
+		[E5, G5, C6].forEach((n) => this.#brass(hz(n), t + 0.4, 1.1, 0.045));
+		[C6, E6, G6, C7, G6, E6, C7].forEach((n, i) =>
+			this.#bell(hz(n), t + 0.55 + i * 0.075, 0.9, 0.08, 0.45)
+		);
+		this.#note({
+			freq: 130,
+			slideTo: 70,
+			start: t,
+			dur: 0.4,
+			gain: 0.35,
+			type: 'sine',
+			attack: 0.004
+		});
+		this.#noiseHit({
+			start: t + 0.4,
+			dur: 1.1,
+			gain: 0.07,
+			type: 'highpass',
+			from: 6500,
+			to: 6500,
+			wet: 0.5
+		});
 	}
 
-	#noiseBurst(start: number, duration: number, cutoff: number, gain: number): void {
+	/** Round wooden tick, used for countdowns and the last-seconds warning. */
+	#wood(freq: number, t: number, gain: number): void {
+		this.#note({ freq, start: t, dur: 0.07, gain, attack: 0.001, wet: 0.12 });
+		this.#note({ freq: freq * 2.4, start: t, dur: 0.035, gain: gain * 0.35, attack: 0.001 });
+	}
+
+	/** Marimba-like pluck: a sine plus a quickly fading overtone. */
+	#pluck(freq: number, t: number, dur: number, gain: number): void {
+		this.#note({ freq, start: t, dur, gain, attack: 0.003, wet: 0.15 });
+		this.#note({ freq: freq * 4, start: t, dur: dur * 0.25, gain: gain * 0.35, attack: 0.002 });
+	}
+
+	/** Glockenspiel / music-box bell: inharmonic partials, the high ones dying first. */
+	#bell(freq: number, t: number, dur: number, gain: number, wet: number): void {
+		const partials: [number, number, number][] = [
+			[1, 1, 1],
+			[2.76, 0.45, 0.6],
+			[5.4, 0.22, 0.35],
+			[8.93, 0.1, 0.2]
+		];
+		for (const [ratio, level, life] of partials) {
+			if (freq * ratio > 12000) continue;
+			this.#note({
+				freq: freq * ratio,
+				start: t,
+				dur: dur * life,
+				gain: gain * level,
+				attack: 0.002,
+				wet
+			});
+		}
+	}
+
+	/** Warm brass: two detuned saws through a low-pass that opens then settles. */
+	#brass(freq: number, t: number, dur: number, gain: number): void {
+		for (const detune of [-7, 7]) {
+			this.#note({
+				freq,
+				start: t,
+				dur,
+				gain,
+				type: 'sawtooth',
+				detune,
+				lowpass: [700, 3200],
+				attack: 0.02,
+				wet: 0.25
+			});
+		}
+	}
+
+	#note(n: Note): void {
 		const ctx = this.#ctx;
-		if (!ctx || !this.#master) return;
+		if (!ctx || !this.#dry) return;
+		const osc = ctx.createOscillator();
+		if (n.wave) osc.setPeriodicWave(n.wave);
+		else osc.type = n.type ?? 'sine';
+		osc.frequency.setValueAtTime(n.freq, n.start);
+		if (n.slideTo) osc.frequency.exponentialRampToValueAtTime(n.slideTo, n.start + n.dur);
+		if (n.detune) osc.detune.value = n.detune;
+
+		const env = ctx.createGain();
+		env.gain.setValueAtTime(0.0001, n.start);
+		env.gain.exponentialRampToValueAtTime(n.gain * this.#scale, n.start + (n.attack ?? 0.006));
+		env.gain.exponentialRampToValueAtTime(0.0001, n.start + n.dur);
+
+		let source: AudioNode = osc;
+		if (n.lowpass) {
+			const filter = ctx.createBiquadFilter();
+			filter.type = 'lowpass';
+			filter.frequency.setValueAtTime(n.lowpass[0], n.start);
+			filter.frequency.exponentialRampToValueAtTime(Math.max(60, n.lowpass[1]), n.start + n.dur);
+			source.connect(filter);
+			source = filter;
+		}
+		source.connect(env);
+		this.#route(env, n.wet ?? 0);
+		osc.start(n.start);
+		osc.stop(n.start + n.dur + 0.03);
+	}
+
+	#noiseHit(n: Noise): void {
+		const ctx = this.#ctx;
+		if (!ctx || !this.#dry) return;
 		if (!this.#noise) {
 			const buffer = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
 			const data = buffer.getChannelData(0);
@@ -153,15 +490,27 @@ class SfxEngine {
 		const src = ctx.createBufferSource();
 		src.buffer = this.#noise;
 		const filter = ctx.createBiquadFilter();
-		filter.type = 'lowpass';
-		filter.frequency.setValueAtTime(cutoff, start);
-		filter.frequency.exponentialRampToValueAtTime(80, start + duration);
+		filter.type = n.type;
+		filter.frequency.setValueAtTime(n.from, n.start);
+		if (n.to !== n.from) filter.frequency.exponentialRampToValueAtTime(n.to, n.start + n.dur);
 		const env = ctx.createGain();
-		env.gain.setValueAtTime(gain, start);
-		env.gain.exponentialRampToValueAtTime(0.0001, start + duration);
-		src.connect(filter).connect(env).connect(this.#master);
-		src.start(start);
-		src.stop(start + duration + 0.02);
+		env.gain.setValueAtTime(n.gain * this.#scale, n.start);
+		env.gain.exponentialRampToValueAtTime(0.0001, n.start + n.dur);
+		src.connect(filter).connect(env);
+		this.#route(env, n.wet ?? 0);
+		src.start(n.start);
+		src.stop(n.start + n.dur + 0.03);
+	}
+
+	#route(node: AudioNode, wet: number): void {
+		const ctx = this.#ctx;
+		if (!ctx || !this.#dry || !this.#reverb) return;
+		node.connect(this.#dry);
+		if (wet > 0) {
+			const send = ctx.createGain();
+			send.gain.value = wet;
+			node.connect(send).connect(this.#reverb);
+		}
 	}
 }
 

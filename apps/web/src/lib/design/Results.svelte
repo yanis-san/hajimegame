@@ -34,7 +34,7 @@
 	onMount(() => {
 		const timer = setTimeout(() => (ordered = true), 700);
 		const show = setTimeout(() => {
-			sfx.play('win');
+			sfx.play(iWon ? 'win' : 'lose');
 			haptic('win');
 			particles?.hanabi();
 		}, 900);

@@ -125,6 +125,21 @@
 		if (!event || event.id === lastElimination) return;
 		lastElimination = event.id;
 		announcement = t('a11y.eliminated', { name: store.player(event.playerId)?.name ?? '' });
+		window.setTimeout(() => sfx.play('out'), 450); // after the explosion has rung out
+	});
+
+	// The last three seconds of your own turn: a rising tick each second (the clock is the server-synced one).
+	$effect(() => {
+		const turn = store.turn;
+		if (!turn || !store.isMyTurn) return;
+		let last = Infinity;
+		const id = setInterval(() => {
+			const left = Math.ceil(session.client.clock.remaining(turn.deadline) / 1000);
+			if (left === last || left > 3 || left < 1) return;
+			last = left;
+			sfx.play('warn', 3 - left);
+		}, 100);
+		return () => clearInterval(id);
 	});
 
 	// Keep the input above the on-screen keyboard (iOS does not resize the layout viewport).

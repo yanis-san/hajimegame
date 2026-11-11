@@ -67,7 +67,19 @@
 			player: { ...base, id: 'd', name: 'Dai', avatar: 4, alive: false, lives: 0 }
 		}
 	];
-	const sounds: SfxName[] = ['click', 'tick', 'turn', 'accept', 'reject', 'life', 'win', 'boom'];
+	const sounds: SfxName[] = [
+		'click',
+		'tick',
+		'turn',
+		'accept',
+		'reject',
+		'life',
+		'win',
+		'lose',
+		'boom',
+		'out',
+		'warn'
+	];
 	const iconNames = Object.keys(ICONS) as IconName[];
 </script>
 
