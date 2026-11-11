@@ -2,9 +2,11 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import type { Browser, BrowserContext, Page } from '@playwright/test';
 
-const tables: { contains: Record<string, string[]>; starts: Record<string, string[]> } = JSON.parse(
-	readFileSync(path.resolve(import.meta.dirname, '.cache/answers.json'), 'utf8')
-);
+const tables: {
+	contains: Record<string, string[]>;
+	starts: Record<string, string[]>;
+	nends: Record<string, string[]>;
+} = JSON.parse(readFileSync(path.resolve(import.meta.dirname, '.cache/answers.json'), 'utf8'));
 
 export function answerFor(fragment: string, used: Set<string>, shiritori = false): string {
 	const table = shiritori ? tables.starts : tables.contains;
@@ -47,4 +49,11 @@ export async function joinRoom(player: Player, code: string): Promise<void> {
 	await player.page.getByLabel('Ton pseudo').fill(player.name);
 	await player.page.getByRole('button', { name: 'Entrer' }).click();
 	await player.page.getByRole('button', { name: 'Pas prêt' }).waitFor();
+}
+
+/** A word starting with `first` and ending in ん (for the shiritori penalty option). */
+export function wordEndingInN(first: string): string {
+	const word = tables.nends[first]?.[0];
+	if (!word) throw new Error(`no word starting with ${first} and ending in n`);
+	return word;
 }

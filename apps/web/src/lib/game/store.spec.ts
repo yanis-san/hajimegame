@@ -7,7 +7,8 @@ const settings: SettingsView = {
 	fuse_seconds: 10,
 	mode: 'classic',
 	max_players: 8,
-	bonus_kana: false
+	bonus_kana: false,
+	n_penalty: false
 };
 
 function player(id: string, extra: Partial<PlayerView> = {}): PlayerView {

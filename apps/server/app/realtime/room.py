@@ -261,6 +261,7 @@ class Room:
             lives=s.lives,
             fuse_seconds=s.fuse_seconds,
             mode=s.mode,  # type: ignore[arg-type]
+            n_penalty=s.n_penalty,
             max_players=s.max_players,
             bonus_kana=s.bonus_kana,
         )
@@ -550,6 +551,7 @@ class Room:
                 lives=current.lives if msg.lives is UNSET else msg.lives,
                 fuse_seconds=current.fuse_seconds if msg.fuse_seconds is UNSET else msg.fuse_seconds,
                 mode=current.mode if msg.mode is UNSET else msg.mode,
+                n_penalty=current.n_penalty if msg.n_penalty is UNSET else msg.n_penalty,
                 max_players=current.max_players if msg.max_players is UNSET else msg.max_players,
                 bonus_kana=current.bonus_kana if msg.bonus_kana is UNSET else msg.bonus_kana,
             )
@@ -752,7 +754,13 @@ class Room:
                     self._send(member.conn, pr.Rejected, reason=event.reason, text=event.text[:32])
             elif isinstance(event, ev.Explosion):
                 metrics.EXPLOSIONS.inc()
-                self._emit(pr.Explosion, turn=event.turn, player_id=event.player_id, lives=event.lives)
+                self._emit(
+                    pr.Explosion,
+                    turn=event.turn,
+                    player_id=event.player_id,
+                    lives=event.lives,
+                    cause=event.cause,
+                )
             elif isinstance(event, ev.PlayerEliminated):
                 self._emit(pr.Elimination, player_id=event.player_id, place=event.place, reason=event.reason)
             elif isinstance(event, ev.LifeGained):

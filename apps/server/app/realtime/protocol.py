@@ -82,6 +82,7 @@ class SetSettings(_Msg, tag_field="t", tag="settings"):
     fuse_seconds: Annotated[float, Meta(ge=5, le=20)] | UnsetType = UNSET
     mode: Mode | UnsetType = UNSET
     max_players: Annotated[int, Meta(ge=2, le=8)] | UnsetType = UNSET
+    n_penalty: bool | UnsetType = UNSET
     bonus_kana: bool | UnsetType = UNSET
     v: int = PROTOCOL_VERSION
 
@@ -134,6 +135,7 @@ class SettingsView(Struct, frozen=True, omit_defaults=False):
     mode: Mode
     max_players: int
     bonus_kana: bool
+    n_penalty: bool
 
 
 class PlayerView(Struct, frozen=True, omit_defaults=False):
@@ -268,6 +270,7 @@ class Explosion(_Event, tag_field="t", tag="explosion"):
     turn: int
     player_id: str
     lives: int
+    cause: Literal["timeout", "n_ending"]
     seq: int
     v: int = PROTOCOL_VERSION
 

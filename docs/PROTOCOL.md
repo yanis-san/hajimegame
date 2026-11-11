@@ -35,7 +35,7 @@ the current `seq` without advancing it, so they never create gaps.
 | `rejoin` | `room`, `token` | Replaces an older connection of the same player (old one gets `error: replaced`, closes 4000). |
 | `ready` | `ready` | Lobby only. |
 | `start` | | Host only, needs 2+ connected players, all non-host players ready. Starts the countdown. |
-| `settings` | any of `lives` 1-5, `fuse_seconds` 5-20, `mode` classic or shiritori, `max_players` 2-8, `bonus_kana` | Host only, lobby only. Partial update. |
+| `settings` | any of `lives` 1-5, `fuse_seconds` 5-20, `mode` classic or shiritori, `max_players` 2-8, `bonus_kana`, `n_penalty` | Host only, lobby only. Partial update. |
 | `typing` | `text` (max 32) | Active player only. Relayed to others, max 10 per second, never used for validation. |
 | `submit` | `text` (max 32) | Kana, kanji or raw romaji. The server normalizes everything. |
 | `ping` | `n`, `t0` | Answered at once, outside the room queue. |
@@ -56,7 +56,7 @@ the current `seq` without advancing it, so they never create gaps.
 | `typing` | What the active player is typing (ephemeral). |
 | `accepted` | Word played: `word`, `reading`, `score_gain`, `score`, `meaning_fr` and `meaning_en` (French may be empty). |
 | `rejected` | Only to the submitter: `reason` is `not_in_dictionary`, `missing_fragment` (classic: fragment absent; shiritori: wrong first kana), `already_used`, `not_your_turn`, `too_late` or `ends_with_n` (shiritori). The turn continues (except `too_late`). |
-| `explosion` | Bomb exploded on `player_id`, `lives` left. |
+| `explosion` | Bomb exploded on `player_id`, `lives` left. `cause` is `timeout` or `n_ending` (shiritori penalty). |
 | `elimination` | `player_id` is out with final `place`. |
 | `life` / `bonus` | Bonus kana progress and extra life. |
 | `game_over` | `winner_id` and `results` (place, score, words, longest word). |

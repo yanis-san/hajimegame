@@ -201,6 +201,9 @@
             "minimum": 2,
             "maximum": 8
           },
+          "n_penalty": {
+            "type": "boolean"
+          },
           "bonus_kana": {
             "type": "boolean"
           },
@@ -620,6 +623,9 @@
           },
           "bonus_kana": {
             "type": "boolean"
+          },
+          "n_penalty": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -627,7 +633,8 @@
           "fuse_seconds",
           "mode",
           "max_players",
-          "bonus_kana"
+          "bonus_kana",
+          "n_penalty"
         ]
       },
       "PlayerView": {
@@ -1039,6 +1046,12 @@
           "lives": {
             "type": "integer"
           },
+          "cause": {
+            "enum": [
+              "n_ending",
+              "timeout"
+            ]
+          },
           "seq": {
             "type": "integer"
           },
@@ -1052,6 +1065,7 @@
           "turn",
           "player_id",
           "lives",
+          "cause",
           "seq"
         ]
       },
@@ -1457,6 +1471,9 @@
           "minimum": 2,
           "maximum": 8
         },
+        "n_penalty": {
+          "type": "boolean"
+        },
         "bonus_kana": {
           "type": "boolean"
         },
@@ -1801,6 +1818,9 @@
         },
         "bonus_kana": {
           "type": "boolean"
+        },
+        "n_penalty": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -1808,7 +1828,8 @@
         "fuse_seconds",
         "mode",
         "max_players",
-        "bonus_kana"
+        "bonus_kana",
+        "n_penalty"
       ]
     },
     "PlayerView": {
@@ -2220,6 +2241,12 @@
         "lives": {
           "type": "integer"
         },
+        "cause": {
+          "enum": [
+            "n_ending",
+            "timeout"
+          ]
+        },
         "seq": {
           "type": "integer"
         },
@@ -2233,6 +2260,7 @@
         "turn",
         "player_id",
         "lives",
+        "cause",
         "seq"
       ]
     },

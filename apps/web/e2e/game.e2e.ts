@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { answerFor, createRoom, joinRoom, newPlayer } from './helpers';
+import { answerFor, createRoom, joinRoom, newPlayer, wordEndingInN } from './helpers';
 
 test('two players play a full game: refused word, accepted word, reload mid-game, rematch', async ({
 	browser
@@ -151,6 +151,43 @@ test('shiritori: the next fragment is the last kana of the word just played', as
 	await field.pressSequentially(`${fragment}ん`);
 	await field.press('Enter');
 	await expect(active.page.getByRole('alert')).toBeVisible();
+	await host.context.close();
+	await guest.context.close();
+});
+
+test('shiritori option: a word ending in ん can cost a life instead of being refused', async ({
+	browser
+}) => {
+	const host = await newPlayer(browser, 'Yanis');
+	const guest = await newPlayer(browser, 'Aya');
+	await host.page.goto('/');
+	await host.page.waitForLoadState('networkidle');
+	await host.page.getByLabel('Ton pseudo').fill('Yanis');
+	await host.page.getByRole('radio', { name: /Shiritori/ }).click();
+	await host.page.getByRole('button', { name: 'Créer une partie' }).click();
+	await host.page.waitForURL(/\/r\/[A-Z0-9]{6}/);
+	await host.page.getByRole('button', { name: 'Lancer la partie' }).waitFor();
+	const code = host.page.url().split('/r/')[1];
+	await host.page.getByRole('switch', { name: /ん fait perdre une vie/ }).click();
+	await joinRoom(guest, code);
+	await expect(guest.page.getByRole('switch', { name: /ん fait perdre une vie/ })).toBeChecked();
+	await guest.page.getByRole('button', { name: 'Pas prêt' }).click();
+	await expect(host.page.getByRole('button', { name: 'Lancer la partie' })).toBeEnabled();
+	await host.page.getByRole('button', { name: 'Lancer la partie' }).click();
+	await expect(host.page.locator('.game')).toBeVisible({ timeout: 15_000 });
+	await host.page.waitForTimeout(700);
+
+	const active =
+		(await host.page.getByLabel('Un mot qui commence par').getAttribute('placeholder')) ===
+		'À toi !'
+			? host
+			: guest;
+	const fragment = (await active.page.locator('.plaque .kana').innerText()).trim();
+	const field = active.page.getByLabel('Un mot qui commence par');
+	await field.pressSequentially(wordEndingInN(fragment), { delay: 20 });
+	await field.press('Enter');
+	await expect(host.page.locator('.notice')).toContainText('ん', { timeout: 5000 });
+	await expect(host.page.locator('.lastcard')).toBeVisible();
 	await host.context.close();
 	await guest.context.close();
 });

@@ -13,6 +13,7 @@ export interface SettingsView {
   mode: Mode;
   max_players: number;
   bonus_kana: boolean;
+  n_penalty: boolean;
 }
 
 export interface PlayerView {
@@ -87,6 +88,7 @@ export interface SetSettings {
   fuse_seconds?: number;
   mode?: Mode;
   max_players?: number;
+  n_penalty?: boolean;
   bonus_kana?: boolean;
   v?: number;
 }
@@ -229,6 +231,7 @@ export interface Explosion {
   turn: number;
   player_id: string;
   lives: number;
+  cause: "n_ending" | "timeout";
   seq: number;
   v: number;
 }

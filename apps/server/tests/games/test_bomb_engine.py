@@ -301,6 +301,26 @@ def test_shiritori_word_ending_in_n_is_refused() -> None:
     assert engine.fragment == "だ"
 
 
+def test_shiritori_n_ending_can_cost_a_life_instead_of_being_refused() -> None:
+    engine, _ = make_engine(2, BombSettings(lives=3, mode="shiritori", n_penalty=True))
+    engine.start()
+    player = engine.current_player or ""
+    events = engine.submit(player, "くるん")
+    assert kinds(events) == ["WordAccepted", "Explosion", "TurnStarted"]
+    boom = events[1]
+    assert isinstance(boom, ev.Explosion) and boom.cause == "n_ending" and boom.lives == 2
+    assert engine.current_player != player
+    assert engine.fragment != "ん"  # the chain restarts on a normal kana
+    assert next(p for p in engine.players if p.info.id == player).score > 0
+
+
+def test_shiritori_n_penalty_can_eliminate() -> None:
+    engine, _ = make_engine(2, BombSettings(lives=1, mode="shiritori", n_penalty=True))
+    engine.start()
+    events = engine.submit(engine.current_player or "", "くるん")
+    assert kinds(events) == ["WordAccepted", "Explosion", "PlayerEliminated", "GameOver"]
+
+
 def test_shiritori_chain_survives_an_explosion() -> None:
     engine, clock = shiritori()
     engine.start()

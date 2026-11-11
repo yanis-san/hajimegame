@@ -64,6 +64,7 @@ class Explosion(GameEvent):
     turn: int
     player_id: str
     lives: int
+    cause: Literal["timeout", "n_ending"] = "timeout"
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)

@@ -14,6 +14,7 @@ export default function globalSetup(): void {
 		'd = Dictionary.load()',
 		'out = {}',
 		'starts = {}',
+		'nends = {}',
 		'for i in range(len(d)):',
 		'    e = d.entry(i)',
 		'    if e.rank > LEVEL_MAX_RANK["n1"]:',
@@ -27,7 +28,11 @@ export default function globalSetup(): void {
 		'            st = starts.setdefault(r[0], [])',
 		'            if len(st) < 8:',
 		'                st.append(r)',
-		'print(json.dumps({"contains": out, "starts": starts}, ensure_ascii=False))'
+		'        if r[-1] == "ん" and len(r) >= 3:',
+		'            ne = nends.setdefault(r[0], [])',
+		'            if len(ne) < 8:',
+		'                ne.append(r)',
+		'print(json.dumps({"contains": out, "starts": starts, "nends": nends}, ensure_ascii=False))'
 	].join('\n');
 	const raw = execFileSync('uv', ['run', 'python', '-c', code], {
 		cwd: server,

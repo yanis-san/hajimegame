@@ -7,7 +7,7 @@ Modes
 - ``classic``: a fragment of 1 to 3 kana is shown, the word must contain it. The fragment difficulty adapts
   to each player's answer speed: fast answers get rarer fragments, slow answers or explosions easier ones.
 - ``shiritori``: the word must START with the last kana of the previous word.
-  A word ending in ん is refused. The chain survives explosions.
+  A word ending in ん is refused (or, with n_penalty, costs a life). The chain survives explosions.
 
 Timing rule (documented in docs/PROTOCOL.md): a word received at ``at <= deadline`` is judged on its merits;
 ``at > deadline`` is ``too_late`` and the bomb explodes. A ``timeout`` before the deadline is ignored.
@@ -184,7 +184,8 @@ class BombEngine:
             )
             return out
         ending = shiritori_end(hit.reading) if shiritori else ""
-        if shiritori and ending == "ん":
+        n_ending = shiritori and ending == "ん"
+        if n_ending and not self.settings.n_penalty:
             out.append(ev.WordRejected(turn=self._turn, player_id=player_id, text=text, reason="ends_with_n"))
             return out
 
@@ -208,8 +209,12 @@ class BombEngine:
         )
         self._adapt(state, (now - self._turn_started) / max(1e-9, self.settings.fuse_seconds))
         if shiritori:
-            self._next_start = ending if self._validator.start_count(ending) >= MIN_START_WORDS else ""
+            enough = self._validator.start_count(ending) >= MIN_START_WORDS
+            self._next_start = ending if enough and not n_ending else ""
         self._update_bonus(state, hit.reading, out)
+        if n_ending:  # the word counts, but ending on ん costs a life
+            self._explode(out, "n_ending")
+            return out
         self._begin_turn(self._next_alive(player_id), out)
         return out
 
@@ -287,13 +292,13 @@ class BombEngine:
             )
         )
 
-    def _explode(self, out: list[GameEvent]) -> None:
+    def _explode(self, out: list[GameEvent], cause: Literal["timeout", "n_ending"] = "timeout") -> None:
         assert self._current is not None
         player_id = self._current
         state = self._players[player_id]
         state.lives -= 1
         state.skill = SKILL_MIN  # the next fragment will be an easy one
-        out.append(ev.Explosion(turn=self._turn, player_id=player_id, lives=state.lives))
+        out.append(ev.Explosion(turn=self._turn, player_id=player_id, lives=state.lives, cause=cause))
         successor = self._next_alive(player_id)
         if state.lives <= 0:
             self._eliminate(state, "explosion", out)

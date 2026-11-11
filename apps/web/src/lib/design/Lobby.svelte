@@ -213,6 +213,14 @@
 				/>
 			</div>
 			<div class="setting toggles">
+				{#if store.settings.mode === 'shiritori'}
+					<Toggle
+						label={t('lobby.nPenalty')}
+						disabled={!isHost}
+						checked={store.settings.n_penalty}
+						onchange={(n_penalty) => session.settings({ n_penalty })}
+					/>
+				{/if}
 				<Toggle
 					label={t('lobby.bonus')}
 					disabled={!isHost}

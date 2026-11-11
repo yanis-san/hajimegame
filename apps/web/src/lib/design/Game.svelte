@@ -27,6 +27,8 @@
 	let mood = $state<Mood | undefined>(undefined);
 	let announcement = $state('');
 	let rejection = $state('');
+	let notice = $state('');
+	let noticeTimer: ReturnType<typeof setTimeout> | undefined;
 	let moodTimer: ReturnType<typeof setTimeout> | undefined;
 	let rejectTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -107,7 +109,13 @@
 		shake(root);
 		const box = bombBox?.getBoundingClientRect();
 		if (box) particles?.explode(box.left + box.width / 2, box.top + box.height / 2);
-		announcement = t('a11y.explosion', { name: store.player(event.playerId)?.name ?? '' });
+		const who = store.player(event.playerId)?.name ?? '';
+		announcement = t('a11y.explosion', { name: who });
+		if (event.cause === 'n_ending') {
+			notice = t('game.nPenalty', { name: who });
+			clearTimeout(noticeTimer);
+			noticeTimer = setTimeout(() => (notice = ''), 3500);
+		}
 	});
 
 	let lastElimination = 0;
@@ -134,6 +142,7 @@
 			viewport.removeEventListener('scroll', update);
 			clearTimeout(moodTimer);
 			clearTimeout(rejectTimer);
+			clearTimeout(noticeTimer);
 		};
 	});
 
@@ -183,6 +192,8 @@
 					onspark={(x, y, k) => particles?.spark(x, y, k)}
 				/>
 			</div>
+
+			{#if notice}<p class="notice" role="status">{notice}</p>{/if}
 
 			<p class="turnline" class:mine={store.isMyTurn} aria-hidden="true">
 				{#if store.turn}
@@ -296,6 +307,17 @@
 	.turnline strong {
 		color: var(--kinpaku);
 		font-size: 1.25rem;
+	}
+	.notice {
+		margin: 0;
+		padding: 0.25rem 0.9rem 0.35rem;
+		background: var(--shu-btn);
+		color: #fff8ef;
+		border: var(--line) solid var(--sumi);
+		border-radius: 12px;
+		box-shadow: 0 3px 0 var(--sumi);
+		font-weight: 700;
+		animation: card-pop var(--t-mid) var(--ease-pop) both;
 	}
 	.frag {
 		padding: 0 0.6rem 0.1rem;

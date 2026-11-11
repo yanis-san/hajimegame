@@ -30,6 +30,7 @@ export interface RejectedEvent extends GameEvent {
 export interface ExplosionEvent extends GameEvent {
 	playerId: string;
 	lives: number;
+	cause: 'timeout' | 'n_ending';
 }
 export interface EliminationEvent extends GameEvent {
 	playerId: string;
@@ -47,7 +48,8 @@ const DEFAULT_SETTINGS: SettingsView = {
 	fuse_seconds: 10,
 	mode: 'classic',
 	max_players: 8,
-	bonus_kana: false
+	bonus_kana: false,
+	n_penalty: false
 };
 
 /** Reactive game state. The server is authoritative: this class only mirrors what it sends. */
@@ -189,7 +191,12 @@ export class GameStore {
 				break;
 			case 'explosion':
 				this.#patchPlayer(msg.player_id, { lives: msg.lives });
-				this.explosion = { id: this.#id(), playerId: msg.player_id, lives: msg.lives };
+				this.explosion = {
+					id: this.#id(),
+					playerId: msg.player_id,
+					lives: msg.lives,
+					cause: msg.cause
+				};
 				break;
 			case 'elimination':
 				this.#patchPlayer(msg.player_id, { alive: false, lives: 0 });

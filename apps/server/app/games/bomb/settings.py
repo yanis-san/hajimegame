@@ -18,6 +18,7 @@ class BombSettings:
     mode: str = "classic"
     max_players: int = PLAYERS_DEFAULT
     bonus_kana: bool = False
+    n_penalty: bool = False  # shiritori: a word ending in ん costs a life instead of being refused
 
     def __post_init__(self) -> None:
         if not LIVES_MIN <= self.lives <= LIVES_MAX:
