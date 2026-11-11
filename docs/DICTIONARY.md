@@ -27,6 +27,17 @@ substrings that never cut a unit. A fragment is playable if at least N words (de
 easy/medium/hard splits the playable fragments by word count into thirds; it follows how well a player is doing
 (response time), not any word level.
 
+## Example sentences
+
+About 27 700 entries (13 %) carry one example sentence (`s`: Japanese, English, French). The Japanese sentence and
+its English translation come from `JMdict_e_examp.gz`, which links entries to sentences of the Tatoeba project.
+The French translation comes from Tatoeba's own exports (`jpn-fra_links`, `fra_sentences`) and is attached only
+when Tatoeba's Japanese text is identical to JMdict's, so a wrong id can never give a wrong translation. About
+4 600 sentences have a French translation; the others show English only. Nothing is machine translated, and
+sentences longer than 45 characters are dropped so they fit on a phone. When an entry has several examples the
+one with a French translation and a comfortable length wins. Licence: Tatoeba contributors, CC BY 2.0 FR
+(credited in the game's credits page and in the dictionary `meta`).
+
 ## Meanings
 
 Each entry keeps a short meaning in both languages (up to 3 senses, 2 glosses each, 90 characters): French (`f`) and

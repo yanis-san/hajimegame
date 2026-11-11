@@ -90,6 +90,9 @@ export const fr = {
 	'game.noMeaning': 'Sens non disponible',
 	'game.meaningFr': 'Sens en français',
 	'game.meaningEn': 'Sens en anglais (pas de version française)',
+	'game.example': 'Exemple de phrase',
+	'game.exampleFr': 'Phrase traduite en français',
+	'game.exampleEn': 'Phrase traduite en anglais',
 
 	'reject.not_in_dictionary': 'Ce mot n’est pas dans le dictionnaire.',
 	'reject.missing_fragment': 'Il manque « {fragment} » dans ce mot.',
@@ -158,6 +161,9 @@ export const fr = {
 	'credits.dictionary.body':
 		'Les mots et leurs sens (anglais, et français quand JMdict le fournit) viennent du fichier JMdict, © Electronic Dictionary Research and Development Group (EDRDG). Le dictionnaire de jeu est une version filtrée et reformatée de ce fichier ; ses règles de filtrage sont documentées dans le dépôt.',
 	'credits.dictionary.licence': 'Licence du groupe EDRDG',
+	'credits.examples.title': "Phrases d'exemple",
+	'credits.examples.body':
+		"Les phrases d'exemple et leurs traductions viennent du projet Tatoeba et de ses contributeurs, sous licence CC BY 2.0 FR. Elles sont rattachées aux mots par les exemples du fichier JMdict. Aucune traduction n'est générée automatiquement.",
 	'credits.fonts.title': 'Polices',
 	'credits.fonts.body':
 		'Shippori Mincho, Zen Maru Gothic, Zen Kaku Gothic New et JetBrains Mono, sous licence SIL Open Font License 1.1, auto-hébergées via Fontsource.',

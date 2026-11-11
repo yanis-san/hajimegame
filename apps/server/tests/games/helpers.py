@@ -18,6 +18,9 @@ class FakeHit:
     text: str
     meaning_fr: str = ""
     meaning_en: str = "test"
+    example_ja: str = ""
+    example_en: str = ""
+    example_fr: str = ""
 
 
 class FakeValidator:

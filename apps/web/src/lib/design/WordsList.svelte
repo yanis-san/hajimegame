@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PlayerView, WordView } from '@hajime/protocol';
 	import { t } from '#lib/i18n/index.ts';
+	import Example from './Example.svelte';
 	import Meanings from './Meanings.svelte';
 
 	let { words, players }: { words: WordView[]; players: PlayerView[] } = $props();
@@ -22,6 +23,7 @@
 						{#if word.reading !== word.word}<span class="r">{word.reading}</span>{/if}
 					</div>
 					<Meanings fr={word.meaning_fr} en={word.meaning_en} />
+					<Example ja={word.example_ja} fr={word.example_fr} en={word.example_en} />
 					<span class="by">{nameOf(word.player_id)}</span>
 				</li>
 			{/each}

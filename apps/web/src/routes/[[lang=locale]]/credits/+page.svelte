@@ -21,6 +21,16 @@
 	</section>
 
 	<section>
+		<h2>{t('credits.examples.title')}</h2>
+		<p>{t('credits.examples.body')}</p>
+		<p>
+			<a href="https://tatoeba.org" rel="noreferrer">Tatoeba</a>
+			·
+			<a href="https://creativecommons.org/licenses/by/2.0/fr/" rel="noreferrer">CC BY 2.0 FR</a>
+		</p>
+	</section>
+
+	<section>
 		<h2>{t('credits.fonts.title')}</h2>
 		<p>{t('credits.fonts.body')}</p>
 	</section>

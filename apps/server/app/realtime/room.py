@@ -855,6 +855,9 @@ class Room:
                         event.turn,
                         event.meaning_fr,
                         event.meaning_en,
+                        event.example_ja,
+                        event.example_en,
+                        event.example_fr,
                     )
                 )
                 del self._words[:-WORD_HISTORY]
@@ -868,6 +871,9 @@ class Room:
                     score=event.score,
                     meaning_fr=event.meaning_fr,
                     meaning_en=event.meaning_en,
+                    example_ja=event.example_ja,
+                    example_en=event.example_en,
+                    example_fr=event.example_fr,
                 )
             elif isinstance(event, ev.WordRejected):
                 member = self._members.get(event.player_id)

@@ -91,6 +91,9 @@ export const ja: Record<MessageKey, string> = {
 	'game.noMeaning': '意味はありません',
 	'game.meaningFr': 'フランス語の意味',
 	'game.meaningEn': '英語の意味（フランス語はありません）',
+	'game.example': '例文',
+	'game.exampleFr': 'フランス語訳',
+	'game.exampleEn': '英語訳',
 
 	'reject.not_in_dictionary': 'この言葉は辞書にありません。',
 	'reject.missing_fragment': 'この言葉に「{fragment}」が含まれていません。',
@@ -159,6 +162,9 @@ export const ja: Record<MessageKey, string> = {
 	'credits.dictionary.body':
 		'言葉とその意味（英語、JMdictにあればフランス語）は、JMdictファイル（© Electronic Dictionary Research and Development Group / EDRDG）に由来します。ゲーム用の辞書は、このファイルをフィルタリング・再構成したものです。フィルタリングの規則はリポジトリに記載されています。',
 	'credits.dictionary.licence': 'EDRDGのライセンス',
+	'credits.examples.title': '例文',
+	'credits.examples.body':
+		'例文とその翻訳はTatoebaプロジェクトとその投稿者によるもので、CC BY 2.0 FRライセンスです。JMdictの例文データを通じて単語に結び付けています。機械翻訳は使っていません。',
 	'credits.fonts.title': 'フォント',
 	'credits.fonts.body':
 		'Shippori Mincho、Zen Maru Gothic、Zen Kaku Gothic New、JetBrains Mono（SIL Open Font License 1.1）。Fontsource経由で自社配信しています。',

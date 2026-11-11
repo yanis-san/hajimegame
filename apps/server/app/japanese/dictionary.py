@@ -30,6 +30,7 @@ class Entry:
     pos: tuple[str, ...]
     meaning_fr: str = ""  # JMdict has French for a minority of entries
     meaning_en: str = ""
+    example: tuple[str, str, str] = ("", "", "")  # Japanese sentence, English, French (Tatoeba)
 
 
 @dataclass(frozen=True, slots=True)
@@ -39,11 +40,19 @@ class WordMatch:
     text: str  # normalized text as typed (hiragana or kanji form)
     meaning_fr: str = ""
     meaning_en: str = ""
+    example_ja: str = ""  # an example sentence using the word, with its translations
+    example_en: str = ""
+    example_fr: str = ""
 
 
 @dataclass(frozen=True, slots=True)
 class WordRejected:
     reason: Reject
+
+
+def _match(entry_id: int, entry: Entry, reading: str, text: str) -> WordMatch:
+    ja, en, fr = entry.example
+    return WordMatch(entry_id, reading, text, entry.meaning_fr, entry.meaning_en, ja, en, fr)
 
 
 def _matches(reading: str, fragment: str, starts_with: bool) -> bool:
@@ -110,7 +119,7 @@ class Dictionary:
             found = True
             for reading in entry.readings:
                 if _matches(reading, fragment, starts_with):
-                    return WordMatch(entry_id, reading, text, entry.meaning_fr, entry.meaning_en)
+                    return _match(entry_id, entry, reading, text)
         return WordRejected("missing_fragment" if found else "not_in_dictionary")
 
     def reject_reason(self, text: str, fragment: str, *, starts_with: bool = False) -> Reject:
@@ -126,7 +135,7 @@ class Dictionary:
             entry = self._entries[entry_id]
             for reading in entry.readings:
                 if _matches(reading, fragment, starts_with):
-                    result.append(WordMatch(entry_id, reading, text, entry.meaning_fr, entry.meaning_en))
+                    result.append(_match(entry_id, entry, reading, text))
                     break
         return tuple(result)
 
@@ -147,7 +156,15 @@ class Dictionary:
         with gzip.open(path, "rt", encoding="utf-8") as fh:
             raw = json.load(fh)
         entries = tuple(
-            Entry(tuple(e["w"]), tuple(e["r"]), int(e["k"]), tuple(e["p"]), e.get("f", ""), e.get("g", ""))
+            Entry(
+                tuple(e["w"]),
+                tuple(e["r"]),
+                int(e["k"]),
+                tuple(e["p"]),
+                e.get("f", ""),
+                e.get("g", ""),
+                tuple(e["s"]) if "s" in e else ("", "", ""),
+            )
             for e in raw["entries"]
         )
         return cls(entries, {frag: int(n) for frag, n in raw["fragments"].items()}, raw["meta"])

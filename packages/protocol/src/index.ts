@@ -47,6 +47,9 @@ export interface WordView {
   turn: number;
   meaning_fr: string;
   meaning_en: string;
+  example_ja: string;
+  example_en: string;
+  example_fr: string;
 }
 
 export interface ResultRow {
@@ -228,6 +231,9 @@ export interface Accepted {
   score: number;
   meaning_fr: string;
   meaning_en: string;
+  example_ja: string;
+  example_en: string;
+  example_fr: string;
   seq: number;
   v: number;
 }

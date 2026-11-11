@@ -22,6 +22,9 @@ export interface AcceptedEvent extends GameEvent {
 	gain: number;
 	meaning_fr: string;
 	meaning_en: string;
+	example_ja: string;
+	example_en: string;
+	example_fr: string;
 }
 export interface RejectedEvent extends GameEvent {
 	reason: RejectCode;
@@ -173,7 +176,10 @@ export class GameStore {
 						reading: msg.reading,
 						turn: msg.turn,
 						meaning_fr: msg.meaning_fr,
-						meaning_en: msg.meaning_en
+						meaning_en: msg.meaning_en,
+						example_ja: msg.example_ja,
+						example_en: msg.example_en,
+						example_fr: msg.example_fr
 					}
 				];
 				this.accepted = {
@@ -183,7 +189,10 @@ export class GameStore {
 					reading: msg.reading,
 					gain: msg.score_gain,
 					meaning_fr: msg.meaning_fr,
-					meaning_en: msg.meaning_en
+					meaning_en: msg.meaning_en,
+					example_ja: msg.example_ja,
+					example_en: msg.example_en,
+					example_fr: msg.example_fr
 				};
 				break;
 			case 'rejected':

@@ -6,6 +6,7 @@
 	import type { GameSession } from '#lib/game/session.svelte.ts';
 	import Bomb from './Bomb.svelte';
 	import type { Mood } from './Mascot.svelte';
+	import Example from './Example.svelte';
 	import Meanings from './Meanings.svelte';
 	import Particles from './Particles.svelte';
 	import PlayerCard from './PlayerCard.svelte';
@@ -237,6 +238,12 @@
 							{#if lastWord.reading !== lastWord.word}<span class="r">{lastWord.reading}</span>{/if}
 						</div>
 						<Meanings fr={lastWord.meaning_fr} en={lastWord.meaning_en} />
+						<Example
+							compact
+							ja={lastWord.example_ja}
+							fr={lastWord.example_fr}
+							en={lastWord.example_en}
+						/>
 					</div>
 				{/key}
 			{:else}

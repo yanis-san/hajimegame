@@ -92,6 +92,9 @@ export const en: Record<MessageKey, string> = {
 	'game.noMeaning': 'Meaning not available',
 	'game.meaningFr': 'Meaning in French',
 	'game.meaningEn': 'Meaning in English (no French version)',
+	'game.example': 'Example sentence',
+	'game.exampleFr': 'Sentence translated into French',
+	'game.exampleEn': 'Sentence translated into English',
 
 	'reject.not_in_dictionary': 'This word is not in the dictionary.',
 	'reject.missing_fragment': 'This word is missing “{fragment}”.',
@@ -160,6 +163,9 @@ export const en: Record<MessageKey, string> = {
 	'credits.dictionary.body':
 		'Words and their meanings (English, and French when JMdict provides it) come from the JMdict file, © Electronic Dictionary Research and Development Group (EDRDG). The game dictionary is a filtered, reformatted version of that file; the filtering rules are documented in the repository.',
 	'credits.dictionary.licence': 'EDRDG licence',
+	'credits.examples.title': 'Example sentences',
+	'credits.examples.body':
+		'Example sentences and their translations come from the Tatoeba project and its contributors, under the CC BY 2.0 FR licence. They are attached to the words through the JMdict example file. No translation is machine generated.',
 	'credits.fonts.title': 'Fonts',
 	'credits.fonts.body':
 		'Shippori Mincho, Zen Maru Gothic, Zen Kaku Gothic New and JetBrains Mono, under the SIL Open Font License 1.1, self-hosted through Fontsource.',

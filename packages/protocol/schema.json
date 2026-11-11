@@ -812,6 +812,18 @@
           "meaning_en": {
             "type": "string",
             "default": ""
+          },
+          "example_ja": {
+            "type": "string",
+            "default": ""
+          },
+          "example_en": {
+            "type": "string",
+            "default": ""
+          },
+          "example_fr": {
+            "type": "string",
+            "default": ""
           }
         },
         "required": [
@@ -1043,6 +1055,15 @@
           "meaning_en": {
             "type": "string"
           },
+          "example_ja": {
+            "type": "string"
+          },
+          "example_en": {
+            "type": "string"
+          },
+          "example_fr": {
+            "type": "string"
+          },
           "seq": {
             "type": "integer"
           },
@@ -1061,6 +1082,9 @@
           "score",
           "meaning_fr",
           "meaning_en",
+          "example_ja",
+          "example_en",
+          "example_fr",
           "seq"
         ]
       },
@@ -2073,6 +2097,18 @@
         "meaning_en": {
           "type": "string",
           "default": ""
+        },
+        "example_ja": {
+          "type": "string",
+          "default": ""
+        },
+        "example_en": {
+          "type": "string",
+          "default": ""
+        },
+        "example_fr": {
+          "type": "string",
+          "default": ""
         }
       },
       "required": [
@@ -2304,6 +2340,15 @@
         "meaning_en": {
           "type": "string"
         },
+        "example_ja": {
+          "type": "string"
+        },
+        "example_en": {
+          "type": "string"
+        },
+        "example_fr": {
+          "type": "string"
+        },
         "seq": {
           "type": "integer"
         },
@@ -2322,6 +2367,9 @@
         "score",
         "meaning_fr",
         "meaning_en",
+        "example_ja",
+        "example_en",
+        "example_fr",
         "seq"
       ]
     },

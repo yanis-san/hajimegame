@@ -209,6 +209,9 @@ class BombEngine:
                 score=state.score,
                 meaning_fr=hit.meaning_fr,
                 meaning_en=hit.meaning_en,
+                example_ja=hit.example_ja,
+                example_en=hit.example_en,
+                example_fr=hit.example_fr,
             )
         )
         self._adapt(state, (now - self._turn_started) / max(1e-9, self.settings.fuse_seconds))

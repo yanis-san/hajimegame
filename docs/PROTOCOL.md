@@ -56,7 +56,8 @@ the current `seq` without advancing it, so they never create gaps.
 | `countdown` | `ends_at` (server time). |
 | `turn` | `turn`, `player_id`, `fragment`, `deadline`, `fuse_ms`. Animate the fuse from `deadline` minus the clock offset. |
 | `typing` | What the active player is typing (ephemeral). |
-| `accepted` | Word played: `word`, `reading`, `score_gain`, `score`, `meaning_fr` and `meaning_en` (French may be empty). |
+| `accepted` | Word played: `word`, `reading`, `score_gain`, `score`, `meaning_fr` and `meaning_en` (French may be empty), `example_ja`, `example_en` and `example_fr` (an example sentence
+with its translations; all empty for most words, French often empty). |
 | `rejected` | Only to the submitter: `reason` is `not_in_dictionary`, `missing_fragment` (classic: fragment absent; shiritori: wrong first kana), `already_used`, `not_your_turn`, `too_late` or `ends_with_n` (shiritori). The turn continues (except `too_late`). |
 | `explosion` | Bomb exploded on `player_id`, `lives` left. `cause` is `timeout` or `n_ending` (shiritori penalty). |
 | `elimination` | `player_id` is out with final `place`. |

@@ -94,3 +94,27 @@ def test_shiritori_start_matching(dictionary: Dictionary) -> None:
     assert dictionary.check("くるま", "る", starts_with=True) == WordRejected("missing_fragment")
     assert dictionary.check("kuruma", "く", starts_with=True) != WordRejected("not_in_dictionary")
     assert dictionary.start_count("く") > 500
+
+
+def test_words_can_carry_an_example_sentence(dictionary: Dictionary) -> None:
+    entries = [dictionary.entry(i) for i in range(len(dictionary))]
+    with_example = [e for e in entries if e.example[0]]
+    assert len(with_example) > 20_000
+    assert sum(1 for e in with_example if e.example[2]) > 3_000  # some have a French translation too
+    assert all(
+        len(e.example[0]) <= 45 and e.example[1] for e in with_example
+    )  # fits a phone, always has English
+    result = dictionary.check("うちゅう", "う")
+    assert isinstance(result, WordMatch)
+    assert "宇宙" in result.example_ja
+    assert result.example_en
+    assert result.example_fr
+
+
+def test_a_word_without_example_has_empty_sentence_fields(dictionary: Dictionary) -> None:
+    bare = next(
+        e for e in (dictionary.entry(i) for i in range(len(dictionary))) if not e.example[0] and e.words
+    )
+    result = dictionary.check(bare.words[0], bare.readings[0][:1])
+    assert isinstance(result, WordMatch)
+    assert (result.example_ja, result.example_en, result.example_fr) == ("", "", "")

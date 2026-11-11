@@ -37,6 +37,9 @@ class WordAccepted(GameEvent):
     score: int
     meaning_fr: str = ""
     meaning_en: str = ""
+    example_ja: str = ""
+    example_en: str = ""
+    example_fr: str = ""
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
