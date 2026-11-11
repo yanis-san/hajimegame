@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -28,6 +28,8 @@ class AppSettings(BaseSettings):
     allow_missing_origin: bool = True  # non-browser clients (tests, curl); disable in production
     cookie_secure: bool = False
     trust_proxy_headers: bool = False  # honour Fly-Client-IP / X-Forwarded-For behind a trusted proxy
+    # /metrics is hidden in production unless a token is set; then it needs `Authorization: Bearer <token>`
+    metrics_token: str | None = Field(default=None, repr=False)
 
     # Rooms
     max_players_per_room: int = 8
@@ -56,6 +58,24 @@ class AppSettings(BaseSettings):
     @property
     def is_prod(self) -> bool:
         return self.env == "prod"
+
+    @model_validator(mode="after")
+    def _refuse_unsafe_production(self) -> AppSettings:
+        """A production server that would accept any origin, or trust placeholder ones, does not start."""
+        if not self.is_prod:
+            return self
+        problems: list[str] = []
+        if not self.allowed_origins:
+            problems.append("HAJIME_ALLOWED_ORIGINS is empty")
+        for origin in self.allowed_origins:
+            host = origin.removeprefix("https://")
+            if not origin.startswith("https://") or "localhost" in host or "example" in host or "*" in origin:
+                problems.append(f"HAJIME_ALLOWED_ORIGINS has a non-production origin: {origin}")
+        if self.allow_missing_origin:
+            problems.append("HAJIME_ALLOW_MISSING_ORIGIN must be false")
+        if problems:
+            raise ValueError("unsafe production settings: " + "; ".join(problems))
+        return self
 
 
 @lru_cache

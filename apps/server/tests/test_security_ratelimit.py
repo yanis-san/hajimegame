@@ -135,5 +135,6 @@ def test_dev_accepts_local_network_origins_on_any_port_but_prod_does_not() -> No
         "http://8.8.8.8:5173",
     ):
         assert not is_origin_allowed(origin, dev), origin
-    prod = AppSettings(env="prod", allowed_origins=[], allow_missing_origin=False)
+    prod = AppSettings(env="prod", allowed_origins=["https://hajime.dev"], allow_missing_origin=False)
+    assert is_origin_allowed("https://hajime.dev", prod)
     assert not is_origin_allowed("http://localhost:5174", prod)

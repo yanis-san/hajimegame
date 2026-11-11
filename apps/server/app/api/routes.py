@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import secrets
 from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
@@ -61,7 +62,15 @@ async def readyz(request: Request) -> JSONResponse:
 
 
 @router.get("/metrics")
-async def prometheus() -> Response:
+async def prometheus(request: Request) -> Response:
+    settings: AppSettings = request.app.state.settings
+    token = settings.metrics_token
+    if settings.is_prod and not token:
+        raise HTTPException(status_code=404)  # no token configured: not exposed at all
+    if token:
+        given = request.headers.get("authorization", "").removeprefix("Bearer ").strip()
+        if not secrets.compare_digest(given.encode(), token.encode()):
+            raise HTTPException(status_code=401, headers={"WWW-Authenticate": "Bearer"})
     return Response(metrics.render(), media_type="text/plain; version=0.0.4")
 
 
