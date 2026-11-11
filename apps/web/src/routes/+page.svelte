@@ -19,7 +19,6 @@
 	let error = $state('');
 	let nameError = $state('');
 	let mood = $state<Mood | undefined>(undefined);
-	let width = $state(400);
 	let mode = $state<'classic' | 'shiritori'>('classic');
 
 	onMount(() => {
@@ -85,12 +84,12 @@
 	<meta name="description" content={t('app.tagline')} />
 </svelte:head>
 
-<svelte:window bind:innerWidth={width} />
-
 <div class="home">
 	<section class="hero">
 		<button class="bomb-btn" type="button" onclick={poke} aria-label="Bakuro">
-			<Bomb fragment="はじ" {mood} size={width >= 900 ? 230 : 120} showTimer={false} />
+			<!-- two sizes switched by CSS only, so nothing resizes after the page loads -->
+			<span class="bomb-small"><Bomb fragment="はじ" {mood} size={120} showTimer={false} /></span>
+			<span class="bomb-large"><Bomb fragment="はじ" {mood} size={230} showTimer={false} /></span>
 		</button>
 		<h1>{t('app.tagline')}</h1>
 	</section>
@@ -172,7 +171,16 @@
 		display: grid;
 		justify-items: center;
 		gap: 0.6rem;
-		padding-top: 2.6rem; /* room for the fuse above the bomb */
+		padding-top: 0;
+	}
+	/* the margin leaves room for the fuse above the bomb, so it counts when centring */
+	.bomb-small {
+		display: block;
+		margin-top: 3rem;
+	}
+	.bomb-large {
+		display: none;
+		margin-top: 5.6rem;
 	}
 	.bomb-btn {
 		display: block;
@@ -258,13 +266,21 @@
 		.home {
 			max-width: 68rem;
 			grid-template-columns: 1fr 1.1fr;
-			align-items: center;
+			/* both columns share one height and their content is centred in it: bomb, title and form line up */
+			align-items: stretch;
+			align-content: center;
 			gap: 3.5rem;
 			min-height: calc(100dvh - var(--bar, 52px) - 1rem);
 		}
 		.hero {
-			padding-top: 5.5rem;
+			align-content: center;
 			gap: 1.2rem;
+		}
+		.bomb-small {
+			display: none;
+		}
+		.bomb-large {
+			display: block;
 		}
 		h1 {
 			max-width: 14ch;

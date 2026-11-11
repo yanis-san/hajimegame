@@ -22,8 +22,9 @@
 	let listBox: HTMLElement | undefined = $state();
 	let lastBox: HTMLElement | undefined = $state();
 	let input: WordInput | undefined = $state();
-	let width = $state(1000);
-	let height = $state(800);
+	// start from the real window size so the bomb never changes size after the first frame
+	let width = $state(typeof window === 'undefined' ? 1000 : window.innerWidth);
+	let height = $state(typeof window === 'undefined' ? 800 : window.innerHeight);
 	let mood = $state<Mood | undefined>(undefined);
 	let announcement = $state('');
 	let rejection = $state('');
