@@ -10,8 +10,16 @@
 		value,
 		onchange,
 		disabled = false,
+		fixed = false,
 		label = ''
-	}: { value: Mode; onchange: (mode: Mode) => void; disabled?: boolean; label?: string } = $props();
+	}: {
+		value: Mode;
+		onchange?: (mode: Mode) => void;
+		disabled?: boolean;
+		/** show the chosen mode as plain information, without any way to change it */
+		fixed?: boolean;
+		label?: string;
+	} = $props();
 
 	const modes: Mode[] = ['classic', 'shiritori'];
 
@@ -25,53 +33,74 @@
 		if (!step) return;
 		event.preventDefault();
 		const next = (index + step + modes.length) % modes.length;
-		onchange(modes[next]);
+		onchange?.(modes[next]);
 		(event.currentTarget as HTMLElement).parentElement
 			?.querySelectorAll<HTMLElement>('[role=radio]')
 			[next]?.focus();
 	}
 </script>
 
-<div class="picker" role="radiogroup" aria-label={label || t('mode.label')}>
-	{#each modes as mode, i (mode)}
-		<button
-			type="button"
-			role="radio"
-			class:on={value === mode}
-			aria-checked={value === mode}
-			tabindex={value === mode ? 0 : -1}
-			{disabled}
-			onclick={() => onchange(mode)}
-			onkeydown={(e) => onkey(e, i)}
-		>
-			<!-- the rule, drawn with kana tiles -->
-			<span class="art" aria-hidden="true">
-				{#if mode === 'classic'}
-					<span class="tile">た</span><span class="tile hot">べ</span><span class="tile">もの</span>
-				{:else}
-					<span class="tile">くる</span><span class="tile hot">ま</span>
-					<span class="link"><Icon name="back" size={20} /></span>
-					<span class="tile hot">ま</span><span class="tile">くら</span>
-				{/if}
-			</span>
-			<span class="head">
-				<span class="title">{t(`mode.${mode}.title` as const)}</span>
-				{#if value === mode}
-					<span class="check"><Icon name="check" size={16} /></span>
-				{/if}
-			</span>
-			<span class="desc">{t(`mode.${mode}.desc` as const)}</span>
-		</button>
-	{/each}
-</div>
+{#snippet card(mode: Mode, showCheck: boolean)}
+	<!-- the rule, drawn with kana tiles -->
+	<span class="art" aria-hidden="true">
+		{#if mode === 'classic'}
+			<span class="tile">た</span><span class="tile hot">べ</span><span class="tile">もの</span>
+		{:else}
+			<span class="tile">くる</span><span class="tile hot">ま</span>
+			<span class="link"><Icon name="back" size={20} /></span>
+			<span class="tile hot">ま</span><span class="tile">くら</span>
+		{/if}
+	</span>
+	<span class="head">
+		<span class="title">{t(`mode.${mode}.title` as const)}</span>
+		{#if showCheck}
+			<span class="check"><Icon name="check" size={16} /></span>
+		{/if}
+	</span>
+	<span class="desc">{t(`mode.${mode}.desc` as const)}</span>
+{/snippet}
+
+{#if fixed}
+	<div class="picker one">
+		<div class="opt on fixed">{@render card(value, false)}</div>
+	</div>
+{:else}
+	<div class="picker" role="radiogroup" aria-label={label || t('mode.label')}>
+		{#each modes as mode, i (mode)}
+			<button
+				type="button"
+				role="radio"
+				class="opt"
+				class:on={value === mode}
+				aria-checked={value === mode}
+				tabindex={value === mode ? 0 : -1}
+				{disabled}
+				onclick={() => onchange?.(mode)}
+				onkeydown={(e) => onkey(e, i)}
+			>
+				{@render card(mode, value === mode)}
+			</button>
+		{/each}
+	</div>
+{/if}
 
 <style>
+	.picker.one {
+		grid-template-columns: 1fr;
+	}
+	.opt.fixed {
+		cursor: default;
+		transform: none;
+		box-shadow:
+			inset 0 -3px 0 var(--kinpaku-dark),
+			0 3px 0 var(--sumi);
+	}
 	.picker {
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
 		gap: 0.8rem;
 	}
-	button {
+	.opt {
 		position: relative;
 		display: grid;
 		gap: 0.35rem;
@@ -87,7 +116,7 @@
 		cursor: pointer;
 		transition: transform var(--t-fast) var(--ease-pop);
 	}
-	button.on {
+	.opt.on {
 		background: var(--kinpaku);
 		color: var(--sumi);
 		transform: translateY(3px);
@@ -95,15 +124,15 @@
 			inset 0 -3px 0 var(--kinpaku-dark),
 			0 2px 0 var(--sumi);
 	}
-	button:disabled:not(.on) {
+	.opt:disabled:not(.on) {
 		opacity: 0.55;
 		cursor: not-allowed;
 	}
-	button:disabled.on {
+	.opt:disabled.on {
 		cursor: default;
 	}
 	@media (hover: hover) {
-		button:not(.on):not(:disabled):hover {
+		.opt:not(.on):not(:disabled):hover {
 			transform: translateY(-2px);
 		}
 	}
@@ -175,7 +204,7 @@
 		.art {
 			flex-wrap: wrap;
 		}
-		button {
+		.opt {
 			padding: 0.55rem 0.6rem 0.65rem;
 			gap: 0.25rem;
 		}
@@ -210,7 +239,7 @@
 	}
 
 	@media (min-width: 900px) and (max-height: 680px) {
-		button {
+		.opt {
 			padding: 0.5rem 0.7rem 0.6rem;
 			gap: 0.15rem;
 		}
@@ -226,6 +255,21 @@
 		.desc {
 			font-size: 0.8rem;
 			line-height: 1.25;
+		}
+	}
+
+	/* the read-only card on wide screens: tiles, title and sentence on one line */
+	@media (min-width: 820px) {
+		.picker.one .opt.fixed {
+			display: flex;
+			align-items: center;
+			gap: 1.4rem;
+		}
+		.picker.one .head {
+			flex: none;
+		}
+		.picker.one .desc {
+			flex: 1;
 		}
 	}
 </style>

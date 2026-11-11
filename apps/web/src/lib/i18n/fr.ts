@@ -49,7 +49,7 @@ export const fr = {
 	'lobby.chat': 'Discussion',
 	'lobby.chatPlaceholder': 'Un petit mot…',
 	'lobby.send': 'Envoyer',
-	'lobby.settings': 'Réglages',
+	'lobby.settings': 'Difficulté',
 	'lobby.lives': 'Vies',
 	'lobby.fuse': 'Mèche',
 	'lobby.mode': 'Mode de jeu',

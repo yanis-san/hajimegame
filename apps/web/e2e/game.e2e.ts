@@ -111,9 +111,11 @@ test('shiritori: the next fragment is the last kana of the word just played', as
 	await host.page.getByRole('button', { name: 'Lancer la partie' }).waitFor();
 	const code = host.page.url().split('/r/')[1];
 	// the lobby shows the chosen mode
-	await expect(host.page.getByRole('radio', { name: /Shiritori/ })).toBeChecked();
+	await expect(host.page.locator('.opt.fixed')).toContainText('Shiritori');
+	// the mode was chosen on the home page: the lobby shows it but cannot change it
+	await expect(host.page.getByRole('radio', { name: /Classique/ })).toHaveCount(0);
 	await joinRoom(guest, code);
-	await expect(guest.page.getByRole('radio', { name: /Shiritori/ })).toBeChecked();
+	await expect(guest.page.locator('.opt.fixed')).toContainText('Shiritori');
 	await guest.page.getByRole('button', { name: 'Pas prêt' }).click();
 	await expect(host.page.getByRole('button', { name: 'Lancer la partie' })).toBeEnabled();
 	await host.page.getByRole('button', { name: 'Lancer la partie' }).click();

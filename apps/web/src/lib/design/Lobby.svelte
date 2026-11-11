@@ -136,6 +136,11 @@
 		</div>
 	</div>
 
+	<!-- the mode was chosen on the home page: shown here as information only -->
+	<div class="modecard">
+		<ModePicker value={store.settings.mode} fixed />
+	</div>
+
 	<div class="cols">
 		<div class="card players">
 			<h2><Icon name="users" size={22} /> {store.players.length}/{store.settings.max_players}</h2>
@@ -183,14 +188,6 @@
 		</div>
 
 		<div class="card settings">
-			<h2>{t('lobby.mode')}</h2>
-			<div class="setting">
-				<ModePicker
-					value={store.settings.mode}
-					disabled={!isHost}
-					onchange={(mode) => session.settings({ mode })}
-				/>
-			</div>
 			<h2><Icon name="gear" size={22} /> {t('lobby.settings')}</h2>
 			<div class="setting">
 				<span class="lbl">{t('lobby.lives')}</span>
@@ -494,8 +491,19 @@
 
 	@media (min-width: 820px) {
 		.cols {
-			grid-template-columns: 1.1fr 1fr;
+			grid-template-columns: 1fr 1.2fr;
 			align-items: start;
+		}
+		/* difficulty settings in two columns so nothing hides behind the action bar */
+		.settings {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			column-gap: 1.6rem;
+			align-items: start;
+		}
+		.settings h2,
+		.settings .toggles {
+			grid-column: 1 / -1;
 		}
 	}
 </style>
