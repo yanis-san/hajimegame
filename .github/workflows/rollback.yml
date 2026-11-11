@@ -1,0 +1,26 @@
+name: Deploy a specific version (rollback)
+
+# Manual: Actions > "Deploy a specific version" > Run workflow, and give the commit hash of a version that was
+# published before (every push to main is published under its commit hash). Use it to go back to a known good
+# version in a minute. deploy/deploy.sh also rolls back by itself when a new version does not become healthy.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Commit hash (the image tag) to deploy
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    permissions:
+      contents: read
+      packages: read
+    uses: ./.github/workflows/_deploy.yml
+    with:
+      tag: ${{ inputs.tag }}
+    secrets: inherit

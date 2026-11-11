@@ -1,0 +1,100 @@
+# Production stack for one small server (any VPS with Docker). Only Caddy is reachable from the Internet:
+# it gets and renews the HTTPS certificate by itself, sends /api and /ws to the game server and everything else
+# to the web app, so the browser sees one origin (no CORS). The web app and the game server have no published port.
+#
+# Normally deployed by the pipeline (docs/DEPLOY.md): deploy/deploy.sh <image-tag>.
+# Needs a .env next to this file: see deploy/production.env.example.
+name: hajime
+
+x-hardened: &hardened
+  restart: unless-stopped
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  pids_limit: 256
+  tmpfs: ["/tmp:size=16m,mode=1777"]
+  logging:
+    driver: json-file
+    options: { max-size: "10m", max-file: "5" }
+
+services:
+  server:
+    <<: *hardened
+    image: ${IMAGE_PREFIX:?set IMAGE_PREFIX in .env}/server:${TAG:?run through deploy.sh}
+    environment:
+      HAJIME_ENV: prod
+      HAJIME_ALLOWED_ORIGINS: '["https://${DOMAIN:?set DOMAIN in .env}"]'
+      HAJIME_ALLOW_MISSING_ORIGIN: "false"
+      # the port is not published: the only client is Caddy, which sets X-Forwarded-For itself
+      HAJIME_TRUST_PROXY_HEADERS: "true"
+      HAJIME_INSTANCE_ID: ${HAJIME_INSTANCE_ID:-prod-1}
+      HAJIME_METRICS_TOKEN: ${HAJIME_METRICS_TOKEN:-}
+      HAJIME_SENTRY_DSN: ${HAJIME_SENTRY_DSN:-}
+    mem_limit: 1g
+    cpus: 1.0
+    networks: [app]
+    stop_grace_period: 30s
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8000/readyz', timeout=3)"]
+      interval: 15s
+      timeout: 4s
+      start_period: 40s
+      retries: 3
+
+  web:
+    <<: *hardened
+    image: ${IMAGE_PREFIX}/web:${TAG}
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      # adapter-node builds absolute URLs and checks form origins from this
+      ORIGIN: https://${DOMAIN}
+    mem_limit: 256m
+    cpus: 0.5
+    networks: [app]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/up').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 15s
+      timeout: 4s
+      start_period: 15s
+      retries: 3
+
+  caddy:
+    image: caddy:2-alpine@sha256:78bd35025c7ba85961dd149ae670315129954e77abe2383ac47c89106b35ade9
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: ["/tmp:size=16m"]
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL in .env}
+    volumes:
+      - ./Caddyfile.prod:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data      # certificates and the ACME account: keep it across deployments
+      - caddy_config:/config
+    networks: [app]
+    depends_on:
+      server: { condition: service_healthy }
+      web: { condition: service_healthy }
+    mem_limit: 128m
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "5" }
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:2019/config/"]
+      interval: 20s
+      timeout: 4s
+      retries: 3
+
+networks:
+  app: {}   # one private network; only Caddy publishes ports
+
+volumes:
+  caddy_data:
+  caddy_config:

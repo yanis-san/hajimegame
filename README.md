@@ -7,7 +7,7 @@ un fragment de kana, difficulté adaptative) et Shiritori (le mot commence par l
 ## Démarrer en 5 minutes (Windows, macOS, Linux)
 
 Prérequis : [uv](https://docs.astral.sh/uv/) (Python), [Node.js](https://nodejs.org) 24+ et pnpm (`npm i -g pnpm`).
-Docker est facultatif (Postgres et Redis ne sont pas nécessaires pour jouer).
+Docker est facultatif (ni base de données ni Redis ne sont nécessaires pour jouer).
 
 ```bash
 git clone https://github.com/yanis-san/hajimegame.git && cd hajimegame
@@ -42,8 +42,8 @@ apps/server   FastAPI : moteur de jeu pur, salles, WebSocket, japonais, base de 
 apps/web      SvelteKit : accueil, salle d'attente, partie, résultats, route /design
 packages/protocol  Schéma JSON et types TypeScript générés
 tools/        build_dictionary.py, gen_protocol.py, loadtest.py, tasks.mjs
-docs/         ARCHITECTURE, PROTOCOL, DICTIONARY, GUIDE, ADR/
-deploy/       Caddyfile, exemples Fly.io
+docs/         ARCHITECTURE, PROTOCOL, DICTIONARY, GUIDE, DEPLOY (déploiement automatisé), ADR/
+deploy/       pile de production (compose, Caddy), scripts de déploiement, exemples Fly.io
 ```
 
 ## Qualité mesurée

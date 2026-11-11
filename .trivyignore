@@ -1,0 +1,3 @@
+# Vulnerabilities accepted on purpose, one CVE id per line, each with a reason and a date to look at it again.
+# Keep this file empty if you can: a fixable HIGH or CRITICAL vulnerability should be fixed (update the base
+# image digest or the dependency), not ignored.

@@ -1,0 +1,40 @@
+# The build context is the repository root, so everything not listed here is sent to the Docker daemon
+# (and could end up in an image or in the build cache). Keep it small, and keep secrets out.
+.git
+.github
+.gitignore
+.gitattributes
+.env
+.env.*
+!.env.example
+.scratch
+.vscode
+.idea
+
+**/node_modules
+**/.venv
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+**/.coverage
+**/htmlcov
+**/.svelte-kit
+**/build
+**/dist
+**/*.log
+
+# not needed to build or run the images
+apps/web/e2e
+apps/web/scripts
+apps/web/.shots
+apps/web/.sounds
+apps/web/test-results
+apps/web/playwright-report
+apps/server/tests
+tools
+docs
+deploy
+docker-compose*.yml
+*.md

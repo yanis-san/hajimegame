@@ -1,0 +1,90 @@
+name: Deploy (reusable)
+
+# Copies the deployment files to the server, runs deploy/deploy.sh there (pull, drain, start, health checks,
+# automatic rollback) and then tests the live site from the outside. Called by ci.yml after every green push to
+# main and by rollback.yml (a manual run). Secrets and variables: docs/DEPLOY.md.
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: Image tag to deploy (a commit hash)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  packages: read
+
+# One deployment at a time, and never cancelled half way.
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    # Add "required reviewers" to this environment in the repository settings to approve each deployment.
+    environment:
+      name: production
+      url: https://${{ vars.DEPLOY_DOMAIN }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+
+      - name: Check the configuration
+        env:
+          TAG: ${{ inputs.tag }}
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER_NAME: ${{ secrets.DEPLOY_USER }}
+          KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          DOMAIN: ${{ vars.DEPLOY_DOMAIN }}
+        run: |
+          missing=""
+          for name in HOST USER_NAME KEY KNOWN_HOSTS DOMAIN; do
+            [ -n "${!name}" ] || missing="$missing $name"
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::missing deployment settings:$missing (see docs/DEPLOY.md)"; exit 1
+          fi
+          [[ "$TAG" =~ ^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$ ]] || { echo "::error::invalid tag"; exit 1; }
+
+      - name: "Prepare SSH (the server key is pinned, no trust on first use)"
+        env:
+          KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Send the deployment files
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER_NAME: ${{ secrets.DEPLOY_USER }}
+        run: |
+          scp -i ~/.ssh/deploy_key -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            deploy/compose.prod.yml deploy/Caddyfile.prod deploy/deploy.sh \
+            "$USER_NAME@$HOST:/opt/hajime/"
+
+      - name: Deploy (pull, wait for quiet, start, health checks, rollback if needed)
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER_NAME: ${{ secrets.DEPLOY_USER }}
+          TAG: ${{ inputs.tag }}
+          REGISTRY_USER: ${{ github.actor }}
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # The registry token travels on stdin (never in a command line) and is removed from the server afterwards.
+          printf '%s' "$REGISTRY_TOKEN" | ssh -i ~/.ssh/deploy_key -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            "$USER_NAME@$HOST" \
+            "docker login ghcr.io -u '$REGISTRY_USER' --password-stdin >/dev/null \
+             && (cd /opt/hajime && chmod +x deploy.sh && ./deploy.sh '$TAG'); status=\$?; docker logout ghcr.io >/dev/null; exit \$status"
+
+      - name: Smoke test the live site
+        env:
+          DOMAIN: ${{ vars.DEPLOY_DOMAIN }}
+        run: python3 deploy/smoke.py "https://$DOMAIN"

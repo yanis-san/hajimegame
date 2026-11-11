@@ -1,14 +1,40 @@
+# Keeps everything we pin up to date: Python and Node dependencies, GitHub Actions (pinned by commit hash) and
+# the base images (pinned by digest). Each update is a pull request that goes through the whole CI first.
 version: 2
 updates:
   - package-ecosystem: uv
     directory: /apps/server
     schedule: { interval: weekly }
+    groups:
+      python-minor-and-patch:
+        update-types: [minor, patch]
+
   - package-ecosystem: npm
     directory: /
     schedule: { interval: weekly }
+    groups:
+      node-minor-and-patch:
+        update-types: [minor, patch]
+
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: weekly }
+    groups:
+      actions:
+        patterns: ["*"]
+
   - package-ecosystem: docker
     directory: /apps/server
+    schedule: { interval: weekly }
+
+  - package-ecosystem: docker
+    directory: /apps/web
+    schedule: { interval: weekly }
+
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule: { interval: weekly }
+
+  - package-ecosystem: docker-compose
+    directory: /deploy
     schedule: { interval: weekly }

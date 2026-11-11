@@ -1,0 +1,48 @@
+# Edge of the production stack (deploy/compose.prod.yml). Caddy gets and renews the Let's Encrypt certificate
+# for $DOMAIN by itself, redirects HTTP to HTTPS and speaks HTTP/2 and HTTP/3.
+{
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN} {
+	encode zstd gzip
+
+	# Same headers the app sets on its pages, here for every response (static files included).
+	header {
+		Strict-Transport-Security "max-age=63072000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "no-referrer"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+		Cross-Origin-Opener-Policy "same-origin"
+		-Server
+	}
+
+	# Metrics are for the operator. They are never served to the Internet (the server also refuses them
+	# in production unless HAJIME_METRICS_TOKEN is set and sent).
+	@private path /metrics /metrics/*
+	respond @private 404
+
+	# The game server: REST, WebSockets and health checks. Everything else is the web app.
+	@game path /api/* /ws/* /healthz /readyz
+	handle @game {
+		request_body {
+			max_size 64KB
+		}
+		reverse_proxy {$SERVER_UPSTREAM:server:8000} {
+			health_uri /healthz
+			health_interval 10s
+		}
+	}
+	handle {
+		reverse_proxy {$WEB_UPSTREAM:web:3000} {
+			health_uri /up
+			health_interval 10s
+		}
+	}
+
+	log {
+		output stdout
+		format json
+	}
+}
