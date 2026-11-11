@@ -41,14 +41,8 @@ def test_level_filters_rare_words(dictionary: Dictionary) -> None:
         e for e in (dictionary.entry(i) for i in range(len(dictionary) - 1, 0, -1)) if len(e.readings[0]) >= 4
     )
     reading = rare.readings[0]
-    assert dictionary.check(reading, reading[:2], "n5") == WordRejected("above_level")
+    assert dictionary.check(reading, reading[:2], "n5") == WordRejected("not_in_dictionary")
     assert isinstance(dictionary.check(reading, reading[:2], "n1"), WordMatch)
-
-
-def test_real_word_above_the_level_gets_its_own_reason(dictionary: Dictionary) -> None:
-    assert dictionary.check("sakki", "き", "n5") == WordRejected("above_level")
-    assert isinstance(dictionary.check("sakki", "き", "n4"), WordMatch)
-    assert dictionary.check("zzzz", "き", "n5") == WordRejected("not_in_dictionary")
 
 
 def test_single_kana_words_are_excluded(dictionary: Dictionary) -> None:
@@ -108,3 +102,10 @@ def test_words_carry_both_meanings_when_available(dictionary: Dictionary) -> Non
     assert len(french) > 5_000  # JMdict has French for a minority of entries; the rest is English only
     both = [e for e in french if e.meaning_en]
     assert len(both) > 0.5 * len(french)  # most French entries also carry the English meaning
+
+
+def test_shiritori_start_matching(dictionary: Dictionary) -> None:
+    assert isinstance(dictionary.check("くるま", "く", "n1", starts_with=True), WordMatch)
+    assert dictionary.check("くるま", "る", "n1", starts_with=True) == WordRejected("missing_fragment")
+    assert dictionary.check("kuruma", "く", "n1", starts_with=True) != WordRejected("not_in_dictionary")
+    assert dictionary.start_count("く") > 500

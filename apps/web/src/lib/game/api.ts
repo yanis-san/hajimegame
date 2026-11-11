@@ -11,11 +11,14 @@ export class ApiError extends Error {
 
 const HEADERS = { 'Content-Type': 'application/json', 'X-Hajime-Client': 'web' };
 
-export async function createRoom(fetcher: typeof fetch = fetch): Promise<{ code: string }> {
+export async function createRoom(
+	mode: 'classic' | 'shiritori' = 'classic',
+	fetcher: typeof fetch = fetch
+): Promise<{ code: string }> {
 	const response = await fetcher(apiUrl('/api/rooms'), {
 		method: 'POST',
 		headers: HEADERS,
-		body: '{}'
+		body: JSON.stringify({ mode })
 	});
 	if (!response.ok) {
 		const body = (await response.json().catch(() => ({}))) as { detail?: string };

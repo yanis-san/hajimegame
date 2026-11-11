@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
@@ -15,6 +15,10 @@ from app.core.security import require_same_site_request
 from app.realtime.manager import CapacityError, RoomManager
 
 router = APIRouter()
+
+
+class CreateRoomBody(BaseModel):
+    mode: Literal["classic", "shiritori"] = "classic"
 
 
 class CreatedRoom(BaseModel):
@@ -63,7 +67,7 @@ async def prometheus() -> Response:
     status_code=201,
     dependencies=[Depends(require_same_site_request)],
 )
-async def create_room(request: Request) -> CreatedRoom:
+async def create_room(request: Request, body: CreateRoomBody | None = None) -> CreatedRoom:
     settings: AppSettings = request.app.state.settings
     manager: RoomManager = request.app.state.manager
     limiter: WindowLimiter = request.app.state.limiter
@@ -72,7 +76,7 @@ async def create_room(request: Request) -> CreatedRoom:
         metrics.RATE_LIMITED.labels("create_room").inc()
         raise HTTPException(status_code=429, detail="rate_limited")
     try:
-        room = await manager.create(ip)
+        room = await manager.create(ip, (body or CreateRoomBody()).mode)
     except CapacityError as exc:
         raise HTTPException(
             status_code=429 if exc.kind == "too_many_rooms" else 503, detail=exc.kind

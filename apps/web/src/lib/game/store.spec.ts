@@ -5,10 +5,9 @@ import { GameStore } from './store.svelte';
 const settings: SettingsView = {
 	lives: 3,
 	fuse_seconds: 10,
-	level: 'n4',
+	mode: 'classic',
 	max_players: 8,
-	bonus_kana: false,
-	tension: false
+	bonus_kana: false
 };
 
 function player(id: string, extra: Partial<PlayerView> = {}): PlayerView {

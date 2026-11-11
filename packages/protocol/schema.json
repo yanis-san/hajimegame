@@ -190,13 +190,10 @@
             "minimum": 5,
             "maximum": 20
           },
-          "level": {
+          "mode": {
             "enum": [
-              "n1",
-              "n2",
-              "n3",
-              "n4",
-              "n5"
+              "classic",
+              "shiritori"
             ]
           },
           "max_players": {
@@ -205,9 +202,6 @@
             "maximum": 8
           },
           "bonus_kana": {
-            "type": "boolean"
-          },
-          "tension": {
             "type": "boolean"
           },
           "v": {
@@ -615,13 +609,10 @@
           "fuse_seconds": {
             "type": "number"
           },
-          "level": {
+          "mode": {
             "enum": [
-              "n1",
-              "n2",
-              "n3",
-              "n4",
-              "n5"
+              "classic",
+              "shiritori"
             ]
           },
           "max_players": {
@@ -629,18 +620,14 @@
           },
           "bonus_kana": {
             "type": "boolean"
-          },
-          "tension": {
-            "type": "boolean"
           }
         },
         "required": [
           "lives",
           "fuse_seconds",
-          "level",
+          "mode",
           "max_players",
-          "bonus_kana",
-          "tension"
+          "bonus_kana"
         ]
       },
       "PlayerView": {
@@ -1008,8 +995,8 @@
           },
           "reason": {
             "enum": [
-              "above_level",
               "already_used",
+              "ends_with_n",
               "missing_fragment",
               "not_in_dictionary",
               "not_your_turn",
@@ -1459,13 +1446,10 @@
           "minimum": 5,
           "maximum": 20
         },
-        "level": {
+        "mode": {
           "enum": [
-            "n1",
-            "n2",
-            "n3",
-            "n4",
-            "n5"
+            "classic",
+            "shiritori"
           ]
         },
         "max_players": {
@@ -1474,9 +1458,6 @@
           "maximum": 8
         },
         "bonus_kana": {
-          "type": "boolean"
-        },
-        "tension": {
           "type": "boolean"
         },
         "v": {
@@ -1809,13 +1790,10 @@
         "fuse_seconds": {
           "type": "number"
         },
-        "level": {
+        "mode": {
           "enum": [
-            "n1",
-            "n2",
-            "n3",
-            "n4",
-            "n5"
+            "classic",
+            "shiritori"
           ]
         },
         "max_players": {
@@ -1823,18 +1801,14 @@
         },
         "bonus_kana": {
           "type": "boolean"
-        },
-        "tension": {
-          "type": "boolean"
         }
       },
       "required": [
         "lives",
         "fuse_seconds",
-        "level",
+        "mode",
         "max_players",
-        "bonus_kana",
-        "tension"
+        "bonus_kana"
       ]
     },
     "PlayerView": {
@@ -2202,8 +2176,8 @@
         },
         "reason": {
           "enum": [
-            "above_level",
             "already_used",
+            "ends_with_n",
             "missing_fragment",
             "not_in_dictionary",
             "not_your_turn",

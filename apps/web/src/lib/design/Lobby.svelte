@@ -7,12 +7,12 @@
 	import Button from './Button.svelte';
 	import Icon from './Icon.svelte';
 	import PlayerChip from './PlayerChip.svelte';
+	import ModePicker from './ModePicker.svelte';
 	import Segmented from './Segmented.svelte';
 	import TextField from './TextField.svelte';
 	import Toggle from './Toggle.svelte';
 	import Mascot from './Mascot.svelte';
 	import Banner from './Banner.svelte';
-	import type { Level } from '@hajime/protocol';
 
 	let { session }: { session: GameSession } = $props();
 	const store = $derived(session.store);
@@ -33,13 +33,6 @@
 	const counting = $derived(store.phase === 'countdown');
 	const isHost = $derived(store.isHost);
 	const meReady = $derived(store.me?.ready ?? false);
-
-	const levels: { value: Level; label: string }[] = (['n5', 'n4', 'n3', 'n2', 'n1'] as const).map(
-		(value) => ({
-			value,
-			label: value.toUpperCase()
-		})
-	);
 
 	// Countdown: derived from the server deadline and our clock estimate, so every screen reads the same number.
 	$effect(() => {
@@ -190,6 +183,14 @@
 		</div>
 
 		<div class="card settings">
+			<h2>{t('lobby.mode')}</h2>
+			<div class="setting">
+				<ModePicker
+					value={store.settings.mode}
+					disabled={!isHost}
+					onchange={(mode) => session.settings({ mode })}
+				/>
+			</div>
 			<h2><Icon name="gear" size={22} /> {t('lobby.settings')}</h2>
 			<div class="setting">
 				<span class="lbl">{t('lobby.lives')}</span>
@@ -211,29 +212,12 @@
 					onchange={(fuse_seconds) => session.settings({ fuse_seconds })}
 				/>
 			</div>
-			<div class="setting">
-				<span class="lbl">{t('lobby.level')}</span>
-				<Segmented
-					label={t('lobby.level')}
-					disabled={!isHost}
-					value={store.settings.level}
-					options={levels}
-					onchange={(level) => session.settings({ level })}
-				/>
-				<span class="sub">{t(`level.${store.settings.level}` as const)}</span>
-			</div>
 			<div class="setting toggles">
 				<Toggle
 					label={t('lobby.bonus')}
 					disabled={!isHost}
 					checked={store.settings.bonus_kana}
 					onchange={(bonus_kana) => session.settings({ bonus_kana })}
-				/>
-				<Toggle
-					label={t('lobby.tension')}
-					disabled={!isHost}
-					checked={store.settings.tension}
-					onchange={(tension) => session.settings({ tension })}
 				/>
 			</div>
 		</div>
@@ -416,10 +400,6 @@
 	}
 	.lbl {
 		font-weight: 700;
-	}
-	.sub {
-		font-size: 0.85rem;
-		color: var(--text-mute);
 	}
 	.toggles {
 		gap: 0.1rem;

@@ -42,6 +42,15 @@ describe('highlightFragment', () => {
 		});
 	});
 
+	it('highlights the first kana for shiritori', () => {
+		expect(highlightFragment('まくら', 'ま', true)).toEqual({
+			before: '',
+			match: 'ま',
+			after: 'くら'
+		});
+		expect(highlightFragment('くるま', 'ま', true)).toBeNull();
+	});
+
 	it('handles missing fragments and empty input', () => {
 		expect(highlightFragment('ねこ', 'く')).toBeNull();
 		expect(highlightFragment('ねこ', '')).toBeNull();

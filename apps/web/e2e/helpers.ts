@@ -2,12 +2,13 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import type { Browser, BrowserContext, Page } from '@playwright/test';
 
-const answers: Record<string, string[]> = JSON.parse(
+const tables: { contains: Record<string, string[]>; starts: Record<string, string[]> } = JSON.parse(
 	readFileSync(path.resolve(import.meta.dirname, '.cache/answers.json'), 'utf8')
 );
 
-export function answerFor(fragment: string, used: Set<string>): string {
-	const word = (answers[fragment] ?? []).find((w) => !used.has(w));
+export function answerFor(fragment: string, used: Set<string>, shiritori = false): string {
+	const table = shiritori ? tables.starts : tables.contains;
+	const word = (table[fragment] ?? []).find((w) => !used.has(w));
 	if (!word) throw new Error(`no answer for ${fragment}`);
 	used.add(word);
 	return word;

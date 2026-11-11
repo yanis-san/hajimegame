@@ -45,10 +45,9 @@ export interface ChatLine {
 const DEFAULT_SETTINGS: SettingsView = {
 	lives: 3,
 	fuse_seconds: 10,
-	level: 'n1',
+	mode: 'classic',
 	max_players: 8,
-	bonus_kana: false,
-	tension: false
+	bonus_kana: false
 };
 
 /** Reactive game state. The server is authoritative: this class only mirrors what it sends. */

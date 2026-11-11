@@ -77,3 +77,38 @@ def fragment_ngrams(reading: str, max_units: int = 3) -> set[str]:
             gram += parts[j]
             found.add(gram)
     return found
+
+
+_SMALL_TO_BIG = {
+    "ゃ": "や",
+    "ゅ": "ゆ",
+    "ょ": "よ",
+    "ぁ": "あ",
+    "ぃ": "い",
+    "ぅ": "う",
+    "ぇ": "え",
+    "ぉ": "お",
+    "ゎ": "わ",
+}
+_ROWS = {
+    "あ": "あかがさざただなはばぱまやらわぁゃゎ",
+    "い": "いきぎしじちぢにひびぴみりぃ",
+    "う": "うくぐすずつづぬふぶぷむゆるぅゅゔ",
+    "え": "えけげせぜてでねへべぺめれぇ",
+    "お": "おこごそぞとどのほぼぽもよろをぉょ",
+}
+_VOWEL_OF = {char: vowel for vowel, chars in _ROWS.items() for char in chars}
+
+
+def shiritori_end(reading: str) -> str:
+    """The kana a shiritori word ends on: small kana grow, ー repeats the previous vowel, っ is skipped."""
+    index = len(reading) - 1
+    while index >= 0 and reading[index] == "っ":
+        index -= 1
+    if index < 0:
+        return ""
+    char = reading[index]
+    if char == LONG_MARK:
+        previous = shiritori_end(reading[:index])
+        return _VOWEL_OF.get(previous, previous)
+    return _SMALL_TO_BIG.get(char, char)

@@ -39,7 +39,7 @@ for (const [name, options] of Object.entries(profiles)) {
 		const active =
 			(await a.getByLabel('Un mot avec').getAttribute('placeholder')) === 'À toi !' ? a : b;
 		const fragment = (await active.locator('.plaque .kana').innerText()).trim();
-		const word = (answers[fragment] ?? []).find((w) => !used.has(w));
+		const word = (answers.contains[fragment] ?? []).find((w) => !used.has(w));
 		used.add(word);
 		const input = active.getByLabel('Un mot avec');
 		await input.pressSequentially(word, { delay: 20 });

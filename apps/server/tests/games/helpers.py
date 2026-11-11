@@ -3,6 +3,7 @@ from __future__ import annotations
 import random
 from collections.abc import Sequence
 from dataclasses import dataclass
+from typing import Any
 
 from app.games.base import ManualClock, PlayerInfo
 from app.games.bomb.engine import BombEngine
@@ -25,10 +26,14 @@ class FakeValidator:
     def __init__(self, words: dict[str, list[tuple[int, str]]]) -> None:
         self.words = words
 
-    def matches(self, text: str, fragment: str, level: str = "n1") -> Sequence[FakeHit]:
-        return [FakeHit(i, r, text) for i, r in self.words.get(text, []) if fragment in r]
+    def matches(self, text: str, fragment: str, *, starts_with: bool = False) -> Sequence[FakeHit]:
+        ok = (lambda r: r[:1] == fragment) if starts_with else (lambda r: fragment in r)
+        return [FakeHit(i, r, text) for i, r in self.words.get(text, []) if ok(r)]
 
-    def reject_reason(self, text: str, fragment: str, level: str = "n1") -> RejectReason:
+    def start_count(self, kana: str) -> int:
+        return 100
+
+    def reject_reason(self, text: str, fragment: str, *, starts_with: bool = False) -> RejectReason:
         return "missing_fragment" if text in self.words else "not_in_dictionary"
 
 
@@ -50,6 +55,10 @@ WORDS = {
     "ねこ": [(6, "ねこ")],
     "はし": [(7, "はし"), (8, "はし")],
     "ひく": [(9, "ひく")],
+    "まくら": [(10, "まくら")],
+    "らーめん": [(11, "らーめん")],
+    "らくだ": [(12, "らくだ")],
+    "だいこん": [(13, "だいこん")],
 }
 
 
@@ -58,6 +67,7 @@ def make_engine(
     settings: BombSettings | None = None,
     seed: int = 1,
     words: dict[str, list[tuple[int, str]]] | None = None,
+    fragments: Any = None,
 ) -> tuple[BombEngine, ManualClock]:
     clock = ManualClock(100.0)
     players = [PlayerInfo(f"p{i}", f"Player {i}") for i in range(n)]
@@ -65,8 +75,19 @@ def make_engine(
         players,
         settings or BombSettings(),
         validator=FakeValidator(words or WORDS),
-        fragments=FixedFragments(),
+        fragments=fragments or FixedFragments(),
         clock=clock,
         rng=random.Random(seed),
     )
     return engine, clock
+
+
+class TierRecorder:
+    """Fragment picker that records the difficulty tier it was asked for."""
+
+    def __init__(self) -> None:
+        self.tiers: list[int] = []
+
+    def pick_text(self, rng: random.Random, tier: int, recent: Sequence[str]) -> str:
+        self.tiers.append(tier)
+        return "く"

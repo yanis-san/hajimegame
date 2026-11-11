@@ -2,6 +2,14 @@
 export const fr = {
 	'app.name': 'Hajime',
 	'app.tagline': 'Trouve un mot japonais avant que la bombe explose.',
+	'mode.label': 'Mode de jeu',
+	'mode.classic.title': 'Classique',
+	'mode.classic.desc':
+		'Un fragment de kana s’affiche : trouve un mot qui le contient avant que la bombe explose.',
+	'mode.shiritori.title': 'Shiritori',
+	'mode.shiritori.desc':
+		'Chaque mot commence par le dernier kana du mot précédent. Pas de répétition, jamais de mot en ん.',
+	'home.mode': 'Choisis ton mode',
 	'home.nickname': 'Ton pseudo',
 	'home.nicknamePlaceholder': 'Yanis',
 	'home.create': 'Créer une partie',
@@ -43,23 +51,17 @@ export const fr = {
 	'lobby.settings': 'Réglages',
 	'lobby.lives': 'Vies',
 	'lobby.fuse': 'Mèche',
-	'lobby.level': 'Niveau',
+	'lobby.mode': 'Mode de jeu',
 	'lobby.maxPlayers': 'Joueurs max',
 	'lobby.bonus': 'Vie bonus',
-	'lobby.tension': 'Tension croissante',
 	'lobby.seconds': '{n} s',
 	'lobby.disconnected': 'Hors ligne',
 	'lobby.countdown': 'Départ dans',
 
-	'level.n5': 'N5 · Débutant',
-	'level.n4': 'N4 · Élémentaire',
-	'level.n3': 'N3 · Intermédiaire',
-	'level.n2': 'N2 · Avancé',
-	'level.n1': 'N1 · Expert',
-
 	'game.yourTurn': 'À toi !',
 	'game.turnOf': 'Tour de {name}',
 	'game.typeHere': 'Un mot avec',
+	'game.typeStart': 'Un mot qui commence par',
 	'game.send': 'Envoyer',
 	'game.words': 'Mots joués',
 	'game.lives': '{n} vie(s)',
@@ -75,10 +77,11 @@ export const fr = {
 
 	'reject.not_in_dictionary': 'Ce mot n’est pas dans le dictionnaire.',
 	'reject.missing_fragment': 'Il manque « {fragment} » dans ce mot.',
+	'reject.missing_start': 'Le mot doit commencer par « {fragment} ».',
+	'reject.ends_with_n': 'Un mot qui finit par ん est interdit au shiritori.',
 	'reject.already_used': 'Ce mot a déjà été joué.',
 	'reject.not_your_turn': 'Ce n’est pas ton tour.',
 	'reject.too_late': 'Trop tard.',
-	'reject.above_level': 'Ce mot existe, mais il est trop avancé pour le niveau {level}.',
 
 	'results.title': 'Résultats',
 	'results.winner': '{name} gagne',

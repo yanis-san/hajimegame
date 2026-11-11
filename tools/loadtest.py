@@ -127,7 +127,7 @@ class Bot:
             await send(json.dumps({"t": "ready", "ready": True}))
             return
         await start.wait()
-        await send(json.dumps({"t": "settings", "lives": 1, "fuse_seconds": 5, "level": LEVEL}))
+        await send(json.dumps({"t": "settings", "lives": 1, "fuse_seconds": 5}))
         await asyncio.sleep(0.5)
         await send(json.dumps({"t": "start"}))
 

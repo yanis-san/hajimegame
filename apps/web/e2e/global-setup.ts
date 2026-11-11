@@ -13,16 +13,21 @@ export default function globalSetup(): void {
 		'from app.japanese.levels import LEVEL_MAX_RANK',
 		'd = Dictionary.load()',
 		'out = {}',
+		'starts = {}',
 		'for i in range(len(d)):',
 		'    e = d.entry(i)',
-		'    if e.rank > LEVEL_MAX_RANK["n4"]:',
+		'    if e.rank > LEVEL_MAX_RANK["n1"]:',
 		'        continue',
 		'    for r in e.readings:',
 		'        for g in fragment_ngrams(r):',
 		'            bucket = out.setdefault(g, [])',
 		'            if len(bucket) < 8:',
 		'                bucket.append(r)',
-		'print(json.dumps(out, ensure_ascii=False))'
+		'        if r[-1] not in "ゃゅょぁぃぅぇぉゎっーん" and len(r) >= 3:',
+		'            st = starts.setdefault(r[0], [])',
+		'            if len(st) < 8:',
+		'                st.append(r)',
+		'print(json.dumps({"contains": out, "starts": starts}, ensure_ascii=False))'
 	].join('\n');
 	const raw = execFileSync('uv', ['run', 'python', '-c', code], {
 		cwd: server,

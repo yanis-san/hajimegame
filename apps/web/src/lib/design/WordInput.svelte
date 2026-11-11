@@ -5,6 +5,7 @@
 
 	let {
 		fragment = '',
+		mode = 'classic',
 		active = false,
 		placeholder = '',
 		onsubmit,
@@ -12,6 +13,7 @@
 		error = ''
 	}: {
 		fragment?: string;
+		mode?: 'classic' | 'shiritori';
 		/** true when it is this player's turn */
 		active?: boolean;
 		placeholder?: string;
@@ -27,7 +29,7 @@
 	let lastTyped = 0;
 	let pendingTyped: ReturnType<typeof setTimeout> | null = null;
 
-	const parts = $derived(highlightFragment(value, fragment));
+	const parts = $derived(highlightFragment(value, fragment, mode === 'shiritori'));
 
 	/** Keep the keyboard open between turns: focus is never released, only the content is cleared. */
 	export function focus(): void {
@@ -143,7 +145,7 @@
 			autocomplete="off"
 			spellcheck="false"
 			maxlength="32"
-			aria-label={t('game.typeHere')}
+			aria-label={mode === 'shiritori' ? t('game.typeStart') : t('game.typeHere')}
 			{placeholder}
 			{value}
 			class:idle={!active}

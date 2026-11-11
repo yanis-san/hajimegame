@@ -1,6 +1,7 @@
 # Hajime Game
 
-Jeu multijoueur en ligne : trouve un mot japonais contenant un fragment de kana avant que la bombe explose.
+Jeu multijoueur en ligne : trouve un mot japonais avant que la bombe explose. Deux modes : Classique (le mot contient
+un fragment de kana, difficulté adaptative) et Shiritori (le mot commence par le dernier kana du précédent).
 2 à 8 joueurs, sans inscription, sur téléphone ou PC. Serveur autoritaire (FastAPI), interface SvelteKit.
 
 ## Démarrer en 5 minutes (Windows, macOS, Linux)

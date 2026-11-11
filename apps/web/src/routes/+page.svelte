@@ -5,6 +5,7 @@
 	import Banner from '#lib/design/Banner.svelte';
 	import Bomb from '#lib/design/Bomb.svelte';
 	import Button from '#lib/design/Button.svelte';
+	import ModePicker from '#lib/design/ModePicker.svelte';
 	import TextField from '#lib/design/TextField.svelte';
 	import { ApiError, createRoom, roomExists } from '#lib/game/api.ts';
 	import { loadProfile, saveProfile } from '#lib/game/session.ts';
@@ -18,6 +19,7 @@
 	let error = $state('');
 	let nameError = $state('');
 	let mood = $state<Mood | undefined>(undefined);
+	let mode = $state<'classic' | 'shiritori'>('classic');
 
 	onMount(() => {
 		const profile = loadProfile();
@@ -41,7 +43,7 @@
 		if (!remember()) return;
 		busy = 'create';
 		try {
-			const room = await createRoom();
+			const room = await createRoom(mode);
 			sessionStorage.setItem(`hajime:autojoin:${room.code}`, '1');
 			await goto(`/r/${room.code}`);
 		} catch (e) {
@@ -100,6 +102,11 @@
 			enterkeyhint="go"
 		/>
 		<fieldset>
+			<legend>{t('home.mode')}</legend>
+			<ModePicker value={mode} onchange={(m) => (mode = m)} />
+		</fieldset>
+
+		<fieldset>
 			<legend>{t('home.avatar')}</legend>
 			<AvatarPicker bind:value={avatar} />
 		</fieldset>
@@ -151,7 +158,7 @@
 	.home {
 		display: grid;
 		gap: 1.1rem;
-		max-width: 28rem;
+		max-width: 36rem;
 		margin: 0 auto;
 		padding: 0.5rem 1rem calc(1.5rem + env(safe-area-inset-bottom));
 	}
@@ -159,7 +166,7 @@
 		display: grid;
 		justify-items: center;
 		gap: 0.9rem;
-		padding-top: 0.5rem;
+		padding-top: 1.8rem;
 	}
 	.bomb-btn {
 		display: block;

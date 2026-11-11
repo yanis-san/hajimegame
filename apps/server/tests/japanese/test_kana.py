@@ -9,6 +9,7 @@ from app.japanese.kana import (
     is_hiragana,
     looks_like_romaji,
     normalize_text,
+    shiritori_end,
     units,
 )
 
@@ -75,3 +76,13 @@ def test_romaji_detection() -> None:
     assert not looks_like_romaji("")
     assert is_hiragana("らーめん")
     assert not is_hiragana("ラーメン")
+
+
+def test_shiritori_end_kana() -> None:
+    assert shiritori_end("くるま") == "ま"
+    assert shiritori_end("ちきゅう") == "う"
+    assert shiritori_end("ふらっしゅ") == "ゆ"  # small kana become full size
+    assert shiritori_end("こーひー") == "い"  # ー repeats the vowel of the previous kana
+    assert shiritori_end("ぎっ") == "ぎ"  # trailing っ is skipped
+    assert shiritori_end("ほん") == "ん"
+    assert shiritori_end("") == ""

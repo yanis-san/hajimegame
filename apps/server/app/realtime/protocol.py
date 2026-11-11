@@ -14,10 +14,10 @@ from msgspec import UNSET, Meta, Struct, UnsetType
 
 PROTOCOL_VERSION = 1
 
-Level = Literal["n5", "n4", "n3", "n2", "n1"]
+Mode = Literal["classic", "shiritori"]
 RoomPhase = Literal["lobby", "countdown", "playing", "finished"]
 RejectCode = Literal[
-    "not_in_dictionary", "missing_fragment", "already_used", "not_your_turn", "too_late", "above_level"
+    "not_in_dictionary", "missing_fragment", "already_used", "not_your_turn", "too_late", "ends_with_n"
 ]
 ErrorCode = Literal[
     "bad_version",
@@ -80,10 +80,9 @@ class Start(_Msg, tag_field="t", tag="start"):
 class SetSettings(_Msg, tag_field="t", tag="settings"):
     lives: Annotated[int, Meta(ge=1, le=5)] | UnsetType = UNSET
     fuse_seconds: Annotated[float, Meta(ge=5, le=20)] | UnsetType = UNSET
-    level: Level | UnsetType = UNSET
+    mode: Mode | UnsetType = UNSET
     max_players: Annotated[int, Meta(ge=2, le=8)] | UnsetType = UNSET
     bonus_kana: bool | UnsetType = UNSET
-    tension: bool | UnsetType = UNSET
     v: int = PROTOCOL_VERSION
 
 
@@ -132,10 +131,9 @@ ClientMessage = (
 class SettingsView(Struct, frozen=True, omit_defaults=False):
     lives: int
     fuse_seconds: float
-    level: Level
+    mode: Mode
     max_players: int
     bonus_kana: bool
-    tension: bool
 
 
 class PlayerView(Struct, frozen=True, omit_defaults=False):

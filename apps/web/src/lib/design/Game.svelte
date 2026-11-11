@@ -87,10 +87,11 @@
 		haptic('reject');
 		input?.shake();
 		const fragment = store.turn?.fragment ?? '';
-		rejection = t(`reject.${event.reason}` as const, {
-			fragment,
-			level: store.settings.level.toUpperCase()
-		});
+		const key =
+			event.reason === 'missing_fragment' && store.settings.mode === 'shiritori'
+				? 'reject.missing_start'
+				: (`reject.${event.reason}` as const);
+		rejection = t(key, { fragment });
 		clearTimeout(rejectTimer);
 		rejectTimer = setTimeout(() => (rejection = ''), 3200);
 	});
@@ -187,7 +188,7 @@
 				{#if store.turn}
 					{#if store.isMyTurn}
 						<strong>{t('game.yourTurn')}</strong>
-						{t('game.typeHere')}
+						{store.settings.mode === 'shiritori' ? t('game.typeStart') : t('game.typeHere')}
 						<span class="frag">{store.turn.fragment}</span>
 					{:else}
 						{t('game.turnOf', { name: activeName })}
@@ -221,6 +222,7 @@
 				<WordInput
 					bind:this={input}
 					fragment={store.turn?.fragment ?? ''}
+					mode={store.settings.mode}
 					active={store.isMyTurn && (store.me?.alive ?? false)}
 					{placeholder}
 					error={rejection}

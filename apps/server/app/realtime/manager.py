@@ -44,14 +44,14 @@ class RoomManager:
         self,
         settings: AppSettings,
         dictionary: Dictionary,
-        tables: dict[str, FragmentTable],
+        fragments: FragmentTable,
         registry: RoomRegistry,
         clock: RoomClock,
         instance_id: str | None = None,
     ) -> None:
         self._settings = settings
         self._dictionary = dictionary
-        self._tables = tables
+        self._fragments = fragments
         self._registry = registry
         self._clock = clock
         self.instance_id = instance_id or settings.instance_id
@@ -94,7 +94,7 @@ class RoomManager:
     def room_count(self) -> int:
         return len(self._rooms)
 
-    async def create(self, ip: str) -> Room:
+    async def create(self, ip: str, mode: str = "classic") -> Room:
         if len(self._rooms) >= self._settings.max_rooms_total:
             raise CapacityError("server_full")
         if len(self._by_ip[ip]) >= self._settings.max_rooms_per_ip:
@@ -108,11 +108,11 @@ class RoomManager:
         deps = RoomDeps(
             settings=self._settings,
             dictionary=self._dictionary,
-            tables=self._tables,
+            fragments=self._fragments,
             clock=self._clock,
             on_close=self._on_room_closed,
         )
-        room = Room(code, deps, host_ip=ip)
+        room = Room(code, deps, host_ip=ip, mode=mode)
         self._rooms[code] = room
         self._by_ip[ip].add(code)
         metrics.ROOMS_ACTIVE.set(len(self._rooms))

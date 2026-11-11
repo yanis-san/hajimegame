@@ -17,7 +17,6 @@ from app.core.config import AppSettings, get_settings
 from app.core.logging import configure_logging, get_logger
 from app.core.ratelimit import MemoryWindowLimiter, RedisWindowLimiter, WindowLimiter
 from app.core.security import SecurityHeadersMiddleware
-from app.games.bomb.settings import LEVELS
 from app.japanese.dictionary import Dictionary
 from app.japanese.fragments import FragmentTable, playable_table
 from app.realtime.clock import RoomClock, SystemClock
@@ -42,8 +41,9 @@ async def _watch_loop_lag(interval: float = 0.01) -> None:
         metrics.LOOP_LAG.observe(max(0.0, loop.time() - expected))
 
 
-def build_tables(dictionary: Dictionary, min_words: int) -> dict[str, FragmentTable]:
-    return {level: playable_table(dictionary.fragment_buckets, level, min_words) for level in LEVELS}
+def build_fragments(dictionary: Dictionary, min_words: int) -> FragmentTable:
+    """Every word is playable, so one table (all words) serves every game."""
+    return playable_table(dictionary.fragment_buckets, "n1", min_words)
 
 
 def create_app(
@@ -61,13 +61,13 @@ def create_app(
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         configure_logging(cfg.env)
         words: Dictionary = dictionary if dictionary is not None else await asyncio.to_thread(load_dictionary)
-        tables = build_tables(words, cfg.min_fragment_words)
+        fragments = build_fragments(words, cfg.min_fragment_words)
         client = redis
         if client is None and cfg.redis_url:
             client = Redis.from_url(cfg.redis_url)
         the_registry = registry or (RedisRegistry(client) if client is not None else MemoryRegistry())
         the_limiter = limiter or (RedisWindowLimiter(client) if client is not None else MemoryWindowLimiter())
-        manager = RoomManager(cfg, words, tables, the_registry, clock or SystemClock())
+        manager = RoomManager(cfg, words, fragments, the_registry, clock or SystemClock())
         manager.start()
         lag_task = asyncio.get_running_loop().create_task(_watch_loop_lag())
         app.state.settings = cfg

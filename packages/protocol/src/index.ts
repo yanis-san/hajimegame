@@ -2,18 +2,17 @@
 
 export const PROTOCOL_VERSION = 1;
 
-export type Level = "n5" | "n4" | "n3" | "n2" | "n1";
+export type Mode = "classic" | "shiritori";
 export type RoomPhase = "lobby" | "countdown" | "playing" | "finished";
-export type RejectCode = "not_in_dictionary" | "missing_fragment" | "already_used" | "not_your_turn" | "too_late" | "above_level";
+export type RejectCode = "not_in_dictionary" | "missing_fragment" | "already_used" | "not_your_turn" | "too_late" | "ends_with_n";
 export type ErrorCode = "bad_version" | "bad_message" | "room_not_found" | "room_full" | "bad_token" | "name_invalid" | "rate_limited" | "not_host" | "not_allowed" | "wrong_phase" | "need_more_players" | "players_not_ready" | "kicked" | "replaced" | "server_restarting" | "wrong_instance";
 
 export interface SettingsView {
   lives: number;
   fuse_seconds: number;
-  level: Level;
+  mode: Mode;
   max_players: number;
   bonus_kana: boolean;
-  tension: boolean;
 }
 
 export interface PlayerView {
@@ -86,10 +85,9 @@ export interface SetSettings {
   t: "settings";
   lives?: number;
   fuse_seconds?: number;
-  level?: Level;
+  mode?: Mode;
   max_players?: number;
   bonus_kana?: boolean;
-  tension?: boolean;
   v?: number;
 }
 

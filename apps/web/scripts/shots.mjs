@@ -35,6 +35,7 @@ async function run(profile) {
 	}
 
 	await hostPage.goto(BASE + '/');
+	await hostPage.waitForLoadState('networkidle');
 	await shot(hostPage, profile, '01-home');
 	await hostPage.getByLabel('Ton pseudo').fill('Yanis');
 	await hostPage.getByRole('button', { name: 'Créer une partie' }).click();
@@ -52,6 +53,7 @@ async function run(profile) {
 	await hostPage.getByRole('radio', { name: '5 s', exact: true }).click();
 
 	await guestPage.goto(`${BASE}/r/${code}`);
+	await guestPage.waitForLoadState('networkidle');
 	await shot(guestPage, profile, '03-join-card');
 	await guestPage.getByLabel('Ton pseudo').fill('Aya');
 	await guestPage.getByRole('button', { name: 'Entrer' }).click();

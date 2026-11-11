@@ -37,8 +37,14 @@ export interface Highlight {
 const TRAILING_SMALL = 'ゃゅょぁぃぅぇぉゎっ';
 
 /** Split ``text`` around the first occurrence of ``fragment`` that does not cut a kana from its small kana. */
-export function highlightFragment(text: string, fragment: string): Highlight | null {
+export function highlightFragment(text: string, fragment: string, start = false): Highlight | null {
 	if (!fragment) return null;
+	if (start) {
+		// shiritori: the word must begin with this kana
+		return toHiragana(text).startsWith(fragment)
+			? { before: '', match: text.slice(0, fragment.length), after: text.slice(fragment.length) }
+			: null;
+	}
 	const hay = toHiragana(text);
 	let from = 0;
 	for (;;) {

@@ -8,7 +8,7 @@ from typing import Literal
 from app.games.base import GameEvent
 
 RejectReason = Literal[
-    "not_in_dictionary", "missing_fragment", "already_used", "not_your_turn", "too_late", "above_level"
+    "not_in_dictionary", "missing_fragment", "already_used", "not_your_turn", "too_late", "ends_with_n"
 ]
 
 

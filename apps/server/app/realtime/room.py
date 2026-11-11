@@ -66,14 +66,14 @@ class Command:
 class RoomDeps:
     settings: AppSettings
     dictionary: Dictionary
-    tables: dict[str, FragmentTable]
+    fragments: FragmentTable
     clock: RoomClock
     rng_factory: Callable[[], random.Random] = lambda: random.Random(secrets.randbits(64))  # noqa: S311
     on_close: Callable[[Room], None] | None = None
 
 
 class Room:
-    def __init__(self, code: str, deps: RoomDeps, host_ip: str = "") -> None:
+    def __init__(self, code: str, deps: RoomDeps, host_ip: str = "", mode: str = "classic") -> None:
         self.code = code
         self.host_ip = host_ip
         self._deps = deps
@@ -86,7 +86,7 @@ class Room:
         self._join_counter = 0
         self._host: str = ""
         self._phase: pr.RoomPhase = "lobby"
-        self._settings = BombSettings(max_players=self._cfg.max_players_per_room)
+        self._settings = BombSettings(max_players=self._cfg.max_players_per_room, mode=mode)
         self._engine: BombEngine | None = None
         self._seq = 0
         self._turn: pr.TurnView | None = None
@@ -122,7 +122,7 @@ class Room:
             "phase": self._phase,
             "players": self.player_count(),
             "max_players": self._settings.max_players,
-            "level": self._settings.level,
+            "mode": self._settings.mode,
         }
 
     def submit(self, cmd: Command) -> None:
@@ -260,10 +260,9 @@ class Room:
         return pr.SettingsView(
             lives=s.lives,
             fuse_seconds=s.fuse_seconds,
-            level=s.level,  # type: ignore[arg-type]
+            mode=s.mode,  # type: ignore[arg-type]
             max_players=s.max_players,
             bonus_kana=s.bonus_kana,
-            tension=s.tension,
         )
 
     def _player_view(self, m: Member) -> pr.PlayerView:
@@ -550,10 +549,9 @@ class Room:
             new = BombSettings(
                 lives=current.lives if msg.lives is UNSET else msg.lives,
                 fuse_seconds=current.fuse_seconds if msg.fuse_seconds is UNSET else msg.fuse_seconds,
-                level=current.level if msg.level is UNSET else msg.level,
+                mode=current.mode if msg.mode is UNSET else msg.mode,
                 max_players=current.max_players if msg.max_players is UNSET else msg.max_players,
                 bonus_kana=current.bonus_kana if msg.bonus_kana is UNSET else msg.bonus_kana,
-                tension=current.tension if msg.tension is UNSET else msg.tension,
             )
         except ValueError as exc:
             self._error(conn, "bad_message", str(exc))
@@ -659,7 +657,7 @@ class Room:
             [PlayerInfo(m.id, m.name) for m in players],
             settings,
             validator=self._deps.dictionary,
-            fragments=self._deps.tables[settings.level],
+            fragments=self._deps.fragments,
             clock=self.clock,
             rng=self._deps.rng_factory(),
         )

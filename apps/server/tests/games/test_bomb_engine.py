@@ -9,7 +9,7 @@ from app.games.base import GameEvent, ManualClock, Phase, PlayerInfo
 from app.games.bomb import events as ev
 from app.games.bomb.engine import BONUS_POOL, BombEngine
 from app.games.bomb.settings import BombSettings
-from tests.games.helpers import WORDS, FakeValidator, FixedFragments, make_engine
+from tests.games.helpers import WORDS, FakeValidator, FixedFragments, TierRecorder, make_engine
 
 
 def kinds(events: list[GameEvent]) -> list[str]:
@@ -232,22 +232,83 @@ def test_leave_unknown_player_is_noop() -> None:
     assert engine.leave("ghost") == []
 
 
-def test_tension_shortens_the_fuse_to_a_floor() -> None:
-    engine, clock = make_engine(2, BombSettings(lives=5, fuse_seconds=5.0, tension=True))
+def test_fast_answers_raise_the_difficulty_and_explosions_lower_it() -> None:
+    picker = TierRecorder()
+    engine, clock = make_engine(2, BombSettings(lives=5), fragments=picker)
     engine.start()
-    fuses = []
-    for _ in range(40):
-        player = engine.current_player
-        if player is None:
-            break
-        word = "くるま" if "くるま" not in {h.word for h in engine.history} else None
-        events = engine.submit(player, word) if word else engine.timeout(at=(engine.next_deadline or 0) + 0)
-        if not events:
-            clock.advance(100)
-            events = engine.timeout()
-        fuses += [e.fuse_seconds for e in events if isinstance(e, ev.TurnStarted)]
-    assert all(f >= 3.0 for f in fuses)
-    assert fuses[-1] <= fuses[0]
+    first = engine.current_player or ""
+    clock.advance(1)  # 10% of a 10 s fuse: fast
+    engine.submit(first, "くるま")
+    other = engine.current_player or ""
+    clock.advance(1)
+    engine.submit(other, "くも")
+    # the first player is up again: their fast answer earned a harder fragment
+    assert engine.current_player == first
+    assert picker.tiers[-1] == 2
+    clock.advance(10)
+    engine.timeout()  # they let the bomb explode: next time an easy fragment
+    engine.timeout(at=clock.now() + 10)
+    assert next(p for p in engine.players if p.info.id == first).skill == 0
+    assert 0 in picker.tiers[3:]
+
+
+def test_slow_answers_lower_the_difficulty() -> None:
+    picker = TierRecorder()
+    engine, clock = make_engine(2, BombSettings(lives=5), fragments=picker)
+    engine.start()
+    player = engine.current_player or ""
+    clock.advance(8)  # 80% of the fuse
+    engine.submit(player, "くるま")
+    assert next(p for p in engine.players if p.info.id == player).skill == 0
+
+
+def shiritori() -> tuple[BombEngine, ManualClock]:
+    return make_engine(2, BombSettings(lives=3, mode="shiritori"))
+
+
+def test_shiritori_chain_follows_the_last_kana() -> None:
+    engine, _ = shiritori()
+    engine.start()
+    assert engine.fragment == "く"  # opening kana
+    a = engine.current_player or ""
+    events = engine.submit(a, "くるま")
+    assert isinstance(events[0], ev.WordAccepted)
+    assert engine.fragment == "ま"  # くるま ends on ま
+    b = engine.current_player or ""
+    assert isinstance(engine.submit(b, "まくら")[0], ev.WordAccepted)
+    assert engine.fragment == "ら"
+
+
+def test_shiritori_word_must_start_with_the_kana() -> None:
+    engine, _ = shiritori()
+    engine.start()
+    player = engine.current_player or ""
+    events = engine.submit(player, "ねこ")  # real word, wrong start
+    assert isinstance(events[0], ev.WordRejected) and events[0].reason == "missing_fragment"
+    assert engine.current_player == player
+
+
+def test_shiritori_word_ending_in_n_is_refused() -> None:
+    engine, _ = shiritori()
+    engine.start()
+    engine.submit(engine.current_player or "", "くるま")
+    engine.submit(engine.current_player or "", "まくら")
+    player = engine.current_player or ""
+    events = engine.submit(player, "らーめん")
+    assert isinstance(events[0], ev.WordRejected) and events[0].reason == "ends_with_n"
+    assert engine.current_player == player
+    assert isinstance(engine.submit(player, "らくだ")[0], ev.WordAccepted)
+    assert engine.fragment == "だ"
+
+
+def test_shiritori_chain_survives_an_explosion() -> None:
+    engine, clock = shiritori()
+    engine.start()
+    engine.submit(engine.current_player or "", "くるま")
+    before = engine.fragment
+    clock.advance(10)
+    engine.timeout()
+    assert engine.fragment == before  # the bomb passed on, the chain did not reset
 
 
 def test_bonus_kana_grants_a_life_when_the_list_is_used() -> None:
@@ -332,7 +393,7 @@ def test_constructor_validation() -> None:
         {"fuse_seconds": 4.9},
         {"fuse_seconds": 20.1},
         {"max_players": 1},
-        {"level": "n9"},
+        {"mode": "chess"},
     ],
 )
 def test_settings_bounds(kwargs: dict[str, Any]) -> None:

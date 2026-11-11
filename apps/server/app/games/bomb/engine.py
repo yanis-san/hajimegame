@@ -1,7 +1,13 @@
-"""Pure, deterministic bomb game engine.
+"""Pure, deterministic bomb game engine with two modes.
 
 No network, no database, no system clock. Clock and RNG are injected: the same seed and the same
 actions always produce the same game.
+
+Modes
+- ``classic``: a fragment of 1 to 3 kana is shown, the word must contain it. The fragment difficulty adapts
+  to each player's answer speed: fast answers get rarer fragments, slow answers or explosions easier ones.
+- ``shiritori``: the word must START with the last kana of the previous word.
+  A word ending in ん is refused. The chain survives explosions.
 
 Timing rule (documented in docs/PROTOCOL.md): a word received at ``at <= deadline`` is judged on its merits;
 ``at > deadline`` is ``too_late`` and the bomb explodes. A ``timeout`` before the deadline is ignored.
@@ -17,8 +23,8 @@ from typing import Literal
 from app.games.base import Clock, GameEvent, Phase, PlayerInfo
 from app.games.bomb import events as ev
 from app.games.bomb.ports import FragmentPicker, WordValidator
-from app.games.bomb.settings import LIFE_CAP, TENSION_FUSE_FLOOR, BombSettings
-from app.japanese.kana import units
+from app.games.bomb.settings import LIFE_CAP, BombSettings
+from app.japanese.kana import shiritori_end, units
 
 RECENT_FRAGMENTS = 8
 BONUS_LIST_SIZE = 3
@@ -26,6 +32,14 @@ BONUS_LIST_SIZE = 3
 BONUS_POOL = tuple(
     "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわん"
 )
+
+# Adaptive difficulty: share of the fuse used to answer.
+FAST_RATIO = 0.30
+SLOW_RATIO = 0.65
+SKILL_MIN, SKILL_START, SKILL_MAX = 0, 1, 2
+# A shiritori chain never continues with a kana that starts fewer words than this.
+MIN_START_WORDS = 20
+_BAD_STARTS = "んーっゃゅょぁぃぅぇぉゎを"
 
 
 @dataclass(slots=True)
@@ -35,6 +49,7 @@ class PlayerState:
     alive: bool = True
     score: int = 0
     words: int = 0
+    skill: int = SKILL_START  # 0 easy fragments, 2 hard fragments (classic mode)
     bonus_left: set[str] = field(default_factory=set)
 
 
@@ -76,6 +91,8 @@ class BombEngine:
         self._current: str | None = None
         self._fragment = ""
         self._deadline: float | None = None
+        self._turn_started = 0.0
+        self._next_start = ""  # shiritori: the kana the next word must start with
         self._recent: list[str] = []
         self._used: set[int] = set()
         self._history: list[PlayedWord] = []
@@ -154,10 +171,10 @@ class BombEngine:
             self._explode(out)
             return out
 
-        level = self.settings.level
-        hits = self._validator.matches(text, self._fragment, level)
+        shiritori = self.settings.mode == "shiritori"
+        hits = self._validator.matches(text, self._fragment, starts_with=shiritori)
         if not hits:
-            reason = self._validator.reject_reason(text, self._fragment, level)
+            reason = self._validator.reject_reason(text, self._fragment, starts_with=shiritori)
             out.append(ev.WordRejected(turn=self._turn, player_id=player_id, text=text, reason=reason))
             return out
         hit = next((h for h in hits if h.entry_id not in self._used), None)
@@ -165,6 +182,10 @@ class BombEngine:
             out.append(
                 ev.WordRejected(turn=self._turn, player_id=player_id, text=text, reason="already_used")
             )
+            return out
+        ending = shiritori_end(hit.reading) if shiritori else ""
+        if shiritori and ending == "ん":
+            out.append(ev.WordRejected(turn=self._turn, player_id=player_id, text=text, reason="ends_with_n"))
             return out
 
         state = self._players[player_id]
@@ -185,6 +206,9 @@ class BombEngine:
                 meaning_en=hit.meaning_en,
             )
         )
+        self._adapt(state, (now - self._turn_started) / max(1e-9, self.settings.fuse_seconds))
+        if shiritori:
+            self._next_start = ending if self._validator.start_count(ending) >= MIN_START_WORDS else ""
         self._update_bonus(state, hit.reading, out)
         self._begin_turn(self._next_alive(player_id), out)
         return out
@@ -223,29 +247,36 @@ class BombEngine:
                 return candidate
         return after
 
-    def _fuse_for_turn(self) -> float:
-        base = self.settings.fuse_seconds
-        if not self.settings.tension:
-            return base
-        rounds = self._turn // max(1, len(self.alive_ids()))
-        return max(min(TENSION_FUSE_FLOOR, base), base - 0.25 * rounds)
+    @staticmethod
+    def _adapt(state: PlayerState, ratio: float) -> None:
+        """Answer speed drives difficulty: fast answers earn harder fragments, slow ones easier."""
+        if ratio < FAST_RATIO:
+            state.skill = min(SKILL_MAX, state.skill + 1)
+        elif ratio > SLOW_RATIO:
+            state.skill = max(SKILL_MIN, state.skill - 1)
 
-    def _tier_for_turn(self) -> int:
-        if self.settings.tension:
-            rounds = self._turn // max(1, len(self.alive_ids()))
-            return 0 if rounds < 3 else 1 if rounds < 8 else 2
-        roll = self._rng.random()
-        return 0 if roll < 0.6 else 1 if roll < 0.9 else 2
+    def _pick_fragment(self, state: PlayerState) -> str:
+        if self.settings.mode == "classic":
+            return self._fragments.pick_text(self._rng, state.skill, self._recent)
+        if self._next_start:
+            return self._next_start
+        # Opening of a shiritori chain (or a dead end): a common kana that many words start with.
+        for _ in range(30):
+            first = self._fragments.pick_text(self._rng, 0, self._recent)[0]
+            if first not in _BAD_STARTS and self._validator.start_count(first) >= MIN_START_WORDS:
+                return first
+        return "あ"
 
     def _begin_turn(self, player_id: str, out: list[GameEvent]) -> None:
         self._turn += 1
-        fragment = self._fragments.pick_text(self._rng, self._tier_for_turn(), self._recent)
+        fragment = self._pick_fragment(self._players[player_id])
         self._recent.append(fragment)
         del self._recent[:-RECENT_FRAGMENTS]
-        fuse = self._fuse_for_turn()
+        fuse = self.settings.fuse_seconds
         self._current = player_id
         self._fragment = fragment
-        self._deadline = self._clock.now() + fuse
+        self._turn_started = self._clock.now()
+        self._deadline = self._turn_started + fuse
         out.append(
             ev.TurnStarted(
                 turn=self._turn,
@@ -261,6 +292,7 @@ class BombEngine:
         player_id = self._current
         state = self._players[player_id]
         state.lives -= 1
+        state.skill = SKILL_MIN  # the next fragment will be an easy one
         out.append(ev.Explosion(turn=self._turn, player_id=player_id, lives=state.lives))
         successor = self._next_alive(player_id)
         if state.lives <= 0:

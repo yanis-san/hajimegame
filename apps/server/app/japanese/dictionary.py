@@ -20,7 +20,7 @@ from app.japanese.romaji import romaji_to_hiragana
 
 DEFAULT_PATH: Final = Path(__file__).parent / "data" / "dictionary.json.gz"
 
-Reject = Literal["not_in_dictionary", "missing_fragment", "above_level"]
+Reject = Literal["not_in_dictionary", "missing_fragment"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -47,6 +47,11 @@ class WordRejected:
     reason: Reject
 
 
+def _matches(reading: str, fragment: str, starts_with: bool) -> bool:
+    """Classic: the fragment occurs in the reading. Shiritori: the reading starts with the kana."""
+    return reading[:1] == fragment if starts_with else contains_fragment(reading, fragment)
+
+
 class Dictionary:
     """Word lookup. Built once at startup, never mutated afterwards."""
 
@@ -63,9 +68,18 @@ class Dictionary:
                 if not bucket or bucket[-1] != entry_id:
                     bucket.append(entry_id)
         self._entries = entries
+        starts: dict[str, int] = {}
+        for entry in entries:
+            for first in {r[0] for r in entry.readings}:
+                starts[first] = starts.get(first, 0) + 1
+        self._starts = starts
         self._index: dict[str, tuple[int, ...]] = {k: tuple(v) for k, v in index.items()}
         self.fragment_buckets = fragment_buckets
         self.meta = meta
+
+    def start_count(self, kana: str) -> int:
+        """How many entries have a reading starting with ``kana`` (used to keep shiritori chains playable)."""
+        return self._starts.get(kana, 0)
 
     def __len__(self) -> int:
         return len(self._entries)
@@ -81,7 +95,9 @@ class Dictionary:
             normalized = romaji_to_hiragana(normalized)
         return normalized
 
-    def check(self, raw: str, fragment: str, level: str = "n1") -> WordMatch | WordRejected:
+    def check(
+        self, raw: str, fragment: str, level: str = "n1", *, starts_with: bool = False
+    ) -> WordMatch | WordRejected:
         """Validate ``raw`` against the dictionary for ``level`` and ``fragment``.
 
         Returns the first matching entry (lowest rank first) whose reading contains the fragment.
@@ -99,20 +115,20 @@ class Dictionary:
                 continue
             found = True
             for reading in entry.readings:
-                if contains_fragment(reading, fragment):
+                if _matches(reading, fragment, starts_with):
                     return WordMatch(entry_id, reading, text, entry.meaning_fr, entry.meaning_en)
-        if found:
-            return WordRejected("missing_fragment")
-        if level != "n1" and isinstance(self.check(raw, fragment, "n1"), WordMatch):
-            return WordRejected("above_level")  # a real word, but too advanced for the chosen level
-        return WordRejected("not_in_dictionary")
+        return WordRejected("missing_fragment" if found else "not_in_dictionary")
 
-    def reject_reason(self, text: str, fragment: str, level: str = "n1") -> Reject:
+    def reject_reason(
+        self, text: str, fragment: str, level: str = "n1", *, starts_with: bool = False
+    ) -> Reject:
         """Why ``text`` cannot be played for ``fragment`` (``not_in_dictionary`` or ``missing_fragment``)."""
-        result = self.check(text, fragment, level)
+        result = self.check(text, fragment, level, starts_with=starts_with)
         return result.reason if isinstance(result, WordRejected) else "missing_fragment"
 
-    def matches(self, text: str, fragment: str, level: str = "n1") -> tuple[WordMatch, ...]:
+    def matches(
+        self, text: str, fragment: str, level: str = "n1", *, starts_with: bool = False
+    ) -> tuple[WordMatch, ...]:
         """All entries matching (used by the engine to reject already played words)."""
         text = self.canonical(text)
         max_rank = LEVEL_MAX_RANK[level]
@@ -122,7 +138,7 @@ class Dictionary:
             if entry.rank > max_rank:
                 continue
             for reading in entry.readings:
-                if contains_fragment(reading, fragment):
+                if _matches(reading, fragment, starts_with):
                     result.append(WordMatch(entry_id, reading, text, entry.meaning_fr, entry.meaning_en))
                     break
         return tuple(result)

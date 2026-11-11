@@ -27,11 +27,14 @@ class WordHit(Protocol):
 
 
 class WordValidator(Protocol):
-    def matches(self, text: str, fragment: str, level: str = ...) -> Sequence[WordHit]:
+    def matches(self, text: str, fragment: str, *, starts_with: bool = ...) -> Sequence[WordHit]:
         """Every dictionary entry spelled ``text`` whose reading contains ``fragment``."""
 
-    def reject_reason(self, text: str, fragment: str, level: str = ...) -> RejectReason:
+    def reject_reason(self, text: str, fragment: str, *, starts_with: bool = ...) -> RejectReason:
         """Why ``text`` has no match: ``not_in_dictionary`` or ``missing_fragment``."""
+
+    def start_count(self, kana: str) -> int:
+        """How many words start with ``kana``."""
 
 
 class FragmentPicker(Protocol):

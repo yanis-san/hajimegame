@@ -150,11 +150,10 @@ async def test_start_requires_players_ready_and_two_players(server: RunningServe
 
 async def test_settings_are_validated_and_broadcast(server: RunningServer) -> None:
     _, (a, b) = await lobby(server)
-    await a.send(t="settings", lives=5, level="n2", tension=True)
+    await a.send(t="settings", lives=5, mode="shiritori")
     patch = await b.wait("patch", lambda m: "settings" in m)
     assert patch["settings"]["lives"] == 5
-    assert patch["settings"]["level"] == "n2"
-    assert patch["settings"]["tension"] is True
+    assert patch["settings"]["mode"] == "shiritori"
     await a.send(t="settings", lives=9)
     assert (await a.wait("error"))["code"] == "bad_message"
     await a.send(t="settings", max_players=2)
