@@ -246,6 +246,26 @@
 		font-weight: 700;
 		cursor: pointer;
 		list-style: none;
+		/* same press behaviour as <Button> */
+		transition:
+			transform var(--t-fast) var(--ease-pop),
+			box-shadow var(--t-fast) var(--ease-snap);
+	}
+	@media (hover: hover) {
+		.codebox summary:hover {
+			transform: translateY(-2px);
+			box-shadow:
+				inset 0 -4px 0 rgb(0 0 0 / 0.22),
+				0 6px 0 var(--sumi);
+		}
+	}
+	.codebox summary:active,
+	.codebox[open] summary:active {
+		transform: translateY(3px);
+		box-shadow:
+			inset 0 -1px 0 rgb(0 0 0 / 0.22),
+			0 1px 0 var(--sumi);
+		transition-duration: 60ms;
 	}
 	.codebox summary::-webkit-details-marker {
 		display: none;
