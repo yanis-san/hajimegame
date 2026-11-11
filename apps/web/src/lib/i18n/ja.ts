@@ -152,6 +152,22 @@ export const ja: Record<MessageKey, string> = {
 
 	'credits.title': 'クレジットとライセンス',
 	'credits.back': '戻る',
+	'common.close': '閉じる',
+	'game.region': 'ゲーム',
+	'mascot.label': '爆弾のバクロ',
+	'credits.dictionary.title': '辞書',
+	'credits.dictionary.body':
+		'言葉とその意味（英語、JMdictにあればフランス語）は、JMdictファイル（© Electronic Dictionary Research and Development Group / EDRDG）に由来します。ゲーム用の辞書は、このファイルをフィルタリング・再構成したものです。フィルタリングの規則はリポジトリに記載されています。',
+	'credits.dictionary.licence': 'EDRDGのライセンス',
+	'credits.fonts.title': 'フォント',
+	'credits.fonts.body':
+		'Shippori Mincho、Zen Maru Gothic、Zen Kaku Gothic New、JetBrains Mono（SIL Open Font License 1.1）。Fontsource経由で自社配信しています。',
+	'credits.software.title': 'ソフトウェア',
+	'credits.software.body':
+		'Svelte と SvelteKit（MIT）、ローマ字からかなへの変換に WanaKana（MIT）、そして FastAPI、msgspec、jaconv。',
+	'credits.art.title': 'イラストと効果音',
+	'credits.art.body':
+		'マスコットのバクロ、アバター、アイコンはHajime用に描き下ろしました。効果音はブラウザ内で合成しており、外部の音声ファイルは使っていません。',
 
 	'a11y.turn': '{name}の番。文字：{fragment}。',
 	'a11y.accepted': '{name}が「{word}」を答えました。',

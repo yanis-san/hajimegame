@@ -160,7 +160,7 @@
 <svelte:window bind:innerWidth={width} bind:innerHeight={height} />
 <Particles bind:this={particles} />
 
-<section class="game" bind:this={root} aria-label="Partie" style="--bomb:{bombSize}px">
+<section class="game" bind:this={root} aria-label={t('game.region')} style="--bomb:{bombSize}px">
 	<div class="sr-only" aria-live="polite" aria-atomic="true">{announcement}</div>
 
 	<!-- players: a row of tiles on phones, a column on desktop -->

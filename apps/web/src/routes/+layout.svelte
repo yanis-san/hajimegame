@@ -6,9 +6,39 @@
 	import Sky from '#lib/design/Sky.svelte';
 	import { loadPref, savePref } from '#lib/game/session.ts';
 	import { sfx } from '#lib/game/sfx.ts';
-	import { detectLocale, isLocale, setLocale, t, type Locale } from '#lib/i18n/index.ts';
+	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
+	import {
+		LOCALES,
+		href,
+		localeFromPath,
+		localizePath,
+		setLocale,
+		t,
+		type Locale
+	} from '#lib/i18n/index.ts';
+	import { LANG_COOKIE } from '#lib/i18n/path.ts';
 
 	let { children } = $props();
+
+	// The language comes from the URL. It is set while this component initialises, before any child renders, so the
+	// server-rendered HTML and the first client render are already in the right language (no flash, no French).
+	setLocale(localeFromPath(page.url.pathname));
+	$effect.pre(() => setLocale(localeFromPath(page.url.pathname)));
+	// The server sets <html lang>; this keeps it right after an in-page language change.
+	$effect(() => {
+		document.documentElement.lang = localeFromPath(page.url.pathname);
+	});
+
+	/** Same page, other language: the URL changes and the choice is remembered for the bare root URL. */
+	function chooseLocale(next: Locale): void {
+		document.cookie = `${LANG_COOKIE}=${next}; path=/; max-age=31536000; samesite=lax`;
+		const { pathname, search, hash } = page.url;
+		void goto(localizePath(pathname, next) + search + hash, {
+			replace: true,
+			reset: false
+		});
+	}
 
 	let theme = $state<'dark' | 'light'>('dark');
 	let muted = $state(false);
@@ -22,16 +52,7 @@
 			?.setAttribute('content', next === 'dark' ? '#0f1b2d' : '#f5efe3');
 	}
 
-	// The saved choice wins, then the browser's languages, then French. Applied after hydration so the
-	// server-rendered page and the first client render agree.
-	function chooseLocale(next: Locale): void {
-		setLocale(next);
-		savePref('locale', next);
-	}
-
 	onMount(() => {
-		const saved = loadPref<string>('locale', '');
-		setLocale(isLocale(saved) ? saved : detectLocale(navigator.languages));
 		applyTheme(loadPref<'dark' | 'light'>('theme', 'dark'));
 		muted = sfx.muted;
 		// Audio can only start from a user gesture (iOS): unlock on the first tap or key press.
@@ -55,10 +76,20 @@
 	}
 </script>
 
+<svelte:head>
+	{#each LOCALES as option (option.code)}
+		<link
+			rel="alternate"
+			hreflang={option.code}
+			href={page.url.origin + localizePath(page.url.pathname, option.code)}
+		/>
+	{/each}
+</svelte:head>
+
 <Sky />
 
 <header class="bar">
-	<a class="logo" href="/" aria-label={t('app.name')}>
+	<a class="logo" href={href('/')} aria-label={t('app.name')}>
 		<span class="mark" aria-hidden="true">始</span>
 		<span class="word">{t('app.name')}</span>
 	</a>

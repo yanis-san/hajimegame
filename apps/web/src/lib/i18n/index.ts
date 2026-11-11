@@ -2,9 +2,11 @@ import { en } from './en.ts';
 import { fr, type MessageKey } from './fr.ts';
 import { ja } from './ja.ts';
 import { active, LOCALES, type Locale } from './locale.svelte.ts';
+import { localizePath } from './path.ts';
 
 export type { MessageKey, Locale };
 export { LOCALES };
+export { detectLocale, isLocale, localeFromPath, localizePath, stripLocale } from './path.ts';
 
 /** Keys that exist in a `.one` and a `.other` form, picked by `tn()` with the language's plural rules. */
 export type PluralKey = 'lobby.spectators' | 'game.lives' | 'results.words';
@@ -15,22 +17,13 @@ type Dictionary = Record<MessageKey, string>;
 // LOCALES, and add its code to Locale. A missing key at runtime still falls back to French.
 const dictionaries: Record<Locale, Partial<Dictionary>> = { fr, en, ja };
 
-export function isLocale(value: unknown): value is Locale {
-	return LOCALES.some((l) => l.code === value);
-}
-
-/** The best supported language for a browser's preference list, French when none matches. */
-export function detectLocale(preferred: readonly string[] = []): Locale {
-	for (const tag of preferred) {
-		const base = tag.toLowerCase().split('-')[0];
-		if (isLocale(base)) return base;
-	}
-	return 'fr';
-}
-
 export function setLocale(next: Locale): void {
 	active.locale = next;
-	if (typeof document !== 'undefined') document.documentElement.lang = next;
+}
+
+/** An internal link in the current language: `href('/credits')` -> `/ja/credits` on a Japanese page. */
+export function href(path: string): string {
+	return localizePath(path, active.locale);
 }
 
 export function getLocale(): Locale {

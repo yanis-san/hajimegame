@@ -3,6 +3,7 @@
 </script>
 
 <script lang="ts">
+	import { t } from '#lib/i18n/index.ts';
 	/**
 	 * Bakuro, the bomb. Original character: a round ink-black bomb with a washi highlight and expressive face.
 	 * The mood changes only in response to game events; there is no idle loop.
@@ -16,7 +17,7 @@
 	height={size}
 	viewBox="0 0 200 200"
 	role="img"
-	aria-label="Bakuro, la bombe"
+	aria-label={t('mascot.label')}
 	stroke-linejoin="round"
 	stroke-linecap="round"
 >

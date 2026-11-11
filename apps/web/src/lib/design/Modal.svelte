@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { t } from '#lib/i18n/index.ts';
 	import type { Snippet } from 'svelte';
 	import Icon from './Icon.svelte';
 
@@ -28,7 +29,12 @@
 	<div class="panel">
 		<header>
 			<h2 id="modal-title">{title}</h2>
-			<button class="x" type="button" aria-label="Fermer" onclick={() => dialog?.close()}>
+			<button
+				class="x"
+				type="button"
+				aria-label={t('common.close')}
+				onclick={() => dialog?.close()}
+			>
 				<Icon name="close" />
 			</button>
 		</header>

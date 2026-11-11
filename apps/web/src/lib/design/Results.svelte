@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { flip } from 'svelte/animate';
-	import { t, tn } from '#lib/i18n/index.ts';
+	import { href, t, tn } from '#lib/i18n/index.ts';
 	import { haptic } from '#lib/game/haptics.ts';
 	import type { GameSession } from '#lib/game/session.svelte.ts';
 	import { sfx } from '#lib/game/sfx.ts';
@@ -99,7 +99,7 @@
 			icon="home"
 			onclick={() => {
 				session.leave();
-				location.assign('/');
+				location.assign(href('/'));
 			}}
 		>
 			{t('results.leave')}

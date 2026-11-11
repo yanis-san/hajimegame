@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { t, tn, type MessageKey } from '#lib/i18n/index.ts';
+	import { href, t, tn, type MessageKey } from '#lib/i18n/index.ts';
 	import { haptic } from '#lib/game/haptics.ts';
 	import type { GameSession } from '#lib/game/session.svelte.ts';
 	import { sfx } from '#lib/game/sfx.ts';
@@ -25,7 +25,7 @@
 	let chatEl: HTMLElement | undefined = $state();
 
 	const link = $derived(
-		typeof location === 'undefined' ? '' : `${location.origin}/r/${store.room}`
+		typeof location === 'undefined' ? '' : `${location.origin}${href(`/r/${store.room}`)}`
 	);
 	const canShare = $derived(
 		typeof navigator !== 'undefined' && typeof navigator.share === 'function'

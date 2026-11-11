@@ -12,7 +12,7 @@
 	import TextField from '#lib/design/TextField.svelte';
 	import { GameSession } from '#lib/game/session.svelte.ts';
 	import { loadProfile, saveProfile, sessionTokens } from '#lib/game/session.ts';
-	import { t, type MessageKey } from '#lib/i18n/index.ts';
+	import { href, t, type MessageKey } from '#lib/i18n/index.ts';
 
 	const code = $derived(page.params.code?.toUpperCase() ?? '');
 
@@ -75,7 +75,7 @@
 			{#if fatal === 'name_invalid'}
 				<Button size="lg" onclick={() => (session = null)}>{t('join.enter')}</Button>
 			{/if}
-			<Button variant="secondary" href="/" icon="home">{t('error.home')}</Button>
+			<Button variant="secondary" href={href('/')} icon="home">{t('error.home')}</Button>
 		{/snippet}
 	</ErrorScreen>
 {:else if !session}

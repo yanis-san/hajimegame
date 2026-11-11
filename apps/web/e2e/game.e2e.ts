@@ -212,15 +212,70 @@ test('a human can play against a CPU: add it in the lobby, start alone, the CPU 
 	await host.context.close();
 });
 
-test('the interface language can be switched and is remembered', async ({ page }) => {
-	await page.goto('/');
-	await page.waitForLoadState('networkidle'); // wait for hydration so the picker is live
-	await page.locator('select').selectOption('en');
-	await expect(page.getByRole('button', { name: 'Create a game' })).toBeVisible();
-	await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-	await page.reload();
-	await page.waitForLoadState('networkidle');
-	await expect(page.getByRole('button', { name: 'Create a game' })).toBeVisible();
-	await page.locator('select').selectOption('ja');
-	await expect(page.getByRole('button', { name: 'ゲームを作る' })).toBeVisible();
+test.describe('interface language lives in the URL', () => {
+	test('a Japanese link is served in Japanese, with no French in the HTML', async ({ request }) => {
+		for (const path of ['/ja', '/ja/credits']) {
+			const html = await (await request.get(path)).text();
+			expect(html).toContain('<html lang="ja"');
+			expect(html).not.toMatch(/Créer|Rejoindre|pseudo|Crédits|Retour|Dictionnaire|Trouve/);
+		}
+		const en = await (await request.get('/en')).text();
+		expect(en).toContain('<html lang="en"');
+		expect(en).toContain('Create a game');
+		expect(en).not.toMatch(/Créer|Rejoindre|pseudo|Trouve/);
+	});
+
+	test('the bare root follows the browser language, unless a language was chosen', async ({
+		request
+	}) => {
+		const ja = await request.get('/', {
+			headers: { 'accept-language': 'ja,en;q=0.8' },
+			maxRedirects: 0
+		});
+		expect(ja.status()).toBe(302);
+		expect(ja.headers()['location']).toMatch(/\/ja$/);
+		const chosen = await request.get('/', {
+			headers: { 'accept-language': 'ja', cookie: 'hajime_lang=fr' },
+			maxRedirects: 0
+		});
+		expect(chosen.status()).toBe(200);
+		const fr = await request.get('/fr/credits', { maxRedirects: 0 });
+		expect(fr.status()).toBe(301);
+	});
+
+	test('the picker changes the URL, keeps the page, and is remembered for the root', async ({
+		page
+	}) => {
+		await page.goto('/');
+		await page.waitForLoadState('networkidle'); // hydrated: the picker is live
+		await page.locator('select').selectOption('en');
+		await expect(page).toHaveURL(/\/en$/);
+		await expect(page.getByRole('button', { name: 'Create a game' })).toBeVisible();
+		await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+		await page.locator('select').selectOption('ja');
+		await expect(page).toHaveURL(/\/ja$/);
+		await expect(page.getByRole('button', { name: 'ゲームを作る' })).toBeVisible();
+		await page.goto('/ja/credits'); // the footer link is hidden on short windows
+		await page.waitForLoadState('networkidle');
+		await expect(page.getByRole('heading', { name: 'クレジットとライセンス' })).toBeVisible();
+		await expect(page.getByRole('link', { name: 'Hajime' })).toHaveAttribute('href', '/ja');
+		await page.locator('select').selectOption('fr');
+		await expect(page).toHaveURL(/\/credits$/);
+		await expect(page.getByRole('heading', { name: 'Crédits et licences' })).toBeVisible();
+	});
+
+	test('switching language inside a room keeps the connection and the link in that language', async ({
+		page
+	}) => {
+		await page.goto('/ja');
+		await page.waitForLoadState('networkidle');
+		await page.getByLabel('ニックネーム').fill('Yanis');
+		await page.getByRole('button', { name: 'ゲームを作る' }).click();
+		await expect(page).toHaveURL(/\/ja\/r\/[A-Z0-9]{6}$/);
+		await expect(page.getByRole('button', { name: 'ゲーム開始' })).toBeVisible();
+		await page.locator('select').selectOption('en');
+		await expect(page).toHaveURL(/\/en\/r\/[A-Z0-9]{6}$/);
+		await expect(page.getByRole('button', { name: 'Start the game' })).toBeVisible();
+		await expect(page.getByText('Yanis').first()).toBeVisible(); // still in the room
+	});
 });

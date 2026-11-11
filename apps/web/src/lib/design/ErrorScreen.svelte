@@ -2,7 +2,7 @@
 	import type { Snippet } from 'svelte';
 	import Button from './Button.svelte';
 	import Mascot from './Mascot.svelte';
-	import { t } from '#lib/i18n/index.ts';
+	import { href, t } from '#lib/i18n/index.ts';
 
 	let {
 		title,
@@ -25,7 +25,7 @@
 		{#if actions}
 			{@render actions()}
 		{:else}
-			<Button href="/" icon="home" size="lg">{t('error.home')}</Button>
+			<Button href={href('/')} icon="home" size="lg">{t('error.home')}</Button>
 		{/if}
 	</div>
 </section>

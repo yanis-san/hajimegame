@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { dev } from '$app/env';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import AvatarPicker from '#lib/design/AvatarPicker.svelte';
@@ -9,7 +10,7 @@
 	import TextField from '#lib/design/TextField.svelte';
 	import { ApiError, createRoom, roomExists } from '#lib/game/api.ts';
 	import { loadProfile, saveProfile } from '#lib/game/session.ts';
-	import { t } from '#lib/i18n/index.ts';
+	import { href, t } from '#lib/i18n/index.ts';
 	import type { Mood } from '#lib/design/Mascot.svelte';
 
 	let name = $state('');
@@ -45,7 +46,7 @@
 		try {
 			const room = await createRoom(mode);
 			sessionStorage.setItem(`hajime:autojoin:${room.code}`, '1');
-			await goto(`/r/${room.code}`);
+			await goto(href(`/r/${room.code}`));
 		} catch (e) {
 			error =
 				e instanceof ApiError && e.status === 429 ? t('home.errorRate') : t('home.errorCreate');
@@ -66,7 +67,7 @@
 				return;
 			}
 			sessionStorage.setItem(`hajime:autojoin:${clean}`, '1');
-			await goto(`/r/${clean}`);
+			await goto(href(`/r/${clean}`));
 		} catch {
 			error = t('home.errorCreate');
 			busy = null;
@@ -86,7 +87,7 @@
 
 <div class="home">
 	<section class="hero">
-		<button class="bomb-btn" type="button" onclick={poke} aria-label="Bakuro">
+		<button class="bomb-btn" type="button" onclick={poke} aria-label={t('mascot.label')}>
 			<!-- two sizes switched by CSS only, so nothing resizes after the page loads -->
 			<span class="bomb-small"><Bomb fragment="はじ" {mood} size={120} showTimer={false} /></span>
 			<span class="bomb-large"><Bomb fragment="はじ" {mood} size={230} showTimer={false} /></span>
@@ -156,8 +157,8 @@
 	</section>
 
 	<footer>
-		<a href="/credits">{t('footer.credits')}</a>
-		<a href="/design">{t('footer.design')}</a>
+		<a href={href('/credits')}>{t('footer.credits')}</a>
+		{#if dev}<a href={href('/design')}>{t('footer.design')}</a>{/if}
 	</footer>
 </div>
 

@@ -151,6 +151,22 @@ export const fr = {
 
 	'credits.title': 'Crédits et licences',
 	'credits.back': 'Retour',
+	'common.close': 'Fermer',
+	'game.region': 'Partie',
+	'mascot.label': 'Bakuro, la bombe',
+	'credits.dictionary.title': 'Dictionnaire',
+	'credits.dictionary.body':
+		'Les mots et leurs sens (anglais, et français quand JMdict le fournit) viennent du fichier JMdict, © Electronic Dictionary Research and Development Group (EDRDG). Le dictionnaire de jeu est une version filtrée et reformatée de ce fichier ; ses règles de filtrage sont documentées dans le dépôt.',
+	'credits.dictionary.licence': 'Licence du groupe EDRDG',
+	'credits.fonts.title': 'Polices',
+	'credits.fonts.body':
+		'Shippori Mincho, Zen Maru Gothic, Zen Kaku Gothic New et JetBrains Mono, sous licence SIL Open Font License 1.1, auto-hébergées via Fontsource.',
+	'credits.software.title': 'Logiciels',
+	'credits.software.body':
+		'Svelte et SvelteKit (MIT), WanaKana (MIT) pour la conversion romaji vers kana, FastAPI, msgspec et jaconv.',
+	'credits.art.title': 'Illustrations et sons',
+	'credits.art.body':
+		'La mascotte Bakuro, les avatars et les icônes sont dessinés pour Hajime. Les sons sont synthétisés dans le navigateur : aucun fichier audio tiers.',
 
 	'a11y.turn': 'Tour de {name}. Fragment : {fragment}.',
 	'a11y.accepted': '{name} a joué {word}.',
