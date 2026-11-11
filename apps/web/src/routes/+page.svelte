@@ -90,6 +90,8 @@
 			<!-- two sizes switched by CSS only, so nothing resizes after the page loads -->
 			<span class="bomb-small"><Bomb fragment="はじ" {mood} size={120} showTimer={false} /></span>
 			<span class="bomb-large"><Bomb fragment="はじ" {mood} size={230} showTimer={false} /></span>
+			<span class="bomb-medium"><Bomb fragment="はじ" {mood} size={190} showTimer={false} /></span>
+			<span class="bomb-xs"><Bomb fragment="はじ" {mood} size={140} showTimer={false} /></span>
 		</button>
 		<h1>{t('app.tagline')}</h1>
 	</section>
@@ -177,6 +179,14 @@
 	.bomb-small {
 		display: block;
 		margin-top: 3rem;
+	}
+	.bomb-medium {
+		display: none;
+		margin-top: 4.4rem;
+	}
+	.bomb-xs {
+		display: none;
+		margin-top: 3.2rem;
 	}
 	.bomb-large {
 		display: none;
@@ -290,6 +300,59 @@
 		}
 		footer {
 			grid-column: 1 / -1;
+		}
+	}
+
+	/* medium windows (13 inch laptops with a browser toolbar): a little smaller, still comfortable */
+	@media (min-width: 900px) and (max-height: 859px) {
+		.home {
+			gap: 3rem;
+		}
+		.bomb-large {
+			display: none;
+		}
+		.bomb-medium {
+			display: block;
+		}
+		.hero {
+			padding-bottom: 0;
+			gap: 0.9rem;
+		}
+		h1 {
+			font-size: 2rem;
+			max-width: 16ch;
+		}
+		.form {
+			gap: 0.8rem;
+			padding: 0.9rem 1.1rem 1.1rem;
+		}
+		footer {
+			display: none;
+		}
+	}
+	/* low windows: tighter, but everything (code button included) stays on screen */
+	@media (min-width: 900px) and (max-height: 680px) {
+		.bomb-medium {
+			display: none;
+		}
+		.bomb-xs {
+			display: block;
+		}
+		h1 {
+			font-size: 1.6rem;
+		}
+		.form {
+			gap: 0.6rem;
+			padding: 0.7rem 1rem 0.9rem;
+		}
+	}
+	@media (min-width: 900px) and (max-height: 590px) {
+		.form {
+			gap: 0.4rem;
+			padding: 0.5rem 0.9rem 0.7rem;
+		}
+		h1 {
+			font-size: 1.4rem;
 		}
 	}
 </style>

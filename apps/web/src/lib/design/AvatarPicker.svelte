@@ -49,4 +49,21 @@
 			transform: translateY(-2px);
 		}
 	}
+
+	/* short desktop windows: one row of twelve instead of two rows of six */
+	@media (min-width: 900px) and (max-height: 859px) {
+		.picker {
+			grid-template-columns: repeat(12, minmax(0, 1fr));
+			gap: 0.2rem;
+		}
+		button {
+			min-width: 0;
+			min-height: 42px;
+			padding: 0.1rem;
+		}
+		button :global(svg) {
+			width: 34px;
+			height: 34px;
+		}
+	}
 </style>

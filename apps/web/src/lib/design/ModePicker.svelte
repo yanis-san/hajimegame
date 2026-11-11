@@ -208,4 +208,24 @@
 			height: 22px;
 		}
 	}
+
+	@media (min-width: 900px) and (max-height: 680px) {
+		button {
+			padding: 0.5rem 0.7rem 0.6rem;
+			gap: 0.15rem;
+		}
+		.art {
+			min-height: 2rem;
+		}
+		.tile {
+			font-size: 1rem;
+		}
+		.title {
+			font-size: 1.2rem;
+		}
+		.desc {
+			font-size: 0.8rem;
+			line-height: 1.25;
+		}
+	}
 </style>
