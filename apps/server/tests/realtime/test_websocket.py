@@ -195,6 +195,9 @@ async def test_full_game_flow(server: RunningServer, dictionary: Dictionary) -> 
     over = await a.wait("game_over", timeout=10)
     assert over["winner_id"] in clients
     assert [r["place"] for r in over["results"]] == [1, 2]
+    assert [w["word"] for w in over["words"]] == [word]  # the whole game, for the review
+    assert over["words"][0]["player_id"] == active.player_id
+    assert over["words"][0]["meaning_en"]
     assert (await b.wait("game_over"))["winner_id"] == over["winner_id"]
     assert a.count("explosion") >= 1
     assert a.count("elimination") == 1
@@ -204,6 +207,33 @@ async def test_full_game_flow(server: RunningServer, dictionary: Dictionary) -> 
     await host.send(t="rematch")
     patch = await host.wait("patch", lambda m: m.get("phase") == "lobby")
     assert all(not p["ready"] for p in patch["players"].values())
+
+
+async def play_turn(
+    watcher: Client, clients: dict[str, Client], dictionary: Dictionary, used: set[str], after_turn: int
+) -> str:
+    """Wait for the next turn and let its active player answer with a valid word; returns that word."""
+    turn = await watcher.wait("turn", lambda m: m["turn"] > after_turn)
+    word = valid_word(dictionary, turn["fragment"], used)
+    await clients[turn["player_id"]].send(t="submit", text=word)
+    await watcher.wait("accepted", lambda m: m["word"] == word)
+    return word
+
+
+async def test_game_over_carries_every_word_not_just_the_last_ones(
+    server: RunningServer, dictionary: Dictionary
+) -> None:
+    _, (a, b) = await lobby(server)
+    await start_game([a, b], lives=1)
+    clients = {a.player_id: a, b.player_id: b}
+    used: set[str] = set()
+    played: list[str] = []
+    for _ in range(45):  # more than a snapshot carries during the game
+        played.append(await play_turn(a, clients, dictionary, used, len(played)))
+    over = await a.wait("game_over", timeout=30)
+    assert [w["word"] for w in over["words"]] == played
+    await a.close()
+    await b.close()
 
 
 async def test_seq_is_gapless_for_broadcasts(server: RunningServer) -> None:

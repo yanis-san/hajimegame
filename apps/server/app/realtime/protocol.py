@@ -332,6 +332,7 @@ class BonusProgress(_Event, tag_field="t", tag="bonus"):
 class GameOver(_Event, tag_field="t", tag="game_over"):
     winner_id: str | None
     results: list[ResultRow]
+    words: list[WordView]  # every word of the game, in order, with meanings and examples
     seq: int
     v: int = PROTOCOL_VERSION
 

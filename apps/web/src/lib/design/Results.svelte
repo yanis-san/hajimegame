@@ -4,18 +4,24 @@
 	import { href, t, tn } from '#lib/i18n/index.ts';
 	import { haptic } from '#lib/game/haptics.ts';
 	import type { GameSession } from '#lib/game/session.svelte.ts';
+	import { buildSavedGame, loadHistory, saveGame } from '#lib/game/history.ts';
 	import { sfx } from '#lib/game/sfx.ts';
 	import Avatar from './Avatar.svelte';
 	import Button from './Button.svelte';
 	import Icon from './Icon.svelte';
 	import Mascot from './Mascot.svelte';
+	import Modal from './Modal.svelte';
 	import Particles from './Particles.svelte';
+	import WordReview from './WordReview.svelte';
 
 	let { session }: { session: GameSession } = $props();
 	const store = $derived(session.store);
 
 	let particles: Particles | undefined = $state();
 	let ordered = $state(false);
+	let reviewOpen = $state(false);
+	// true once this game is in the history of this device (a spectator's history is not kept)
+	let saved = $state(false);
 
 	const rows = $derived(store.results ?? []);
 	// First show the seat order, then let the rows slide into their final places (animate:flip).
@@ -32,6 +38,20 @@
 	const iWon = $derived(store.winnerId !== null && store.winnerId === store.you);
 
 	onMount(() => {
+		const game = store.spectator
+			? null
+			: buildSavedGame(
+					{
+						room: store.room,
+						you: store.you,
+						mode: store.settings.mode,
+						players: store.players,
+						results: store.results ?? [],
+						words: store.words
+					},
+					Date.now()
+				);
+		if (game) saved = saveGame(game) || loadHistory().some((g) => g.id === game.id);
 		const timer = setTimeout(() => (ordered = true), 700);
 		const show = setTimeout(() => {
 			sfx.play(iWon ? 'win' : 'lose');
@@ -94,19 +114,29 @@
 		{:else if !store.spectator}
 			<p class="wait">{t('results.waitRematch')}</p>
 		{/if}
-		<Button
-			variant="ghost"
-			full
-			icon="home"
-			onclick={() => {
-				session.leave();
-				location.assign(href('/'));
-			}}
-		>
-			{t('results.leave')}
-		</Button>
+		<div class="pair">
+			<Button variant="secondary" full icon="book" onclick={() => (reviewOpen = true)}>
+				{t('results.review')}
+			</Button>
+			<Button
+				variant="ghost"
+				full
+				icon="home"
+				onclick={() => {
+					session.leave();
+					location.assign(href('/'));
+				}}
+			>
+				{t('results.leave')}
+			</Button>
+		</div>
+		{#if saved}<p class="saved">{t('results.saved')}</p>{/if}
 	</div>
 </section>
+
+<Modal bind:open={reviewOpen} title={t('review.title')}>
+	<WordReview words={store.words} players={store.players} you={store.you} />
+</Modal>
 
 <style>
 	.results {
@@ -184,6 +214,17 @@
 	.cta {
 		display: grid;
 		gap: 0.7rem;
+	}
+	.pair {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 0.7rem;
+	}
+	.saved {
+		margin: 0;
+		text-align: center;
+		font-size: 0.85rem;
+		color: var(--text-mute);
 	}
 	.wait {
 		margin: 0;

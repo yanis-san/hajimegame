@@ -37,7 +37,8 @@ from app.realtime.connection import Connection
 
 log = get_logger("room")
 
-WORD_HISTORY = 40
+WORD_HISTORY = 40  # words a snapshot carries while the game runs
+GAME_WORDS_MAX = 500  # words kept for the whole game, sent at the end so players can review it
 TYPING_INTERVAL = 0.1  # at most 10 relayed typing updates per second
 ZOMBIE_FACTOR = 3.0
 BOT_NAMES = (
@@ -327,7 +328,7 @@ class Room:
             spectators=self._spectator_count(),
             turn=self._turn,
             typing=self._typing,
-            words=self._words[-WORD_HISTORY:],
+            words=self._words if self._phase == "finished" else self._words[-WORD_HISTORY:],
             countdown_ends=to_ms(self._countdown_ends) if self._countdown_ends is not None else None,
             results=self._results,
             server_time=to_ms(self.clock.now()),
@@ -860,7 +861,7 @@ class Room:
                         event.example_fr,
                     )
                 )
-                del self._words[:-WORD_HISTORY]
+                del self._words[:-GAME_WORDS_MAX]
                 self._emit(
                     pr.Accepted,
                     turn=event.turn,
@@ -916,6 +917,6 @@ class Room:
             rows.append(pr.ResultRow(player_id, place, state.score, state.words, longest))
         self._results = rows
         metrics.GAMES_FINISHED.inc()
-        self._emit(pr.GameOver, winner_id=event.winner_id, results=rows)
+        self._emit(pr.GameOver, winner_id=event.winner_id, results=rows, words=list(self._words))
         self._patch(phase="finished")
         assert engine.phase is Phase.FINISHED

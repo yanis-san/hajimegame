@@ -219,6 +219,7 @@ export class GameStore {
 				break;
 			case 'game_over':
 				this.results = msg.results;
+				this.words = msg.words; // the whole game, for the review
 				this.winnerId = msg.winner_id;
 				this.turn = null;
 				break;

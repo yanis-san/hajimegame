@@ -1291,6 +1291,12 @@
               "$ref": "#/$defs/ResultRow"
             }
           },
+          "words": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/WordView"
+            }
+          },
           "seq": {
             "type": "integer"
           },
@@ -1303,6 +1309,7 @@
           "t",
           "winner_id",
           "results",
+          "words",
           "seq"
         ]
       },
@@ -2576,6 +2583,12 @@
             "$ref": "#/$defs/ResultRow"
           }
         },
+        "words": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/WordView"
+          }
+        },
         "seq": {
           "type": "integer"
         },
@@ -2588,6 +2601,7 @@
         "t",
         "winner_id",
         "results",
+        "words",
         "seq"
       ]
     },

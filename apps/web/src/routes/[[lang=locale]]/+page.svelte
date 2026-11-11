@@ -117,16 +117,26 @@
 		</fieldset>
 
 		<div class="createbar">
+			<div class="grow">
+				<Button
+					size="lg"
+					full
+					icon="play"
+					loading={busy === 'create'}
+					disabled={busy !== null}
+					onclick={create}
+				>
+					{busy === 'create' ? t('home.creating') : t('home.create')}
+				</Button>
+			</div>
 			<Button
 				size="lg"
-				full
-				icon="play"
-				loading={busy === 'create'}
-				disabled={busy !== null}
-				onclick={create}
-			>
-				{busy === 'create' ? t('home.creating') : t('home.create')}
-			</Button>
+				variant="secondary"
+				iconOnly
+				icon="book"
+				label={t('history.open')}
+				href={href('/history')}
+			/>
 		</div>
 
 		<details class="codebox">
@@ -230,6 +240,13 @@
 		position: sticky;
 		bottom: 0.6rem;
 		z-index: 10;
+		display: flex;
+		align-items: stretch;
+		gap: 0.6rem;
+	}
+	.grow {
+		flex: 1;
+		min-width: 0;
 	}
 	.codebox summary {
 		display: flex;

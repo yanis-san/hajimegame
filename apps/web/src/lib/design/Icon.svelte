@@ -26,6 +26,7 @@
 		chat: 'M4 5h16v11H11l-5 4v-4H4z',
 		trophy: 'M7 4h10v6a5 5 0 0 1-10 0z M7 6H4c0 3 1 4.5 3 5 M17 6h3c0 3-1 4.5-3 5 M12 15v4 M8 20h8',
 		bolt: 'M13 3L5 13.5h6L10 21l9-11.5h-6z',
+		book: 'M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z M5 17a3 3 0 0 1 3-3h11',
 		chevron: 'M6 9l6 6 6-6'
 	} as const;
 	export type IconName = keyof typeof ICONS;

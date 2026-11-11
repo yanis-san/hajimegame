@@ -285,6 +285,7 @@ export interface GameOver {
   t: "game_over";
   winner_id: string | null;
   results: ResultRow[];
+  words: WordView[];
   seq: number;
   v: number;
 }

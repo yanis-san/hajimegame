@@ -51,7 +51,7 @@ the current `seq` without advancing it, so they never create gaps.
 | `t` | Purpose |
 | --- | --- |
 | `welcome` | Your `player_id`, session `token`, `spectator` flag. |
-| `snapshot` | Full state on join and rejoin: phase, host, settings, players, current turn, typing text, last words, results. |
+| `snapshot` | Full state on join and rejoin: phase, host, settings, players, current turn, typing text, results, and `words` (the last 40 while playing, the whole game once finished). |
 | `patch` | Partial lobby state: `players` (id to full view, or `null` if removed), `host`, `phase`, `settings`, `spectators`, `countdown_ends`. Absent fields are unchanged. |
 | `countdown` | `ends_at` (server time). |
 | `turn` | `turn`, `player_id`, `fragment`, `deadline`, `fuse_ms`. Animate the fuse from `deadline` minus the clock offset. |
@@ -62,7 +62,7 @@ with its translations; all empty for most words, French often empty). |
 | `explosion` | Bomb exploded on `player_id`, `lives` left. `cause` is `timeout` or `n_ending` (shiritori penalty). |
 | `elimination` | `player_id` is out with final `place`. |
 | `life` / `bonus` | Bonus kana progress and extra life. |
-| `game_over` | `winner_id` and `results` (place, score, words, longest word). |
+| `game_over` | `winner_id`, `results` (place, score, words, longest word) and `words`: every word of the game in order (at most 500), with meanings and examples, for the end-of-game review and the history kept by the client. |
 | `chat` | Lobby chat line. Plain text, never HTML. |
 | `error` | `code` is one of `ErrorCode` in the generated types. |
 | `pong` | Echo of `n` and `t0` plus `server_time`. |

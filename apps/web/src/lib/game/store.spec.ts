@@ -166,11 +166,16 @@ describe('GameStore', () => {
 				{ player_id: 'a', place: 1, score: 5, words: 2, longest: 'さくら' },
 				{ player_id: 'b', place: 2, score: 1, words: 1, longest: 'ねこ' }
 			],
+			words: [
+				{ player_id: 'a', word: 'さくら', reading: 'さくら', turn: 1 },
+				{ player_id: 'b', word: 'ねこ', reading: 'ねこ', turn: 2 }
+			],
 			seq: 4,
 			v: 1
 		} as ServerMessage);
 		expect(store.winnerId).toBe('a');
 		expect(store.results).toHaveLength(2);
+		expect(store.words.map((w) => w.word)).toEqual(['さくら', 'ねこ']); // all of them, not the last few
 	});
 
 	it('clears the game when the room goes back to the lobby', () => {
