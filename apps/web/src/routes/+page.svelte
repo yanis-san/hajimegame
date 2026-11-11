@@ -276,7 +276,7 @@
 			align-content: center;
 			gap: 1.2rem;
 			/* nudges the left block up a little (half of this value) */
-			padding-bottom: 3rem;
+			padding-bottom: 5rem;
 		}
 		.bomb-small {
 			display: none;
