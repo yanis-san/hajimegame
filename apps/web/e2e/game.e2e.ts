@@ -211,3 +211,16 @@ test('a human can play against a CPU: add it in the lobby, start alone, the CPU 
 	await expect(host.page.locator('.lastcard')).toBeVisible({ timeout: 60_000 });
 	await host.context.close();
 });
+
+test('the interface language can be switched and is remembered', async ({ page }) => {
+	await page.goto('/');
+	await page.waitForLoadState('networkidle'); // wait for hydration so the picker is live
+	await page.locator('select').selectOption('en');
+	await expect(page.getByRole('button', { name: 'Create a game' })).toBeVisible();
+	await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+	await page.reload();
+	await page.waitForLoadState('networkidle');
+	await expect(page.getByRole('button', { name: 'Create a game' })).toBeVisible();
+	await page.locator('select').selectOption('ja');
+	await expect(page.getByRole('button', { name: 'ゲームを作る' })).toBeVisible();
+});

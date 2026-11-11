@@ -1,4 +1,4 @@
-/** French strings (default locale). English and Japanese dictionaries only need to override keys. */
+/** French strings: the reference locale. Other dictionaries must define every key of this one. */
 export const fr = {
 	'app.name': 'Hajime',
 	'app.tagline': 'Trouve un mot japonais avant que la bombe explose.',
@@ -45,7 +45,8 @@ export const fr = {
 	'lobby.host': 'Hôte',
 	'lobby.kick': 'Expulser',
 	'lobby.leave': 'Quitter',
-	'lobby.spectators': '{n} spectateur(s)',
+	'lobby.spectators.one': '{n} spectateur',
+	'lobby.spectators.other': '{n} spectateurs',
 	'lobby.chat': 'Discussion',
 	'lobby.chatPlaceholder': 'Un petit mot…',
 	'lobby.send': 'Envoyer',
@@ -77,7 +78,8 @@ export const fr = {
 	'game.typeStart': 'Un mot qui commence par',
 	'game.send': 'Envoyer',
 	'game.words': 'Mots joués',
-	'game.lives': '{n} vie(s)',
+	'game.lives.one': '{n} vie',
+	'game.lives.other': '{n} vies',
 	'game.eliminated': 'éliminé',
 	'game.spectating': 'Tu regardes la partie',
 	'game.wordsEmpty': 'Aucun mot pour l’instant',
@@ -100,10 +102,9 @@ export const fr = {
 	'results.title': 'Résultats',
 	'results.winner': '{name} gagne',
 	'results.you': 'Tu gagnes',
-	'results.place': '{n}e',
-	'results.first': '1er',
 	'results.score': '{n} pts',
-	'results.words': '{n} mot(s)',
+	'results.words.one': '{n} mot',
+	'results.words.other': '{n} mots',
 	'results.longest': 'Plus long : {word}',
 	'results.rematch': 'Revanche',
 	'results.waitRematch': 'L’hôte lance la revanche',
@@ -146,6 +147,7 @@ export const fr = {
 	'sound.off': 'Son coupé',
 	'theme.dark': 'Thème nuit',
 	'theme.light': 'Thème washi',
+	'lang.label': 'Langue de l’interface',
 
 	'credits.title': 'Crédits et licences',
 	'credits.back': 'Retour',

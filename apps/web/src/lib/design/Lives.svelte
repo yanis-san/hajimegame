@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { t } from '#lib/i18n/index.ts';
+	import { tn } from '#lib/i18n/index.ts';
 
 	/** Lives as sakura petals. A lost life lets its petal fall (animation runs once, on the change). */
 	let { lives, max = 3, size = 22 }: { lives: number; max?: number; size?: number } = $props();
@@ -20,7 +20,7 @@
 	});
 </script>
 
-<span class="lives" role="img" aria-label={t('game.lives', { n: lives })}>
+<span class="lives" role="img" aria-label={tn('game.lives', lives)}>
 	{#each { length: slots } as _, i (i)}
 		<svg
 			class="petal"

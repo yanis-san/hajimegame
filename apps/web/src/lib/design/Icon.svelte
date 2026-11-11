@@ -25,7 +25,8 @@
 			'M3 3l18 18 M2 9c2.5-2 5-3 8-3.3 M22 9c-1.4-1.1-2.9-1.9-4.5-2.5 M5.5 12.5C7 11.3 8.6 10.6 10.5 10.3 M18.5 12.5c-.7-.6-1.5-1.1-2.3-1.5 M9 16c1.7-1.2 4.3-1.2 6 0 M12 19.5v.01',
 		chat: 'M4 5h16v11H11l-5 4v-4H4z',
 		trophy: 'M7 4h10v6a5 5 0 0 1-10 0z M7 6H4c0 3 1 4.5 3 5 M17 6h3c0 3-1 4.5-3 5 M12 15v4 M8 20h8',
-		bolt: 'M13 3L5 13.5h6L10 21l9-11.5h-6z'
+		bolt: 'M13 3L5 13.5h6L10 21l9-11.5h-6z',
+		chevron: 'M6 9l6 6 6-6'
 	} as const;
 	export type IconName = keyof typeof ICONS;
 </script>

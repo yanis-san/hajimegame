@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { flip } from 'svelte/animate';
-	import { t } from '#lib/i18n/index.ts';
+	import { t, tn } from '#lib/i18n/index.ts';
 	import { haptic } from '#lib/game/haptics.ts';
 	import type { GameSession } from '#lib/game/session.svelte.ts';
 	import { sfx } from '#lib/game/sfx.ts';
@@ -77,7 +77,7 @@
 					<small
 						>{row.longest
 							? t('results.longest', { word: row.longest })
-							: t('results.words', { n: row.words })}</small
+							: tn('results.words', row.words)}</small
 					>
 				</span>
 				<span class="score">{t('results.score', { n: row.score })}</span>

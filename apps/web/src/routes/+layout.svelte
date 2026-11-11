@@ -2,10 +2,11 @@
 	import './layout.css';
 	import { onMount } from 'svelte';
 	import Button from '#lib/design/Button.svelte';
+	import LanguagePicker from '#lib/design/LanguagePicker.svelte';
 	import Sky from '#lib/design/Sky.svelte';
 	import { loadPref, savePref } from '#lib/game/session.ts';
 	import { sfx } from '#lib/game/sfx.ts';
-	import { t } from '#lib/i18n/index.ts';
+	import { detectLocale, isLocale, setLocale, t, type Locale } from '#lib/i18n/index.ts';
 
 	let { children } = $props();
 
@@ -21,7 +22,16 @@
 			?.setAttribute('content', next === 'dark' ? '#0f1b2d' : '#f5efe3');
 	}
 
+	// The saved choice wins, then the browser's languages, then French. Applied after hydration so the
+	// server-rendered page and the first client render agree.
+	function chooseLocale(next: Locale): void {
+		setLocale(next);
+		savePref('locale', next);
+	}
+
 	onMount(() => {
+		const saved = loadPref<string>('locale', '');
+		setLocale(isLocale(saved) ? saved : detectLocale(navigator.languages));
 		applyTheme(loadPref<'dark' | 'light'>('theme', 'dark'));
 		muted = sfx.muted;
 		// Audio can only start from a user gesture (iOS): unlock on the first tap or key press.
@@ -53,6 +63,7 @@
 		<span class="word">{t('app.name')}</span>
 	</a>
 	<div class="tools">
+		<LanguagePicker onchange={chooseLocale} />
 		<Button
 			size="sm"
 			variant="ghost"
@@ -122,7 +133,8 @@
 	}
 	.tools {
 		display: flex;
-		gap: 0.5rem;
+		align-items: center;
+		gap: 0.75rem;
 	}
 	main {
 		min-height: calc(100dvh - var(--bar));

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { t, type MessageKey } from '#lib/i18n/index.ts';
+	import { t, tn, type MessageKey } from '#lib/i18n/index.ts';
 	import { haptic } from '#lib/game/haptics.ts';
 	import type { GameSession } from '#lib/game/session.svelte.ts';
 	import { sfx } from '#lib/game/sfx.ts';
@@ -213,7 +213,7 @@
 			{#if store.spectators > 0}
 				<p class="spectators">
 					<Icon name="eye" size={18} />
-					{t('lobby.spectators', { n: store.spectators })}
+					{tn('lobby.spectators', store.spectators)}
 				</p>
 			{/if}
 		</div>
