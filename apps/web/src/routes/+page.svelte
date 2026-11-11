@@ -90,7 +90,7 @@
 <div class="home">
 	<section class="hero">
 		<button class="bomb-btn" type="button" onclick={poke} aria-label="Bakuro">
-			<Bomb fragment="はじ" {mood} size={width >= 900 ? 230 : 140} showTimer={false} />
+			<Bomb fragment="はじ" {mood} size={width >= 900 ? 230 : 120} showTimer={false} />
 		</button>
 		<h1>{t('app.tagline')}</h1>
 	</section>
@@ -114,37 +114,40 @@
 			<AvatarPicker bind:value={avatar} />
 		</fieldset>
 
-		<Button
-			size="lg"
-			full
-			icon="play"
-			loading={busy === 'create'}
-			disabled={busy !== null}
-			onclick={create}
-		>
-			{busy === 'create' ? t('home.creating') : t('home.create')}
-		</Button>
-
-		<p class="or"><span>{t('home.or')}</span></p>
-
-		<form class="join" onsubmit={join}>
-			<TextField
-				label={t('home.codeLabel')}
-				placeholder={t('home.codePlaceholder')}
-				bind:value={code}
-				maxlength={8}
-				uppercase
-				inputmode="text"
-			/>
+		<div class="createbar">
 			<Button
-				type="submit"
-				variant="gold"
-				disabled={busy !== null || code.trim().length < 4}
-				loading={busy === 'join'}
+				size="lg"
+				full
+				icon="play"
+				loading={busy === 'create'}
+				disabled={busy !== null}
+				onclick={create}
 			>
-				{t('home.join')}
+				{busy === 'create' ? t('home.creating') : t('home.create')}
 			</Button>
-		</form>
+		</div>
+
+		<details class="codebox">
+			<summary>{t('home.haveCode')}</summary>
+			<form class="join" onsubmit={join}>
+				<TextField
+					label={t('home.codeLabel')}
+					placeholder={t('home.codePlaceholder')}
+					bind:value={code}
+					maxlength={8}
+					uppercase
+					inputmode="text"
+				/>
+				<Button
+					type="submit"
+					variant="gold"
+					disabled={busy !== null || code.trim().length < 4}
+					loading={busy === 'join'}
+				>
+					{t('home.join')}
+				</Button>
+			</form>
+		</details>
 
 		{#if error}
 			<Banner tone="error" icon="bolt" live="assertive">{error}</Banner>
@@ -169,7 +172,7 @@
 		display: grid;
 		justify-items: center;
 		gap: 0.6rem;
-		padding-top: 3.2rem; /* room for the fuse above the bomb */
+		padding-top: 2.6rem; /* room for the fuse above the bomb */
 	}
 	.bomb-btn {
 		display: block;
@@ -182,7 +185,7 @@
 	h1 {
 		max-width: 18ch;
 		text-align: center;
-		font-size: clamp(1.5rem, 6.5vw, 1.9rem);
+		font-size: clamp(1.25rem, 5.5vw, 1.6rem);
 		line-height: 1.25;
 	}
 	.form {
@@ -203,20 +206,34 @@
 		font-weight: 700;
 		font-size: 0.95rem;
 	}
-	.or {
+	/* the main action stays on screen while the form scrolls (phones) */
+	.createbar {
+		position: sticky;
+		bottom: 0.6rem;
+		z-index: 10;
+	}
+	.codebox summary {
 		display: flex;
 		align-items: center;
-		gap: 0.8rem;
-		margin: 0;
-		color: var(--text-mute);
+		justify-content: center;
+		min-height: 48px;
+		padding: 0.3rem 1rem;
+		background: var(--surface-2);
+		color: var(--text);
+		border: var(--line) solid var(--sumi);
+		border-radius: 14px;
+		box-shadow:
+			inset 0 -4px 0 rgb(0 0 0 / 0.22),
+			0 4px 0 var(--sumi);
 		font-weight: 700;
+		cursor: pointer;
+		list-style: none;
 	}
-	.or::before,
-	.or::after {
-		content: '';
-		flex: 1;
-		border-top: var(--line) dashed var(--text-mute);
-		opacity: 0.5;
+	.codebox summary::-webkit-details-marker {
+		display: none;
+	}
+	.codebox[open] summary {
+		margin-bottom: 0.9rem;
 	}
 	.join {
 		display: grid;

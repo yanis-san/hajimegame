@@ -19,6 +19,7 @@ export const fr = {
 	'home.avatar': 'Ton avatar',
 	'home.creating': 'Création…',
 	'home.or': 'ou',
+	'home.haveCode': 'J’ai un code de partie',
 	'home.errorCreate': 'Impossible de créer la partie. Réessaie dans un instant.',
 	'home.errorRate': 'Trop de parties créées. Patiente une minute.',
 	'home.errorNotFound': 'Cette partie n’existe pas.',

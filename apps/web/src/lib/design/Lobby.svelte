@@ -413,9 +413,17 @@
 		gap: 0.1rem;
 		margin-bottom: 0;
 	}
+	/* the start / ready button stays reachable without scrolling */
 	.cta {
 		display: grid;
 		gap: 0.6rem;
+		position: sticky;
+		bottom: 0;
+		z-index: 20;
+		margin: 0 -0.9rem;
+		padding: 0.6rem 0.9rem calc(0.6rem + env(safe-area-inset-bottom));
+		background: var(--bg);
+		border-top: var(--line) solid var(--sumi);
 	}
 	.hint,
 	.wait {

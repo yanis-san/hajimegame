@@ -68,7 +68,7 @@
 <style>
 	.picker {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+		grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
 		gap: 0.8rem;
 	}
 	button {
@@ -164,5 +164,48 @@
 		background: var(--sumi);
 		color: var(--kinpaku);
 		border-radius: 50%;
+	}
+
+	/* phones: two compact cards side by side instead of two tall ones */
+	@media (max-width: 639px) {
+		.picker {
+			grid-template-columns: 1fr 1fr;
+			gap: 0.5rem;
+		}
+		.art {
+			flex-wrap: wrap;
+		}
+		button {
+			padding: 0.55rem 0.6rem 0.65rem;
+			gap: 0.25rem;
+		}
+		.art {
+			min-height: 2rem;
+			gap: 0.15rem;
+		}
+		.tile {
+			font-size: 0.95rem;
+			padding: 0 0.22rem 0.05rem;
+			border-width: 2px;
+			border-radius: 6px;
+		}
+		.link {
+			margin: 0;
+		}
+		.link :global(svg) {
+			width: 14px;
+			height: 14px;
+		}
+		.title {
+			font-size: 1.15rem;
+		}
+		.desc {
+			font-size: 0.78rem;
+			line-height: 1.3;
+		}
+		.check {
+			width: 22px;
+			height: 22px;
+		}
 	}
 </style>

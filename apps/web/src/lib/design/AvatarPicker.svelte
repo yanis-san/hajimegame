@@ -15,7 +15,7 @@
 			aria-label={t('a11y.avatar', { n: i + 1 })}
 			onclick={() => (value = i)}
 		>
-			<Avatar id={i} size={42} label={false} />
+			<Avatar id={i} size={36} label={false} />
 		</button>
 	{/each}
 </div>
@@ -30,7 +30,7 @@
 		display: grid;
 		place-items: center;
 		min-width: 44px;
-		min-height: 52px;
+		min-height: 46px;
 		padding: 0.15rem;
 		border: var(--line) solid transparent;
 		border-radius: 12px;

@@ -1,128 +1,89 @@
 <script lang="ts">
-	/** Night festival backdrop: flat colour bands, a moon, hills, a string of lanterns and a seigaiha waterline. */
-	const stars = [
-		[40, 60],
-		[120, 110],
-		[210, 50],
-		[320, 90],
-		[370, 40],
-		[70, 170],
-		[260, 150],
-		[350, 190],
-		[160, 30],
-		[20, 130]
-	];
-	const lanterns = [30, 105, 180, 255, 330];
+	/**
+	 * Night festival backdrop. It does not depend on the screen shape: one even seigaiha pattern over the whole page,
+	 * a moon in the corner and low hills along the bottom edge. Nothing stretches with the window.
+	 */
 </script>
 
-<svg
-	class="sky"
-	viewBox="0 0 400 800"
-	preserveAspectRatio="xMidYMax slice"
-	aria-hidden="true"
-	focusable="false"
->
-	<defs>
-		<pattern id="seigaiha" width="40" height="20" patternUnits="userSpaceOnUse">
-			<g fill="none" stroke="var(--sky-wave)" stroke-width="2">
-				<circle cx="20" cy="20" r="18" />
-				<circle cx="20" cy="20" r="12" />
-				<circle cx="20" cy="20" r="6" />
-				<circle cx="0" cy="10" r="18" />
-				<circle cx="0" cy="10" r="12" />
-				<circle cx="0" cy="10" r="6" />
-				<circle cx="40" cy="10" r="18" />
-				<circle cx="40" cy="10" r="12" />
-				<circle cx="40" cy="10" r="6" />
-			</g>
-		</pattern>
-	</defs>
-	<!-- flat bands, darkest at the top -->
-	<rect width="400" height="800" fill="var(--sky-1)" />
-	<rect y="180" width="400" height="620" fill="var(--sky-2)" />
-	<rect y="360" width="400" height="440" fill="var(--sky-3)" />
-	<rect y="520" width="400" height="280" fill="var(--sky-4)" />
+<div class="sky" aria-hidden="true">
+	<svg class="pattern" width="100%" height="100%" focusable="false">
+		<defs>
+			<pattern id="seigaiha" width="48" height="24" patternUnits="userSpaceOnUse">
+				<g fill="none" stroke="var(--sky-wave)" stroke-width="2">
+					<circle cx="24" cy="24" r="22" />
+					<circle cx="24" cy="24" r="15" />
+					<circle cx="24" cy="24" r="8" />
+					<circle cx="0" cy="12" r="22" />
+					<circle cx="0" cy="12" r="15" />
+					<circle cx="0" cy="12" r="8" />
+					<circle cx="48" cy="12" r="22" />
+					<circle cx="48" cy="12" r="15" />
+					<circle cx="48" cy="12" r="8" />
+				</g>
+			</pattern>
+		</defs>
+		<rect width="100%" height="100%" fill="url(#seigaiha)" />
+	</svg>
 
-	{#each stars as [x, y] (x + ':' + y)}
+	<div class="moon"></div>
+
+	<svg class="hills" viewBox="0 0 400 100" preserveAspectRatio="none" focusable="false">
 		<path
-			d="M{x} {y - 3}l1.4 1.6 1.6 1.4-1.6 1.4-1.4 1.6-1.4-1.6-1.6-1.4 1.6-1.4z"
-			fill="var(--sky-star)"
+			d="M0 62 L55 28 L120 56 L200 14 L280 52 L350 24 L400 44 V100 H0z"
+			fill="var(--sky-hill-far)"
 		/>
-	{/each}
-
-	<!-- moon: disc plus a flat crescent cut -->
-	<circle cx="352" cy="330" r="30" fill="var(--sky-moon)" stroke="var(--sumi)" stroke-width="3" />
-	<circle cx="362" cy="322" r="25" fill="var(--sky-2)" />
-
-	<!-- far hills -->
-	<path
-		d="M0 560 L60 500 L130 548 L210 480 L290 540 L360 492 L400 520 V800 H0z"
-		fill="var(--sky-hill-far)"
-	/>
-	<path
-		d="M0 620 L80 566 L170 612 L260 560 L340 604 L400 580 V800 H0z"
-		fill="var(--sky-hill-near)"
-	/>
-
-	<!-- lantern string -->
-	<path d="M-10 18 Q200 52 410 18" fill="none" stroke="var(--sumi)" stroke-width="3" />
-	{#each lanterns as x, i (x)}
-		{@const y = 30 + Math.sin(((x + 10) / 400) * Math.PI) * 14}
-		<g transform="translate({x} {y})">
-			<rect x="-3" y="0" width="6" height="8" fill="var(--sumi)" />
-			<ellipse
-				cx="0"
-				cy="22"
-				rx="14"
-				ry="16"
-				fill={i % 2 ? 'var(--shu)' : 'var(--kinpaku)'}
-				stroke="var(--sumi)"
-				stroke-width="2.5"
-			/>
-			<path
-				d="M-13 17h26M-14 23h28M-13 29h26"
-				stroke="var(--sumi)"
-				stroke-width="1.6"
-				fill="none"
-			/>
-			<rect x="-7" y="36" width="14" height="5" fill="var(--sumi)" />
-		</g>
-	{/each}
-
-	<!-- waterline -->
-	<rect y="700" width="400" height="100" fill="var(--sky-water)" />
-	<rect y="700" width="400" height="100" fill="url(#seigaiha)" />
-</svg>
+		<path d="M0 82 L70 56 L160 78 L250 50 L330 74 L400 60 V100 H0z" fill="var(--sky-hill-near)" />
+	</svg>
+</div>
 
 <style>
 	.sky {
 		position: fixed;
 		inset: 0;
-		width: 100%;
-		height: 100%;
 		z-index: -1;
 		pointer-events: none;
-		--sky-1: #0a1320;
-		--sky-2: #0f1b2d;
-		--sky-3: #14233a;
-		--sky-4: #1a2c48;
-		--sky-hill-far: #1b2a44;
-		--sky-hill-near: #16233a;
-		--sky-water: #101c30;
-		--sky-wave: #142238;
-		--sky-star: #f5efe3;
+		overflow: hidden;
+		background: var(--sky-bg);
+		--sky-bg: #0f1b2d;
+		--sky-wave: #15243b;
+		--sky-hill-far: #17263f;
+		--sky-hill-near: #1b2c49;
 		--sky-moon: #e7b94a;
 	}
 	:global(:root[data-theme='light']) .sky {
-		--sky-1: #e6dcc6;
-		--sky-2: #efe6d2;
-		--sky-3: #f5efe3;
-		--sky-4: #f8f3e8;
-		--sky-hill-far: #d7cdb6;
-		--sky-hill-near: #c8bea8;
-		--sky-water: #d9cfb8;
-		--sky-wave: #c3b79c;
-		--sky-star: #c3b79c;
-		--sky-moon: #e7b94a;
+		--sky-bg: #f5efe3;
+		--sky-wave: #e9dfc9;
+		--sky-hill-far: #e2d8c1;
+		--sky-hill-near: #d8ceb6;
+	}
+	.pattern {
+		position: absolute;
+		inset: 0;
+	}
+	.hills {
+		position: absolute;
+		left: 0;
+		bottom: 0;
+		width: 100%;
+		height: clamp(5rem, 18vh, 11rem);
+	}
+	/* flat moon: a disc with a crescent cut, drawn with two discs */
+	.moon {
+		position: absolute;
+		top: clamp(4.5rem, 12vh, 8rem);
+		right: clamp(1rem, 6vw, 6rem);
+		width: clamp(3rem, 6vw, 4.5rem);
+		aspect-ratio: 1;
+		border-radius: 50%;
+		background: var(--sky-moon);
+		border: 3px solid var(--sumi);
+		overflow: hidden;
+	}
+	.moon::after {
+		content: '';
+		position: absolute;
+		inset: -6% -34% 10% 22%;
+		border-radius: 50%;
+		background: var(--sky-bg);
 	}
 </style>
