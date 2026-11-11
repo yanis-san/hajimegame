@@ -19,6 +19,7 @@
 	let error = $state('');
 	let nameError = $state('');
 	let mood = $state<Mood | undefined>(undefined);
+	let width = $state(400);
 	let mode = $state<'classic' | 'shiritori'>('classic');
 
 	onMount(() => {
@@ -84,10 +85,12 @@
 	<meta name="description" content={t('app.tagline')} />
 </svelte:head>
 
+<svelte:window bind:innerWidth={width} />
+
 <div class="home">
 	<section class="hero">
 		<button class="bomb-btn" type="button" onclick={poke} aria-label="Bakuro">
-			<Bomb fragment="はじ" {mood} size={170} showTimer={false} />
+			<Bomb fragment="はじ" {mood} size={width >= 900 ? 230 : 140} showTimer={false} />
 		</button>
 		<h1>{t('app.tagline')}</h1>
 	</section>
@@ -160,13 +163,13 @@
 		gap: 1.1rem;
 		max-width: 36rem;
 		margin: 0 auto;
-		padding: 0.5rem 1rem calc(1.5rem + env(safe-area-inset-bottom));
+		padding: 0.2rem 1rem calc(1.5rem + env(safe-area-inset-bottom));
 	}
 	.hero {
 		display: grid;
 		justify-items: center;
-		gap: 0.9rem;
-		padding-top: 1.8rem;
+		gap: 0.6rem;
+		padding-top: 3.2rem; /* room for the fuse above the bomb */
 	}
 	.bomb-btn {
 		display: block;
@@ -231,5 +234,27 @@
 		color: var(--text-mute);
 		font-weight: 700;
 		padding: 0.6rem 0.2rem;
+	}
+
+	/* desktop: the bomb and the pitch on the left, the form on the right: no empty band at the top */
+	@media (min-width: 900px) {
+		.home {
+			max-width: 68rem;
+			grid-template-columns: 1fr 1.1fr;
+			align-items: center;
+			gap: 3.5rem;
+			min-height: calc(100dvh - var(--bar, 52px) - 1rem);
+		}
+		.hero {
+			padding-top: 5.5rem;
+			gap: 1.2rem;
+		}
+		h1 {
+			max-width: 14ch;
+			font-size: 2.3rem;
+		}
+		footer {
+			grid-column: 1 / -1;
+		}
 	}
 </style>

@@ -92,6 +92,9 @@
 		box-sizing: border-box;
 		padding: 0 0.75rem;
 		padding-top: env(safe-area-inset-top);
+		/* solid band so scrolled content never runs behind the logo and buttons */
+		background: var(--bg);
+		border-bottom: var(--line) solid var(--sumi);
 	}
 	.logo {
 		display: inline-flex;

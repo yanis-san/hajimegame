@@ -54,11 +54,13 @@
 					<span class="tile hot">ま</span><span class="tile">くら</span>
 				{/if}
 			</span>
-			<span class="title">{t(`mode.${mode}.title` as const)}</span>
+			<span class="head">
+				<span class="title">{t(`mode.${mode}.title` as const)}</span>
+				{#if value === mode}
+					<span class="check"><Icon name="check" size={16} /></span>
+				{/if}
+			</span>
 			<span class="desc">{t(`mode.${mode}.desc` as const)}</span>
-			{#if value === mode}
-				<span class="check"><Icon name="check" size={16} /></span>
-			{/if}
 		</button>
 	{/each}
 </div>
@@ -147,14 +149,18 @@
 		line-height: 1.35;
 		font-weight: 500;
 	}
+	.head {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
+	}
 	.check {
-		position: absolute;
-		top: 0.7rem;
-		right: 0.7rem;
 		display: grid;
 		place-items: center;
 		width: 28px;
 		height: 28px;
+		flex: none;
 		background: var(--sumi);
 		color: var(--kinpaku);
 		border-radius: 50%;
