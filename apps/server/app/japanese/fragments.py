@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import random
 from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence
@@ -12,7 +13,11 @@ from app.japanese.levels import LEVELS, level_index
 
 DEFAULT_MIN_WORDS = 80
 STORE_MIN_TOTAL = 20  # fragments below this total are not worth storing
-_UNPLAYABLE_SINGLES = frozenset({"ん", "を"})
+_UNPLAYABLE_SINGLES = frozenset({"ん", "を", "ゔ"})
+# Share of each fragment length among the prompts: mostly 2 kana, often 3, rarely 1 or 4+.
+LENGTH_WEIGHTS = {1: 0.06, 2: 0.58, 3: 0.33, 4: 0.03}
+RECENT_FIRSTS = 4  # the first kana of the last prompts is avoided, so prompts do not feel repetitive
+N_WEIGHT = 0.2  # ん-initial fragments are legal but awkward; keep them uncommon
 
 
 def count_fragments(entries: Iterable[tuple[int, Sequence[str]]]) -> dict[str, list[int]]:
@@ -69,12 +74,36 @@ class FragmentTable:
         return self._fragments
 
     def pick(self, rng: random.Random, tier: int = 0, recent: Sequence[str] = ()) -> Fragment:
-        """Pick a fragment of ``tier`` (clamped), avoiding ``recent`` ones when possible."""
+        """Pick a fragment of ``tier`` (clamped), avoiding ``recent`` ones when possible.
+
+        Choosing uniformly among fragments would give mostly long, rare-looking ones and many starting with
+        the same kana. So the length is drawn first (``LENGTH_WEIGHTS``), then the first kana (flattened by a
+        square root so common kana stay common, with ん damped,
+        and not one of the last few), and only then the fragment itself.
+        """
         tier = max(0, min(2, tier))
         pool = [f for f in self._fragments if f.tier == tier and f.text not in recent]
         if not pool:
             pool = [f for f in self._fragments if f.text not in recent] or list(self._fragments)
-        return pool[rng.randrange(len(pool))]
+        by_length: dict[int, list[Fragment]] = defaultdict(list)
+        for fragment in pool:
+            by_length[len(fragment.text)].append(fragment)
+        lengths = list(by_length)
+        length = rng.choices(lengths, [LENGTH_WEIGHTS.get(n, 0.01) for n in lengths])[0]
+        candidates = by_length[length]
+        recent_firsts = {text[0] for text in recent[-RECENT_FIRSTS:]}
+        fresh = [f for f in candidates if f.text[0] not in recent_firsts]
+        candidates = fresh or candidates
+        firsts: dict[str, list[Fragment]] = defaultdict(list)
+        for fragment in candidates:
+            firsts[fragment.text[0]].append(fragment)
+        keys = list(firsts)
+        weights = [
+            math.sqrt(sum(f.words for f in firsts[key])) * (N_WEIGHT if key == "ん" else 1.0) for key in keys
+        ]
+        first = rng.choices(keys, weights)[0]
+        group = firsts[first]
+        return group[rng.randrange(len(group))]
 
     def pick_text(self, rng: random.Random, tier: int, recent: Sequence[str]) -> str:
         """FragmentPicker port used by the game engine."""
