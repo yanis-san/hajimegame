@@ -7,7 +7,7 @@ import type { Mode, PlayerView, ResultRow, WordView } from '@hajime/protocol';
 
 const KEY = 'hajime:history:v1';
 /** Oldest games are dropped beyond this number. */
-export const MAX_GAMES = 30;
+export const MAX_GAMES = 10;
 /** A game longer than this keeps its first words only (a normal game has far fewer). */
 export const MAX_WORDS = 400;
 
