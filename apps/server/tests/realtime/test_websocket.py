@@ -44,7 +44,8 @@ async def start_game(clients: list[Client], **settings: Any) -> None:
         await client.wait("turn", timeout=8)
 
 
-def valid_word(dictionary: Dictionary, fragment: str, used: set[str], level: str = "n4") -> str:
+def valid_word(dictionary: Dictionary, fragment: str, used: set[str], level: str = "n1") -> str:
+    """A word the game accepts for ``fragment``. Rooms validate at the widest level (n1), so sample there."""
     for word in dictionary.sample_words(fragment, level, 200):
         if word not in used:
             used.add(word)
