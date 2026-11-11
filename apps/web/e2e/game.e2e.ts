@@ -225,17 +225,23 @@ test.describe('interface language lives in the URL', () => {
 		expect(en).not.toMatch(/Créer|Rejoindre|pseudo|Trouve/);
 	});
 
-	test('the bare root follows the browser language, unless a language was chosen', async ({
+	test('any page without a prefix follows the browser language, unless a language was chosen', async ({
 		request
 	}) => {
 		const ja = await request.get('/', {
-			headers: { 'accept-language': 'ja,en;q=0.8' },
+			headers: { 'accept-language': 'ja,en;q=0.8', accept: 'text/html' },
 			maxRedirects: 0
 		});
 		expect(ja.status()).toBe(302);
 		expect(ja.headers()['location']).toMatch(/\/ja$/);
+		const room = await request.get('/r/K7M2QX?x=1', {
+			headers: { 'accept-language': 'en-GB,en;q=0.9', accept: 'text/html' },
+			maxRedirects: 0
+		});
+		expect(room.status()).toBe(302);
+		expect(room.headers()['location']).toMatch(/\/en\/r\/K7M2QX\?x=1$/);
 		const chosen = await request.get('/', {
-			headers: { 'accept-language': 'ja', cookie: 'hajime_lang=fr' },
+			headers: { 'accept-language': 'ja', cookie: 'hajime_lang=fr', accept: 'text/html' },
 			maxRedirects: 0
 		});
 		expect(chosen.status()).toBe(200);
@@ -278,4 +284,29 @@ test.describe('interface language lives in the URL', () => {
 		await expect(page.getByRole('button', { name: 'Start the game' })).toBeVisible();
 		await expect(page.getByText('Yanis').first()).toBeVisible(); // still in the room
 	});
+});
+
+test('two players can play in different interface languages', async ({ browser }) => {
+	const host = await newPlayer(browser, 'Yanis');
+	const guest = await newPlayer(browser, 'Aya');
+	const code = await createRoom(host); // French
+	await host.page.waitForLoadState('networkidle');
+	await guest.page.goto(`/ja/r/${code}`);
+	await guest.page.getByLabel('ニックネーム').fill('Aya');
+	await guest.page.getByRole('button', { name: '入る' }).click();
+	await expect(guest.page.getByRole('button', { name: '準備中' })).toBeVisible();
+	await expect(
+		host.page
+			.getByRole('button', { name: 'Pas prêt' })
+			.or(host.page.getByText('Aya').first())
+			.first()
+	).toBeVisible();
+	await expect(host.page.getByRole('button', { name: 'Lancer la partie' })).toBeVisible();
+	await guest.page.getByRole('button', { name: '準備中' }).click();
+	await expect(host.page.getByRole('button', { name: 'Lancer la partie' })).toBeEnabled();
+	await host.page.getByRole('button', { name: 'Lancer la partie' }).click();
+	await expect(host.page.locator('.game')).toBeVisible({ timeout: 15_000 });
+	await expect(guest.page.locator('.game')).toBeVisible();
+	await expect(guest.page.getByText(/の番|あなたの番/).first()).toBeVisible();
+	await expect(host.page.getByText(/Tour de|À toi/).first()).toBeVisible();
 });
