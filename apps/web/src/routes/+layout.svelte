@@ -167,6 +167,24 @@
 		align-items: center;
 		gap: 0.75rem;
 	}
+	/* narrow phones: tighter bar so the logo, the language picker and the two buttons never widen the page */
+	@media (max-width: 400px) {
+		.bar {
+			padding-inline: 0.5rem;
+		}
+		.tools {
+			gap: 0.4rem;
+		}
+		.logo {
+			gap: 0.4rem;
+			font-size: 1.2rem;
+		}
+	}
+	@media (max-width: 340px) {
+		.word {
+			display: none;
+		}
+	}
 	main {
 		min-height: calc(100dvh - var(--bar));
 	}
