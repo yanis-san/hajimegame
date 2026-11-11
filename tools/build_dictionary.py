@@ -28,10 +28,9 @@ import jaconv
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "apps" / "server"))
 
 from app.japanese.fragments import count_fragments  # noqa: E402
-from app.japanese.levels import bucket_for_rank  # noqa: E402
 
 JMDICT_URL = "https://www.edrdg.org/pub/Nihongo/JMdict.gz"  # full file: English plus other languages
-FORMAT_VERSION = 3
+FORMAT_VERSION = 4
 XML_LANG = "{http://www.w3.org/XML/1998/namespace}lang"
 MEANING_MAX = 90
 ROOT = Path(__file__).resolve().parent.parent
@@ -207,10 +206,10 @@ def main() -> None:
         "attribution": "This dictionary uses the JMdict file, (c) the Electronic Dictionary Research and "
         "Development Group, used in conformance with the Group's licence.",
         "entries": len(entries),
-        "rank_note": "k: smaller is more common (nfNN band, 12 = ichi1, 25 = other *1 priority, 40 = *2 priority, 99 = other)",
+        "rank_note": "k: commonness, smaller is more common (nfNN band, 12 = ichi1, 25 = other *1 priority, 40 = *2 priority, 99 = other). It only orders suggestions: every word is playable.",
     }
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    fragments = count_fragments((bucket_for_rank(int(e["k"])), e["r"]) for e in entries)  # type: ignore[arg-type, misc]
+    fragments = count_fragments(e["r"] for e in entries)  # type: ignore[misc]
     meta["fragments"] = len(fragments)
     payload = json.dumps({"meta": meta, "entries": entries, "fragments": fragments}, ensure_ascii=False, separators=(",", ":"))
     with gzip.GzipFile(args.out, "wb", mtime=0) as fh:
@@ -220,11 +219,8 @@ def main() -> None:
     for key, value in sorted(stats.items()):
         print(f"  {key}: {value}")
     print(f"  fragments stored: {len(fragments)}")
-    print(f"  rank<=6: {sum(v for k, v in ranks.items() if k <= 6)}")
-    print(f"  rank<=12: {sum(v for k, v in ranks.items() if k <= 12)}")
-    print(f"  rank<=24: {sum(v for k, v in ranks.items() if k <= 24)}")
-    print(f"  rank<=40: {sum(v for k, v in ranks.items() if k <= 40)}")
-    print(f"  rank 99 (other): {ranks[RANK_OTHER]}")
+    print(f"  common (rank<=40): {sum(v for k, v in ranks.items() if k <= 40)}")
+    print(f"  other (rank {RANK_OTHER}): {ranks[RANK_OTHER]}")
 
 
 if __name__ == "__main__":

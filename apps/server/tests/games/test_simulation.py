@@ -12,7 +12,7 @@ from app.games.bomb import events as ev
 from app.games.bomb.engine import BombEngine
 from app.games.bomb.settings import LIFE_CAP, MODES, BombSettings
 from app.japanese.dictionary import Dictionary
-from app.japanese.fragments import FragmentTable, playable_table
+from app.japanese.fragments import FragmentTable
 from app.japanese.kana import fragment_ngrams, shiritori_end
 
 GAMES = int(os.environ.get("HAJIME_SIM_GAMES", "1000"))
@@ -20,7 +20,7 @@ GAMES = int(os.environ.get("HAJIME_SIM_GAMES", "1000"))
 
 @pytest.fixture(scope="module")
 def table(dictionary: Dictionary) -> FragmentTable:
-    return playable_table(dictionary.fragment_buckets, "n1")
+    return FragmentTable(dictionary.fragment_counts)
 
 
 def check_invariants(engine: BombEngine, all_ids: set[str]) -> None:

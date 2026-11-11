@@ -9,7 +9,6 @@ from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 
 from app.japanese.kana import fragment_ngrams
-from app.japanese.levels import LEVELS, level_index
 
 DEFAULT_MIN_WORDS = 80
 STORE_MIN_TOTAL = 20  # fragments below this total are not worth storing
@@ -20,19 +19,20 @@ RECENT_FIRSTS = 4  # the first kana of the last prompts is avoided, so prompts d
 N_WEIGHT = 0.2  # ん-initial fragments are legal but awkward; keep them uncommon
 
 
-def count_fragments(entries: Iterable[tuple[int, Sequence[str]]]) -> dict[str, list[int]]:
-    """Count distinct entries per fragment, bucketed by level index.
+def count_fragments(entries: Iterable[Sequence[str]]) -> dict[str, int]:
+    """Count the distinct entries containing each fragment.
 
-    ``entries`` yields (level_bucket, readings). Result: fragment -> counts per bucket (len == len(LEVELS)).
+    ``entries`` yields the readings of each entry; an entry counts once per fragment even if several of its
+    readings contain it. Fragments with too few words are not stored.
     """
-    counts: dict[str, list[int]] = defaultdict(lambda: [0] * len(LEVELS))
-    for bucket, readings in entries:
+    counts: dict[str, int] = defaultdict(int)
+    for readings in entries:
         grams: set[str] = set()
         for reading in readings:
             grams |= fragment_ngrams(reading)
         for gram in grams:
-            counts[gram][bucket] += 1
-    return {g: c for g, c in counts.items() if sum(c) >= STORE_MIN_TOTAL}
+            counts[gram] += 1
+    return {g: n for g, n in counts.items() if n >= STORE_MIN_TOTAL}
 
 
 @dataclass(frozen=True, slots=True)
@@ -43,27 +43,21 @@ class Fragment:
 
 
 class FragmentTable:
-    """Playable fragments for one difficulty level."""
+    """Playable fragments, split in three tiers by how many words contain them (fewer words, harder)."""
 
-    def __init__(
-        self, buckets: Mapping[str, Sequence[int]], level: str, min_words: int = DEFAULT_MIN_WORDS
-    ) -> None:
-        upto = level_index(level)
-        playable = []
-        for text, counts in buckets.items():
-            if text in _UNPLAYABLE_SINGLES:
-                continue
-            total = sum(counts[: upto + 1])
-            if total >= min_words:
-                playable.append((text, total))
+    def __init__(self, counts: Mapping[str, int], min_words: int = DEFAULT_MIN_WORDS) -> None:
+        playable = [
+            (text, total)
+            for text, total in counts.items()
+            if text not in _UNPLAYABLE_SINGLES and total >= min_words
+        ]
         if not playable:
-            raise ValueError(f"no fragment reaches {min_words} words for level {level}")
+            raise ValueError(f"no fragment reaches {min_words} words")
         playable.sort(key=lambda item: (-item[1], item[0]))
         third = max(1, len(playable) // 3)
         self._fragments = tuple(
             Fragment(text, total, min(2, index // third)) for index, (text, total) in enumerate(playable)
         )
-        self.level = level
         self.min_words = min_words
 
     def __len__(self) -> int:
@@ -109,28 +103,4 @@ class FragmentTable:
         return self.pick(rng, tier, recent).text
 
 
-MIN_FRAGMENTS = 30
-
-
-def playable_table(
-    buckets: Mapping[str, Sequence[int]], level: str, min_words: int = DEFAULT_MIN_WORDS
-) -> FragmentTable:
-    """Table for ``level`` with at least ``min_words`` words per fragment.
-
-    Small levels (N5 has under 2000 words) cannot reach the default threshold, so the threshold is halved
-    until at least ``MIN_FRAGMENTS`` fragments exist. The effective value is exposed as ``table.min_words``.
-    """
-    threshold = min_words
-    while True:
-        try:
-            table = FragmentTable(buckets, level, threshold)
-        except ValueError:
-            table = None
-        if table is not None and len(table) >= MIN_FRAGMENTS:
-            return table
-        if threshold <= 3:
-            raise ValueError(f"cannot build a playable fragment table for {level}")
-        threshold = max(3, threshold // 2)
-
-
-__all__ = ["DEFAULT_MIN_WORDS", "Fragment", "FragmentTable", "count_fragments", "playable_table"]
+__all__ = ["DEFAULT_MIN_WORDS", "Fragment", "FragmentTable", "count_fragments"]

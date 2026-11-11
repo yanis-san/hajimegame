@@ -25,7 +25,7 @@
 	let particles: Particles | undefined = $state();
 	let modal = $state(false);
 	let nick = $state('Yanis');
-	let level = $state<'n5' | 'n4' | 'n3'>('n4');
+	let size = $state<'short' | 'normal' | 'long'>('normal');
 	let bonus = $state(true);
 	let avatar = $state(3);
 	let lives = $state(3);
@@ -121,20 +121,20 @@
 			<TextField label="Code" value="K7M2QX" uppercase hint="6 caractères" />
 			<div class="stack">
 				<Segmented
-					label="Niveau"
-					value={level}
+					label="Durée"
+					value={size}
 					options={[
-						{ value: 'n5', label: 'N5' },
-						{ value: 'n4', label: 'N4' },
-						{ value: 'n3', label: 'N3' }
+						{ value: 'short', label: 'Courte' },
+						{ value: 'normal', label: 'Normale' },
+						{ value: 'long', label: 'Longue' }
 					]}
-					onchange={(v) => (level = v)}
+					onchange={(v) => (size = v)}
 				/>
 				<Segmented
 					label="Désactivé"
 					disabled
-					value="n4"
-					options={[{ value: 'n4', label: 'N4' }]}
+					value="normal"
+					options={[{ value: 'normal', label: 'Normale' }]}
 					onchange={() => {}}
 				/>
 				<Toggle label="Vie bonus" checked={bonus} onchange={(v) => (bonus = v)} />

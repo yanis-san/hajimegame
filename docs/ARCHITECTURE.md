@@ -42,8 +42,8 @@ db/         SQLAlchemy models + Alembic (accounts, games, scores, seasons, group
 | Reconnect | 128-bit session token per player, grace period (default 30 s), `rejoin` returns exact snapshot. New connection replaces old one. |
 | Registry | `RoomRegistry` interface. `MemoryRegistry` for v1, `RedisRegistry` maps room code to owning instance id (SET NX + TTL heartbeat); non-owner instances answer "redirect". Tested with two instances. |
 | Dictionary | JMdict compiled by `tools/build_dictionary.py` into a versioned gzip JSON (committed). Loaded into immutable dicts at startup. |
-| Difficulty | JLPT lists are no longer published. Fallback: JMdict frequency ranks (`nfNN`, `news/ichi/spec/gai`) mapped to N5..N1 thresholds. Source and limit documented in `docs/DICTIONARY.md`; thresholds are configuration, so a community JLPT list can replace them. |
-| Fragments | Units are a kana plus following small kana. 1-3 unit n-grams with at least N (default 80) valid words per level. Plain substring test that never cuts a unit. |
+| Difficulty | No word levels: every dictionary word is playable. Difficulty is only the fuse time and the lives; the fragment tier follows how fast a player answers. See `docs/DICTIONARY.md`. |
+| Fragments | Units are a kana plus following small kana. 1-3 unit n-grams with at least N (default 80) valid words. Plain substring test that never cuts a unit. |
 | Data schema | Alembic migration 0001 creates players, games, game_players, seasons, groups, challenges up front. No API/UI beyond milestone A. |
 
 ## 4. Ambiguities and defaults chosen

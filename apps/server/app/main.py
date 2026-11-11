@@ -19,7 +19,7 @@ from app.core.ratelimit import MemoryWindowLimiter, RedisWindowLimiter, WindowLi
 from app.core.security import SecurityHeadersMiddleware
 from app.japanese.candidates import CandidateIndex
 from app.japanese.dictionary import Dictionary
-from app.japanese.fragments import FragmentTable, playable_table
+from app.japanese.fragments import FragmentTable
 from app.realtime.clock import RoomClock, SystemClock
 from app.realtime.manager import RoomManager
 from app.realtime.registry import MemoryRegistry, RedisRegistry, RoomRegistry
@@ -50,7 +50,7 @@ async def _build_candidates(words: Dictionary, manager: RoomManager) -> None:
 
 def build_fragments(dictionary: Dictionary, min_words: int) -> FragmentTable:
     """Every word is playable, so one table (all words) serves every game."""
-    return playable_table(dictionary.fragment_buckets, "n1", min_words)
+    return FragmentTable(dictionary.fragment_counts, min_words)
 
 
 def create_app(

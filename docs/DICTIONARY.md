@@ -1,4 +1,4 @@
-# Dictionary and difficulty levels
+# Dictionary
 
 Source: the full JMdict file from the EDRDG (English plus French and other glosses), licence CC BY-SA 4.0 (https://www.edrdg.org/edrdg/licence.html).
 Rebuild with `make dictionary` (downloads the file, filters, writes `apps/server/app/japanese/data/dictionary.json.gz`).
@@ -13,29 +13,19 @@ The compiled file is committed so the game works right after cloning.
 - JMdict has no proper-noun entries (that is JMnedict), so none are present.
 - Result: about 207 000 entries, 2.4 MB gzipped.
 
-## Levels
+## No levels
 
-The JLPT stopped publishing official lists, so levels are derived from JMdict frequency data. Each entry has a rank
-(smaller is more common): the smallest `nfNN` band (500 words each), 12 for `ichi1`, 25 for other `*1` priorities
-(`news1`, `spec1`, `gai1`), 40 for `*2`, else 99.
-
-| Level | Accepts rank up to | Approx. words |
-| --- | --- | --- |
-| n5 | 6 | 3 000 |
-| n4 | 12 | 11 700 |
-| n3 | 24 | 15 600 |
-| n2 | 40 | 29 800 |
-| n1 | 99 | all |
-
-Limit: this is a frequency proxy, not the real JLPT syllabus. To use a community JLPT list instead, change
-`LEVEL_MAX_RANK` or the `k` field in `tools/build_dictionary.py`; nothing else depends on the source.
+The game has no JLPT or any other word level: every word of the dictionary is playable. Difficulty comes only from
+the fuse (it shortens as the game goes on) and from lives. Each entry still carries a commonness rank `k` (smaller is
+more common: the smallest `nfNN` band, 12 for `ichi1`, 25 for other `*1` priorities, 40 for `*2`, else 99). It is used
+only to order suggestions (CPU players, test helpers), never to refuse a word.
 
 ## Fragments
 
 Units are a kana plus its trailing small kana (ゃゅょぁぃぅぇぉゎっ). Fragments are 1 to 3 units, matched as plain
-substrings that never cut a unit. A fragment is playable for a level if at least N words (default 80) contain it;
-small levels halve N until 30 fragments exist (the effective N is reported by `FragmentTable.min_words`).
-Tier easy/medium/hard splits playable fragments by word count into thirds.
+substrings that never cut a unit. A fragment is playable if at least N words (default 80) contain it. The tier
+easy/medium/hard splits the playable fragments by word count into thirds; it follows how well a player is doing
+(response time), not any word level.
 
 ## Meanings
 

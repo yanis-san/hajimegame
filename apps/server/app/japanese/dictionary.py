@@ -15,7 +15,6 @@ from app.japanese.kana import (
     looks_like_romaji,
     normalize_text,
 )
-from app.japanese.levels import LEVEL_MAX_RANK, bucket_for_rank
 from app.japanese.romaji import romaji_to_hiragana
 
 DEFAULT_PATH: Final = Path(__file__).parent / "data" / "dictionary.json.gz"
@@ -27,7 +26,7 @@ Reject = Literal["not_in_dictionary", "missing_fragment"]
 class Entry:
     words: tuple[str, ...]
     readings: tuple[str, ...]
-    rank: int
+    rank: int  # commonness, smaller is more common; only orders suggestions, never filters words
     pos: tuple[str, ...]
     meaning_fr: str = ""  # JMdict has French for a minority of entries
     meaning_en: str = ""
@@ -58,7 +57,7 @@ class Dictionary:
     def __init__(
         self,
         entries: tuple[Entry, ...],
-        fragment_buckets: dict[str, tuple[int, ...]],
+        fragment_counts: dict[str, int],
         meta: dict[str, object],
     ) -> None:
         index: dict[str, list[int]] = {}
@@ -74,7 +73,7 @@ class Dictionary:
                 starts[first] = starts.get(first, 0) + 1
         self._starts = starts
         self._index: dict[str, tuple[int, ...]] = {k: tuple(v) for k, v in index.items()}
-        self.fragment_buckets = fragment_buckets
+        self.fragment_counts = fragment_counts
         self.meta = meta
 
     def start_count(self, kana: str) -> int:
@@ -95,61 +94,46 @@ class Dictionary:
             normalized = romaji_to_hiragana(normalized)
         return normalized
 
-    def check(
-        self, raw: str, fragment: str, level: str = "n1", *, starts_with: bool = False
-    ) -> WordMatch | WordRejected:
-        """Validate ``raw`` against the dictionary for ``level`` and ``fragment``.
+    def check(self, raw: str, fragment: str, *, starts_with: bool = False) -> WordMatch | WordRejected:
+        """Validate ``raw`` against the dictionary and ``fragment``.
 
-        Returns the first matching entry (lowest rank first) whose reading contains the fragment.
+        Every word of the dictionary is accepted. Returns the first entry whose reading contains the fragment.
         """
         if len(raw) > MAX_WORD_LENGTH * 2:
             return WordRejected("not_in_dictionary")
         text = self.canonical(raw)
         if not text or len(text) > MAX_WORD_LENGTH:
             return WordRejected("not_in_dictionary")
-        max_rank = LEVEL_MAX_RANK[level]
         found = False
         for entry_id in self._index.get(text, ()):
             entry = self._entries[entry_id]
-            if entry.rank > max_rank:
-                continue
             found = True
             for reading in entry.readings:
                 if _matches(reading, fragment, starts_with):
                     return WordMatch(entry_id, reading, text, entry.meaning_fr, entry.meaning_en)
         return WordRejected("missing_fragment" if found else "not_in_dictionary")
 
-    def reject_reason(
-        self, text: str, fragment: str, level: str = "n1", *, starts_with: bool = False
-    ) -> Reject:
+    def reject_reason(self, text: str, fragment: str, *, starts_with: bool = False) -> Reject:
         """Why ``text`` cannot be played for ``fragment`` (``not_in_dictionary`` or ``missing_fragment``)."""
-        result = self.check(text, fragment, level, starts_with=starts_with)
+        result = self.check(text, fragment, starts_with=starts_with)
         return result.reason if isinstance(result, WordRejected) else "missing_fragment"
 
-    def matches(
-        self, text: str, fragment: str, level: str = "n1", *, starts_with: bool = False
-    ) -> tuple[WordMatch, ...]:
+    def matches(self, text: str, fragment: str, *, starts_with: bool = False) -> tuple[WordMatch, ...]:
         """All entries matching (used by the engine to reject already played words)."""
         text = self.canonical(text)
-        max_rank = LEVEL_MAX_RANK[level]
         result = []
         for entry_id in self._index.get(text, ()):
             entry = self._entries[entry_id]
-            if entry.rank > max_rank:
-                continue
             for reading in entry.readings:
                 if _matches(reading, fragment, starts_with):
                     result.append(WordMatch(entry_id, reading, text, entry.meaning_fr, entry.meaning_en))
                     break
         return tuple(result)
 
-    def sample_words(self, fragment: str, level: str, limit: int = 5) -> list[str]:
-        """Example words for a fragment (used by bots and tests)."""
-        max_rank = LEVEL_MAX_RANK[level]
+    def sample_words(self, fragment: str, limit: int = 5) -> list[str]:
+        """Example words for a fragment, commonest first (used by bots and tests)."""
         out: list[str] = []
         for entry in self._entries:
-            if entry.rank > max_rank:
-                break
             for reading in entry.readings:
                 if contains_fragment(reading, fragment):
                     out.append(reading)
@@ -166,8 +150,7 @@ class Dictionary:
             Entry(tuple(e["w"]), tuple(e["r"]), int(e["k"]), tuple(e["p"]), e.get("f", ""), e.get("g", ""))
             for e in raw["entries"]
         )
-        buckets = {frag: tuple(counts) for frag, counts in raw["fragments"].items()}
-        return cls(entries, buckets, raw["meta"])
+        return cls(entries, {frag: int(n) for frag, n in raw["fragments"].items()}, raw["meta"])
 
 
-__all__ = ["Dictionary", "Entry", "WordMatch", "WordRejected", "bucket_for_rank"]
+__all__ = ["Dictionary", "Entry", "WordMatch", "WordRejected"]

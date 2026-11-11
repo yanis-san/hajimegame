@@ -31,18 +31,14 @@ sys.path.insert(0, str(SERVER_DIR))
 
 from app.japanese.dictionary import Dictionary  # noqa: E402
 from app.japanese.kana import fragment_ngrams  # noqa: E402
-from app.japanese.levels import LEVEL_MAX_RANK  # noqa: E402
 
 ORIGIN = "http://localhost:5173"
-LEVEL = "n4"
 
 
 def build_candidates(dictionary: Dictionary) -> dict[str, list[str]]:
     out: dict[str, list[str]] = {}
     for entry_id in range(len(dictionary)):
         entry = dictionary.entry(entry_id)
-        if entry.rank > LEVEL_MAX_RANK[LEVEL]:
-            continue
         for reading in entry.readings:
             for gram in fragment_ngrams(reading):
                 bucket = out.setdefault(gram, [])

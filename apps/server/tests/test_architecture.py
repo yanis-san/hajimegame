@@ -5,8 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from app.japanese.fragments import FragmentTable, count_fragments, playable_table
-from app.japanese.levels import bucket_for_rank, level_index
+from app.japanese.fragments import FragmentTable, count_fragments
 
 APP = Path(__file__).resolve().parent.parent / "app"
 FORBIDDEN = {"fastapi", "starlette", "redis", "sqlalchemy", "asyncpg", "uvicorn", "msgspec"}
@@ -29,35 +28,24 @@ def test_pure_packages_do_not_import_infrastructure(package: str) -> None:
                 )
 
 
-def test_levels() -> None:
-    assert level_index("n5") == 0
-    assert bucket_for_rank(1) == 0
-    assert bucket_for_rank(7) == 1
-    assert bucket_for_rank(99) == 4
-    with pytest.raises(ValueError, match="unknown level"):
-        level_index("n0")
-
-
-def test_count_fragments_counts_each_entry_once_per_bucket() -> None:
+def test_count_fragments_counts_each_entry_once() -> None:
     # one entry with two readings that both contain "か" still counts once
-    counts = count_fragments([(1, ["かさ", "さか"]) for _ in range(25)])
-    assert counts["か"] == [0, 25, 0, 0, 0]
-    assert counts["かさ"] == [0, 25, 0, 0, 0]
-    assert count_fragments([(0, ["かさ"])]) == {}  # too rare to store
+    counts = count_fragments([["かさ", "さか"] for _ in range(25)])
+    assert counts["か"] == 25
+    assert counts["かさ"] == 25
+    assert count_fragments([["かさ"]]) == {}  # too rare to store
 
 
 def test_fragment_table_requires_playable_fragments() -> None:
     with pytest.raises(ValueError, match="no fragment"):
-        FragmentTable({"か": [1, 0, 0, 0, 0]}, "n5", min_words=80)
-    with pytest.raises(ValueError, match="cannot build"):
-        playable_table({"か": [1, 0, 0, 0, 0]}, "n5")
+        FragmentTable({"か": 1}, min_words=80)
 
 
 def test_unplayable_single_kana_are_skipped() -> None:
     buckets = {
-        "ん": [999] * 5,
-        "を": [999] * 5,
-        **{f"{c}": [100] * 5 for c in "かきくけこさしすせそたちつてとなにぬねのはひふへほまみむめも"},
+        "ん": 999,
+        "を": 999,
+        **{f"{c}": 100 for c in "かきくけこさしすせそたちつてとなにぬねのはひふへほまみむめも"},
     }
-    table = FragmentTable(buckets, "n1")
+    table = FragmentTable(buckets)
     assert "ん" not in {f.text for f in table.fragments}

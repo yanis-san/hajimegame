@@ -32,4 +32,4 @@ def test_every_candidate_is_accepted_by_the_real_validator(
 ) -> None:
     for fragment in ("く", "ばん", "ょう"[1:], "あ"):
         for candidate in candidate_index.candidates(fragment)[:30]:
-            assert dictionary.matches(candidate.reading, fragment, "n1"), (fragment, candidate)
+            assert dictionary.matches(candidate.reading, fragment), (fragment, candidate)

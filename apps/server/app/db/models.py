@@ -108,7 +108,7 @@ class Challenge(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(sa.Uuid, primary_key=True, default=_uuid)
     kind: Mapped[str] = mapped_column(sa.String(16))  # "daily" | "friend"
-    config: Mapped[dict[str, Any]] = mapped_column(JSONType, default=dict)  # seed, level, mode...
+    config: Mapped[dict[str, Any]] = mapped_column(JSONType, default=dict)  # seed, mode...
     created_by: Mapped[uuid.UUID | None] = mapped_column(sa.ForeignKey("players.id", ondelete="SET NULL"))
     starts_at: Mapped[datetime] = mapped_column(sa.DateTime)
     ends_at: Mapped[datetime | None] = mapped_column(sa.DateTime)
