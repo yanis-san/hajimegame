@@ -47,6 +47,9 @@ class AppSettings(BaseSettings):
     join_attempts_per_minute: int = 30
     invalid_messages_before_kick: int = 20
 
+    # CPU players: build the word index at startup (a few seconds in the background)
+    preload_bots: bool = True
+
     # Fragment generation
     min_fragment_words: int = 80
 

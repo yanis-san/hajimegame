@@ -25,7 +25,7 @@ from app.realtime import protocol as pr  # noqa: E402
 SCHEMA_PATH = ROOT / "packages" / "protocol" / "schema.json"
 TS_PATH = ROOT / "packages" / "protocol" / "src" / "index.ts"
 
-LITERAL_ALIASES = ("Mode", "RoomPhase", "RejectCode", "ErrorCode")
+LITERAL_ALIASES = ("Mode", "Difficulty", "RoomPhase", "RejectCode", "ErrorCode")
 
 
 def literal_names() -> dict[frozenset[object], str]:

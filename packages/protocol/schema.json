@@ -37,6 +37,12 @@
       },
       {
         "$ref": "#/$defs/Leave"
+      },
+      {
+        "$ref": "#/$defs/AddBot"
+      },
+      {
+        "$ref": "#/$defs/RemoveBot"
       }
     ],
     "discriminator": {
@@ -53,7 +59,9 @@
         "kick": "#/$defs/Kick",
         "chat": "#/$defs/Chat",
         "rematch": "#/$defs/Rematch",
-        "leave": "#/$defs/Leave"
+        "leave": "#/$defs/Leave",
+        "add_bot": "#/$defs/AddBot",
+        "remove_bot": "#/$defs/RemoveBot"
       }
     },
     "$defs": {
@@ -373,6 +381,58 @@
           "t"
         ],
         "additionalProperties": false
+      },
+      "AddBot": {
+        "title": "AddBot",
+        "type": "object",
+        "properties": {
+          "t": {
+            "enum": [
+              "add_bot"
+            ]
+          },
+          "difficulty": {
+            "enum": [
+              "easy",
+              "hard",
+              "normal"
+            ],
+            "default": "normal"
+          },
+          "v": {
+            "type": "integer",
+            "default": 1
+          }
+        },
+        "required": [
+          "t"
+        ],
+        "additionalProperties": false
+      },
+      "RemoveBot": {
+        "title": "RemoveBot",
+        "type": "object",
+        "properties": {
+          "t": {
+            "enum": [
+              "remove_bot"
+            ]
+          },
+          "player_id": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 1
+          },
+          "v": {
+            "type": "integer",
+            "default": 1
+          }
+        },
+        "required": [
+          "t",
+          "player_id"
+        ],
+        "additionalProperties": false
       }
     }
   },
@@ -668,6 +728,25 @@
               "type": "string"
             },
             "default": []
+          },
+          "bot": {
+            "type": "boolean",
+            "default": false
+          },
+          "difficulty": {
+            "anyOf": [
+              {
+                "enum": [
+                  "easy",
+                  "hard",
+                  "normal"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
           }
         },
         "required": [
@@ -1251,6 +1330,7 @@
               "bad_message",
               "bad_token",
               "bad_version",
+              "bots_loading",
               "kicked",
               "name_invalid",
               "need_more_players",
@@ -1638,6 +1718,58 @@
       ],
       "additionalProperties": false
     },
+    "AddBot": {
+      "title": "AddBot",
+      "type": "object",
+      "properties": {
+        "t": {
+          "enum": [
+            "add_bot"
+          ]
+        },
+        "difficulty": {
+          "enum": [
+            "easy",
+            "hard",
+            "normal"
+          ],
+          "default": "normal"
+        },
+        "v": {
+          "type": "integer",
+          "default": 1
+        }
+      },
+      "required": [
+        "t"
+      ],
+      "additionalProperties": false
+    },
+    "RemoveBot": {
+      "title": "RemoveBot",
+      "type": "object",
+      "properties": {
+        "t": {
+          "enum": [
+            "remove_bot"
+          ]
+        },
+        "player_id": {
+          "type": "string",
+          "maxLength": 32,
+          "minLength": 1
+        },
+        "v": {
+          "type": "integer",
+          "default": 1
+        }
+      },
+      "required": [
+        "t",
+        "player_id"
+      ],
+      "additionalProperties": false
+    },
     "Welcome": {
       "title": "Welcome",
       "type": "object",
@@ -1857,6 +1989,25 @@
             "type": "string"
           },
           "default": []
+        },
+        "bot": {
+          "type": "boolean",
+          "default": false
+        },
+        "difficulty": {
+          "anyOf": [
+            {
+              "enum": [
+                "easy",
+                "hard",
+                "normal"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         }
       },
       "required": [
@@ -2440,6 +2591,7 @@
             "bad_message",
             "bad_token",
             "bad_version",
+            "bots_loading",
             "kicked",
             "name_invalid",
             "need_more_players",

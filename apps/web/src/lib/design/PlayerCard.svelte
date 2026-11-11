@@ -37,6 +37,7 @@
 		<span class="name"
 			>{player.name}{#if you}<small>{t('game.you')}</small>{/if}</span
 		>
+		{#if player.bot}<span class="cpu">{t('cpu.tag')}</span>{/if}
 		{#if out}
 			<span class="gone">{t('game.eliminated')}</span>
 		{:else}
@@ -124,6 +125,16 @@
 		font-size: 0.72rem;
 		opacity: 0.8;
 	}
+	.cpu {
+		justify-self: start;
+		padding: 0 0.4rem;
+		background: var(--sumi);
+		color: var(--washi);
+		border-radius: 5px;
+		font-size: 0.62rem;
+		font-weight: 700;
+		letter-spacing: 0.05em;
+	}
 	.gone {
 		font-size: 0.8rem;
 		font-weight: 700;
@@ -181,6 +192,9 @@
 		.info :global(.petal) {
 			width: 11px;
 			height: 11px;
+		}
+		.info :global(.cpu) {
+			justify-self: center;
 		}
 		.name small,
 		.typing {

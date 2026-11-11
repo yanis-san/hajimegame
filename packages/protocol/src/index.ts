@@ -3,9 +3,10 @@
 export const PROTOCOL_VERSION = 1;
 
 export type Mode = "classic" | "shiritori";
+export type Difficulty = "easy" | "normal" | "hard";
 export type RoomPhase = "lobby" | "countdown" | "playing" | "finished";
 export type RejectCode = "not_in_dictionary" | "missing_fragment" | "already_used" | "not_your_turn" | "too_late" | "ends_with_n";
-export type ErrorCode = "bad_version" | "bad_message" | "room_not_found" | "room_full" | "bad_token" | "name_invalid" | "rate_limited" | "not_host" | "not_allowed" | "wrong_phase" | "need_more_players" | "players_not_ready" | "kicked" | "replaced" | "server_restarting" | "wrong_instance";
+export type ErrorCode = "bad_version" | "bad_message" | "room_not_found" | "room_full" | "bad_token" | "name_invalid" | "rate_limited" | "not_host" | "not_allowed" | "wrong_phase" | "need_more_players" | "players_not_ready" | "kicked" | "replaced" | "server_restarting" | "wrong_instance" | "bots_loading";
 
 export interface SettingsView {
   lives: number;
@@ -27,6 +28,8 @@ export interface PlayerView {
   lives: number;
   score: number;
   bonus: string[];
+  bot: boolean;
+  difficulty: Difficulty | null;
 }
 
 export interface TurnView {
@@ -133,7 +136,19 @@ export interface Leave {
   v?: number;
 }
 
-export type ClientMessage = Join | Rejoin | Ready | Start | SetSettings | Typing | Submit | Ping | Kick | Chat | Rematch | Leave;
+export interface AddBot {
+  t: "add_bot";
+  difficulty?: Difficulty;
+  v?: number;
+}
+
+export interface RemoveBot {
+  t: "remove_bot";
+  player_id: string;
+  v?: number;
+}
+
+export type ClientMessage = Join | Rejoin | Ready | Start | SetSettings | Typing | Submit | Ping | Kick | Chat | Rematch | Leave | AddBot | RemoveBot;
 
 // ---- server -> client
 export interface Welcome {

@@ -10,6 +10,7 @@ from collections import defaultdict
 from app.core import metrics
 from app.core.config import AppSettings
 from app.core.logging import get_logger
+from app.japanese.candidates import CandidateIndex
 from app.japanese.dictionary import Dictionary
 from app.japanese.fragments import FragmentTable
 from app.realtime.clock import RoomClock
@@ -58,6 +59,7 @@ class RoomManager:
         self._rooms: dict[str, Room] = {}
         self._by_ip: dict[str, set[str]] = defaultdict(set)
         self._refresher: asyncio.Task[None] | None = None
+        self.candidates: CandidateIndex | None = None  # CPU word index, filled in the background
         self._release_tasks: set[asyncio.Task[None]] = set()
 
     # ------------------------------------------------------------------ lifecycle
@@ -109,6 +111,7 @@ class RoomManager:
             settings=self._settings,
             dictionary=self._dictionary,
             fragments=self._fragments,
+            get_candidates=lambda: self.candidates,
             clock=self._clock,
             on_close=self._on_room_closed,
         )

@@ -193,3 +193,21 @@ test('shiritori option: a word ending in ん can cost a life instead of being re
 	await host.context.close();
 	await guest.context.close();
 });
+
+test('a human can play against a CPU: add it in the lobby, start alone, the CPU plays', async ({
+	browser
+}) => {
+	const host = await newPlayer(browser, 'Yanis');
+	await createRoom(host);
+	await host.page.getByRole('radio', { name: 'Difficile' }).click();
+	await host.page.getByRole('button', { name: 'Ajouter un CPU' }).click();
+	await expect(host.page.locator('.tag.cpu')).toContainText('Difficile');
+	// a CPU is always ready: the host can start without waiting for anybody
+	await expect(host.page.getByRole('button', { name: 'Lancer la partie' })).toBeEnabled();
+	await host.page.getByRole('button', { name: 'Lancer la partie' }).click();
+	await expect(host.page.locator('.game')).toBeVisible({ timeout: 15_000 });
+	await expect(host.page.locator('.cpu').first()).toHaveText('CPU');
+	// nobody types for the human: the bomb explodes, then the CPU plays a word on its own turn
+	await expect(host.page.locator('.lastcard')).toBeVisible({ timeout: 60_000 });
+	await host.context.close();
+});

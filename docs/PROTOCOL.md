@@ -40,6 +40,8 @@ the current `seq` without advancing it, so they never create gaps.
 | `submit` | `text` (max 32) | Kana, kanji or raw romaji. The server normalizes everything. |
 | `ping` | `n`, `t0` | Answered at once, outside the room queue. |
 | `kick` | `player_id` | Host only. |
+| `add_bot` | `difficulty` (`easy`/`normal`/`hard`) | Host only, lobby. Adds a CPU player; errors: `room_full`, `bots_loading`. |
+| `remove_bot` | `player_id` | Host only, lobby. |
 | `chat` | `text` (max 200) | Lobby and results. Filtered, 1 message per second. |
 | `rematch` | | Host only, after `game_over`. Returns to lobby. |
 | `leave` | | Leave immediately without grace period. |
@@ -101,3 +103,6 @@ close code 1012: reconnect after a short delay.
 The mode (`classic` or `shiritori`) is chosen once, in the body of `POST /api/rooms` (`{"mode": "shiritori"}`), and never changes
 afterwards: `settings` has no `mode` field, so a client that sends one gets `error: bad_message`. The mode is visible in
 `snapshot.settings.mode`.
+
+
+Players carry `bot` (true for CPU players, always connected and ready) and `difficulty` (CPU only).

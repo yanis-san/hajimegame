@@ -51,6 +51,14 @@ export class GameSession {
 		this.client.send({ t: 'typing', text });
 	}
 
+	addBot(difficulty: 'easy' | 'normal' | 'hard'): void {
+		this.client.send({ t: 'add_bot', difficulty });
+	}
+
+	removeBot(playerId: string): void {
+		this.client.send({ t: 'remove_bot', player_id: playerId });
+	}
+
 	kick(playerId: string): void {
 		this.client.send({ t: 'kick', player_id: playerId });
 	}

@@ -17,6 +17,7 @@
 	const store = $derived(session.store);
 
 	let copied = $state(false);
+	let cpuLevel = $state<'easy' | 'normal' | 'hard'>('normal');
 	let chatText = $state('');
 	let seconds = $state(0);
 	let notice = $state('');
@@ -31,6 +32,7 @@
 	);
 	const counting = $derived(store.phase === 'countdown');
 	const isHost = $derived(store.isHost);
+	const canAddCpu = $derived(isHost && store.players.length < store.settings.max_players);
 	const meReady = $derived(store.me?.ready ?? false);
 
 	// Countdown: derived from the server deadline and our clock estimate, so every screen reads the same number.
@@ -156,7 +158,11 @@
 							/>
 						</div>
 						<div class="state">
-							{#if player.host}
+							{#if player.bot}
+								<span class="tag cpu">
+									{t('cpu.tag')} · {t(`cpu.${player.difficulty ?? 'normal'}` as const)}
+								</span>
+							{:else if player.host}
 								<span class="tag host">{t('lobby.host')}</span>
 							{:else if !player.connected}
 								<span class="tag off">{t('lobby.disconnected')}</span>
@@ -170,15 +176,40 @@
 									size="sm"
 									variant="ghost"
 									iconOnly
-									icon="kick"
-									label="{t('lobby.kick')} {player.name}"
-									onclick={() => session.kick(player.id)}
+									icon={player.bot ? 'close' : 'kick'}
+									label="{player.bot ? t('cpu.remove') : t('lobby.kick')} {player.name}"
+									onclick={() =>
+										player.bot ? session.removeBot(player.id) : session.kick(player.id)}
 								/>
 							{/if}
 						</div>
 					</li>
 				{/each}
 			</ul>
+			{#if isHost}
+				<div class="cpu">
+					<h3><Icon name="bolt" size={20} /> {t('cpu.title')}</h3>
+					<Segmented
+						label={t('cpu.title')}
+						value={cpuLevel}
+						options={[
+							{ value: 'easy', label: t('cpu.easy') },
+							{ value: 'normal', label: t('cpu.normal') },
+							{ value: 'hard', label: t('cpu.hard') }
+						]}
+						onchange={(level) => (cpuLevel = level)}
+					/>
+					<p class="cpu-desc">{t(`cpu.${cpuLevel}.desc` as const)}</p>
+					<Button
+						variant="secondary"
+						icon="play"
+						disabled={!canAddCpu}
+						onclick={() => session.addBot(cpuLevel)}
+					>
+						{t('cpu.add')}
+					</Button>
+				</div>
+			{/if}
 			{#if store.spectators > 0}
 				<p class="spectators">
 					<Icon name="eye" size={18} />
@@ -416,6 +447,28 @@
 	.tag.host {
 		background: var(--kinpaku);
 		color: var(--sumi);
+	}
+	.tag.cpu {
+		background: var(--ai-raised);
+		color: var(--text);
+	}
+	.cpu {
+		display: grid;
+		gap: 0.5rem;
+		margin-top: 0.9rem;
+		padding-top: 0.8rem;
+		border-top: var(--line) dashed var(--text-mute);
+	}
+	.cpu h3 {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		font-size: 1.05rem;
+	}
+	.cpu-desc {
+		margin: 0;
+		font-size: 0.9rem;
+		color: var(--text-mute);
 	}
 	.tag.off {
 		background: #ffb3a8;

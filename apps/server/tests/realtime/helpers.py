@@ -15,6 +15,7 @@ from websockets.exceptions import ConnectionClosed
 
 from app.core.config import AppSettings
 from app.core.ratelimit import MemoryWindowLimiter, WindowLimiter
+from app.japanese.candidates import CandidateIndex
 from app.japanese.dictionary import Dictionary
 from app.main import create_app
 from app.realtime.clock import RoomClock, ScaledClock
@@ -59,6 +60,7 @@ async def running_server(
     instance_id: str = "A",
     limiter: WindowLimiter | None = None,
     clock: RoomClock | None = None,
+    candidates: CandidateIndex | None = None,
     **overrides: Any,
 ) -> AsyncIterator[RunningServer]:
     settings = AppSettings(
@@ -67,6 +69,7 @@ async def running_server(
         countdown_seconds=overrides.pop("countdown_seconds", 3.0),
         grace_seconds=overrides.pop("grace_seconds", 30.0),
         min_fragment_words=80,
+        preload_bots=False,  # tests that need CPU players pass a shared index instead
         **overrides,
     )
     app = create_app(
@@ -75,6 +78,7 @@ async def running_server(
         clock=clock or ScaledClock(scale),
         limiter=limiter or MemoryWindowLimiter(),
         dictionary=dictionary,
+        candidates=candidates,
     )
     config = uvicorn.Config(
         app, host="127.0.0.1", port=0, log_level="warning", lifespan="on", ws_ping_interval=None

@@ -46,7 +46,9 @@
 		alive: true,
 		lives: 3,
 		score: 12,
-		bonus: []
+		bonus: [],
+		bot: false,
+		difficulty: null
 	};
 	const chips: { label: string; player: PlayerView; active?: boolean; typing?: string }[] = [
 		{ label: 'normal', player: base },

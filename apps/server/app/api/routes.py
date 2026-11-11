@@ -44,6 +44,10 @@ async def healthz() -> dict[str, str]:
 @router.get("/readyz")
 async def readyz(request: Request) -> JSONResponse:
     checks: dict[str, bool] = {"dictionary": request.app.state.dictionary is not None}
+    # CPU players need their word index: it is built in the background at startup (a few seconds)
+    manager: RoomManager = request.app.state.manager
+    settings: AppSettings = request.app.state.settings
+    checks["bots"] = manager.candidates is not None or not settings.preload_bots
     redis = request.app.state.redis
     if redis is not None:
         try:

@@ -15,6 +15,7 @@ from msgspec import UNSET, Meta, Struct, UnsetType
 PROTOCOL_VERSION = 1
 
 Mode = Literal["classic", "shiritori"]
+Difficulty = Literal["easy", "normal", "hard"]
 RoomPhase = Literal["lobby", "countdown", "playing", "finished"]
 RejectCode = Literal[
     "not_in_dictionary", "missing_fragment", "already_used", "not_your_turn", "too_late", "ends_with_n"
@@ -36,6 +37,7 @@ ErrorCode = Literal[
     "replaced",
     "server_restarting",
     "wrong_instance",
+    "bots_loading",
 ]
 
 Code = Annotated[str, Meta(min_length=4, max_length=8)]
@@ -120,8 +122,31 @@ class Leave(_Msg, tag_field="t", tag="leave"):
     v: int = PROTOCOL_VERSION
 
 
+class AddBot(_Msg, tag_field="t", tag="add_bot"):
+    difficulty: Difficulty = "normal"
+    v: int = PROTOCOL_VERSION
+
+
+class RemoveBot(_Msg, tag_field="t", tag="remove_bot"):
+    player_id: PlayerId
+    v: int = PROTOCOL_VERSION
+
+
 ClientMessage = (
-    Join | Rejoin | Ready | Start | SetSettings | Typing | Submit | Ping | Kick | Chat | Rematch | Leave
+    Join
+    | Rejoin
+    | Ready
+    | Start
+    | SetSettings
+    | Typing
+    | Submit
+    | Ping
+    | Kick
+    | Chat
+    | Rematch
+    | Leave
+    | AddBot
+    | RemoveBot
 )
 
 
@@ -148,6 +173,8 @@ class PlayerView(Struct, frozen=True, omit_defaults=False):
     lives: int
     score: int
     bonus: list[str] = []
+    bot: bool = False
+    difficulty: Difficulty | None = None
 
 
 class TurnView(Struct, frozen=True, omit_defaults=False):

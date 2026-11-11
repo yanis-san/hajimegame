@@ -1,6 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const reuse = !process.env.CI;
+// Ports can be changed when the defaults are taken: E2E_API_PORT=8100 E2E_WEB_PORT=5273 pnpm e2e
+const apiPort = process.env.E2E_API_PORT ?? '8000';
+const webPort = process.env.E2E_WEB_PORT ?? '5173';
 
 export default defineConfig({
 	testDir: 'e2e',
@@ -10,7 +13,7 @@ export default defineConfig({
 	fullyParallel: false,
 	workers: 1,
 	reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
-	use: { baseURL: 'http://localhost:5173', locale: 'fr-FR', trace: 'retain-on-failure' },
+	use: { baseURL: `http://localhost:${webPort}`, locale: 'fr-FR', trace: 'retain-on-failure' },
 	projects: [
 		{
 			name: 'desktop',
@@ -28,9 +31,9 @@ export default defineConfig({
 	],
 	webServer: [
 		{
-			command: 'uv run uvicorn app.main:create_app --factory --port 8000 --log-level warning',
+			command: `uv run uvicorn app.main:create_app --factory --port ${apiPort} --log-level warning`,
 			cwd: '../server',
-			url: 'http://127.0.0.1:8000/readyz',
+			url: `http://127.0.0.1:${apiPort}/readyz`,
 			reuseExistingServer: reuse,
 			timeout: 90_000,
 			env: {
@@ -41,8 +44,9 @@ export default defineConfig({
 			}
 		},
 		{
-			command: 'pnpm exec vite dev --port 5173',
-			url: 'http://localhost:5173',
+			command: `pnpm exec vite dev --port ${webPort}`,
+			url: `http://localhost:${webPort}`,
+			env: { HAJIME_API_TARGET: `http://127.0.0.1:${apiPort}` },
 			reuseExistingServer: reuse,
 			timeout: 90_000
 		}

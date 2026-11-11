@@ -130,6 +130,10 @@ class BombEngine:
         return tuple(self._players[i] for i in self._order)
 
     @property
+    def used_entry_ids(self) -> frozenset[int]:
+        return frozenset(self._used)
+
+    @property
     def history(self) -> tuple[PlayedWord, ...]:
         return tuple(self._history)
 

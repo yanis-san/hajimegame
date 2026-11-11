@@ -23,6 +23,8 @@ function player(id: string, extra: Partial<PlayerView> = {}): PlayerView {
 		lives: 3,
 		score: 0,
 		bonus: [],
+		bot: false,
+		difficulty: null,
 		...extra
 	};
 }

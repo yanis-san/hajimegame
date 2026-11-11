@@ -17,6 +17,7 @@ from app.core.config import AppSettings, get_settings
 from app.core.logging import configure_logging, get_logger
 from app.core.ratelimit import MemoryWindowLimiter, RedisWindowLimiter, WindowLimiter
 from app.core.security import SecurityHeadersMiddleware
+from app.japanese.candidates import CandidateIndex
 from app.japanese.dictionary import Dictionary
 from app.japanese.fragments import FragmentTable, playable_table
 from app.realtime.clock import RoomClock, SystemClock
@@ -41,6 +42,12 @@ async def _watch_loop_lag(interval: float = 0.01) -> None:
         metrics.LOOP_LAG.observe(max(0.0, loop.time() - expected))
 
 
+async def _build_candidates(words: Dictionary, manager: RoomManager) -> None:
+    """Index the dictionary for CPU players without blocking the event loop (takes a few seconds)."""
+    manager.candidates = await asyncio.to_thread(CandidateIndex, words)
+    log.info("bots_ready")
+
+
 def build_fragments(dictionary: Dictionary, min_words: int) -> FragmentTable:
     """Every word is playable, so one table (all words) serves every game."""
     return playable_table(dictionary.fragment_buckets, "n1", min_words)
@@ -54,6 +61,7 @@ def create_app(
     limiter: WindowLimiter | None = None,
     dictionary: Dictionary | None = None,
     redis: Redis | None = None,
+    candidates: CandidateIndex | None = None,
 ) -> FastAPI:
     cfg = settings or get_settings()
 
@@ -69,6 +77,11 @@ def create_app(
         the_limiter = limiter or (RedisWindowLimiter(client) if client is not None else MemoryWindowLimiter())
         manager = RoomManager(cfg, words, fragments, the_registry, clock or SystemClock())
         manager.start()
+        index_task = None
+        if candidates is not None:
+            manager.candidates = candidates
+        elif cfg.preload_bots:
+            index_task = asyncio.get_running_loop().create_task(_build_candidates(words, manager))
         lag_task = asyncio.get_running_loop().create_task(_watch_loop_lag())
         app.state.settings = cfg
         app.state.dictionary = words
@@ -80,6 +93,8 @@ def create_app(
             yield
         finally:
             lag_task.cancel()
+            if index_task is not None:
+                index_task.cancel()
             await manager.shutdown()
             if client is not None and redis is None:
                 await client.aclose()

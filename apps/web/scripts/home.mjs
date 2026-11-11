@@ -6,7 +6,8 @@ const profiles = [
 	['mobile', { ...devices['iPhone 13'], locale: 'fr-FR' }],
 	['desktop', { viewport: { width: 1600, height: 900 }, locale: 'fr-FR' }]
 ];
-const out = (n) => new URL(`../.shots/${n}.png`, import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1');
+const out = (n) =>
+	new URL(`../.shots/${n}.png`, import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1');
 for (const [name, options] of profiles) {
 	const p = await (await b.newContext(options)).newPage();
 	await p.goto('http://localhost:5173/');

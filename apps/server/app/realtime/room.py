@@ -25,8 +25,10 @@ from app.core.ratelimit import TokenBucket
 from app.core.security import sanitize_chat, sanitize_nickname
 from app.games.base import GameEvent, Phase, PlayerInfo
 from app.games.bomb import events as ev
+from app.games.bomb.bots import Difficulty, plan_turn
 from app.games.bomb.engine import BombEngine
 from app.games.bomb.settings import BombSettings
+from app.japanese.candidates import CandidateIndex
 from app.japanese.dictionary import Dictionary
 from app.japanese.fragments import FragmentTable
 from app.realtime import protocol as pr
@@ -38,6 +40,10 @@ log = get_logger("room")
 WORD_HISTORY = 40
 TYPING_INTERVAL = 0.1  # at most 10 relayed typing updates per second
 ZOMBIE_FACTOR = 3.0
+BOT_NAMES = (
+    "Hana", "Sora", "Mochi", "Kaito", "Tako", "Ume", "Nori", "Riku", "Yuzu", "Momo", "Kiri", "Taro",
+    "Sakura", "Daichi", "Mika", "Ren",
+)  # fmt: skip
 
 
 @dataclass(eq=False)
@@ -51,6 +57,11 @@ class Member:
     conn: Connection | None = None
     ready: bool = False
     chat_bucket: TokenBucket = field(default_factory=lambda: TokenBucket(1.0, 3))
+    bot_difficulty: Difficulty | None = None  # set for CPU players
+
+    @property
+    def is_bot(self) -> bool:
+        return self.bot_difficulty is not None
 
 
 @dataclass(slots=True)
@@ -68,6 +79,7 @@ class RoomDeps:
     dictionary: Dictionary
     fragments: FragmentTable
     clock: RoomClock
+    get_candidates: Callable[[], CandidateIndex | None] = lambda: None
     rng_factory: Callable[[], random.Random] = lambda: random.Random(secrets.randbits(64))  # noqa: S311
     on_close: Callable[[Room], None] | None = None
 
@@ -95,6 +107,8 @@ class Room:
         self._words: list[pr.WordView] = []
         self._results: list[pr.ResultRow] | None = None
         self._countdown_ends: float | None = None
+        self._bot_rng = deps.rng_factory()
+        self._bot_plan: tuple[int, str, str | None] | None = None  # (turn, bot id, word)
         self._closed = False
         self._empty_since: float | None = self.clock.now()
         self._arm("idle", self._cfg.room_idle_seconds)
@@ -219,6 +233,10 @@ class Room:
             self._on_countdown_done()
         elif name == "typing":
             self._flush_typing()
+        elif name == "bot_type":
+            self._bot_type()
+        elif name == "bot_submit":
+            self._bot_submit()
         elif name == "idle":
             self._on_idle()
         elif name == "heartbeat":
@@ -280,13 +298,15 @@ class Room:
             id=m.id,
             name=m.name,
             avatar=m.avatar,
-            ready=m.ready,
-            connected=m.conn is not None,
+            ready=m.ready or m.is_bot,
+            connected=m.conn is not None or m.is_bot,
             host=m.id == self._host,
             alive=alive,
             lives=lives,
             score=score,
             bonus=bonus,
+            bot=m.is_bot,
+            difficulty=m.bot_difficulty,
         )
 
     def _players(self) -> list[Member]:
@@ -362,6 +382,10 @@ class Room:
             self._on_rematch(conn, member)
         elif isinstance(msg, pr.Leave):
             self._remove_member(member, notify_conn=True)
+        elif isinstance(msg, pr.AddBot):
+            self._on_add_bot(conn, member, msg)
+        elif isinstance(msg, pr.RemoveBot):
+            self._on_remove_bot(conn, member, msg)
 
     # ------------------------------------------------------------------ join / leave
 
@@ -493,11 +517,11 @@ class Room:
     def _pick_host(self) -> str:
         players = self._players()
         connected = [m for m in players if m.conn is not None]
-        pool = connected or players
+        pool = connected or [m for m in players if not m.is_bot]
         return pool[0].id if pool else ""
 
     def _connected_players(self) -> int:
-        return sum(1 for m in self._members.values() if not m.spectator and m.conn is not None)
+        return sum(1 for m in self._members.values() if not m.spectator and (m.conn is not None or m.is_bot))
 
     def _check_empty(self) -> None:
         if not any(m.conn is not None for m in self._members.values()):
@@ -644,10 +668,10 @@ class Room:
     def _on_countdown_done(self) -> None:
         if self._phase != "countdown":
             return
-        players = [m for m in self._players() if m.conn is not None]
+        players = [m for m in self._players() if m.conn is not None or m.is_bot]
         # Players who dropped during the countdown simply do not play this game.
         for m in self._players():
-            if m.conn is None:
+            if m.conn is None and not m.is_bot:
                 self._members.pop(m.id, None)
                 self._disarm(f"grace:{m.id}")
                 self._patch(players={m.id: None})
@@ -703,12 +727,108 @@ class Room:
             return
         self._apply(engine.submit(member.id, msg.text, at=at))
 
+    # ------------------------------------------------------------------ CPU players
+
+    def _on_add_bot(self, conn: Connection, member: Member, msg: pr.AddBot) -> None:
+        if member.id != self._host:
+            self._error(conn, "not_host")
+            return
+        if self._phase != "lobby":
+            self._error(conn, "wrong_phase")
+            return
+        if self._deps.get_candidates() is None:
+            self._error(conn, "bots_loading", "Les CPU se préparent, réessaie dans un instant")
+            return
+        if self.player_count() >= self._settings.max_players:
+            self._error(conn, "room_full", "Partie pleine")
+            return
+        taken = {m.name for m in self._members.values()}
+        free = [n for n in BOT_NAMES if n not in taken] or list(BOT_NAMES)
+        self._join_counter += 1
+        bot = Member(
+            id=secrets.token_hex(6),
+            name=self._unique_name(self._bot_rng.choice(free)),
+            avatar=self._bot_rng.randrange(12),
+            token="",
+            spectator=False,
+            order=self._join_counter,
+            bot_difficulty=msg.difficulty,
+        )
+        self._members[bot.id] = bot
+        self._patch_players(bot)
+
+    def _on_remove_bot(self, conn: Connection, member: Member, msg: pr.RemoveBot) -> None:
+        if member.id != self._host:
+            self._error(conn, "not_host")
+            return
+        if self._phase != "lobby":
+            self._error(conn, "wrong_phase")
+            return
+        target = self._members.get(msg.player_id)
+        if target is None or not target.is_bot:
+            self._error(conn, "not_allowed")
+            return
+        self._remove_member(target)
+
+    def _schedule_bot(self, event: ev.TurnStarted) -> None:
+        """When the turn belongs to a CPU player, decide what it will do and when."""
+        engine = self._engine
+        member = self._members.get(event.player_id)
+        index = self._deps.get_candidates()
+        if engine is None or member is None or member.bot_difficulty is None or index is None:
+            return
+        plan = plan_turn(
+            member.bot_difficulty,
+            event.fragment,
+            shiritori=self._settings.mode == "shiritori",
+            used=engine.used_entry_ids,
+            fuse_seconds=event.fuse_seconds,
+            source=index,
+            rng=self._bot_rng,
+        )
+        started = event.deadline - event.fuse_seconds
+        self._bot_plan = (event.turn, member.id, plan.word)
+        if plan.word is not None:
+            self._arm_at("bot_type", started + plan.typing_at)
+            self._arm_at("bot_submit", started + plan.delay)
+        # no word: the bot draws a blank and the bomb explodes on the normal timer
+
+    def _bot_turn_is_current(self) -> tuple[BombEngine, str, str] | None:
+        engine = self._engine
+        plan = self._bot_plan
+        if engine is None or plan is None or self._phase != "playing":
+            return None
+        turn, bot_id, word = plan
+        if word is None or engine.turn != turn or engine.current_player != bot_id:
+            return None
+        return engine, bot_id, word
+
+    def _bot_type(self) -> None:
+        """The CPU "types" part of its word, so the other players see it coming."""
+        current = self._bot_turn_is_current()
+        if current is None:
+            return
+        _, _, word = current
+        self._typing = word[: max(1, (len(word) * 2) // 3)]
+        self._flush_typing()
+
+    def _bot_submit(self) -> None:
+        current = self._bot_turn_is_current()
+        if current is None:
+            return
+        engine, bot_id, word = current
+        self._typing = word
+        self._flush_typing()
+        self._apply(engine.submit(bot_id, word, at=self.clock.now()))
+
     # ------------------------------------------------------------------ engine events -> protocol
 
     def _apply(self, events: list[GameEvent]) -> None:
         for event in events:
             if isinstance(event, ev.TurnStarted):
                 self._typing = ""
+                self._disarm("bot_type")
+                self._disarm("bot_submit")
                 self._turn = pr.TurnView(
                     turn=event.turn,
                     player_id=event.player_id,
@@ -725,6 +845,7 @@ class Room:
                     deadline=self._turn.deadline,
                     fuse_ms=self._turn.fuse_ms,
                 )
+                self._schedule_bot(event)
             elif isinstance(event, ev.WordAccepted):
                 self._words.append(
                     pr.WordView(
@@ -775,6 +896,8 @@ class Room:
         assert engine is not None
         self._disarm("turn")
         self._disarm("typing")
+        self._disarm("bot_type")
+        self._disarm("bot_submit")
         self._turn = None
         self._typing = ""
         self._phase = "finished"
