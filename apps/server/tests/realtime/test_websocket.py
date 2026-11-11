@@ -185,7 +185,7 @@ async def test_full_game_flow(server: RunningServer, dictionary: Dictionary) -> 
     accepted = await a.wait("accepted")
     assert accepted["word"] == word
     assert accepted["player_id"] == active.player_id
-    assert accepted["score_gain"] >= 2
+    assert accepted["score_gain"] >= 1
     next_turn = await a.wait("turn", lambda m: m["turn"] > turn["turn"])
     assert next_turn["player_id"] == other.player_id
     assert next_turn["deadline"] > turn["deadline"] - 1

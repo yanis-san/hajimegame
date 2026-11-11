@@ -82,15 +82,14 @@ class FragmentTable:
         and not one of the last few), and only then the fragment itself.
         """
         tier = max(0, min(2, tier))
-        pool = [f for f in self._fragments if f.tier == tier and f.text not in recent]
-        if not pool:
-            pool = [f for f in self._fragments if f.text not in recent] or list(self._fragments)
+        pool = [f for f in self._fragments if f.text not in recent] or list(self._fragments)
         by_length: dict[int, list[Fragment]] = defaultdict(list)
         for fragment in pool:
             by_length[len(fragment.text)].append(fragment)
         lengths = list(by_length)
         length = rng.choices(lengths, [LENGTH_WEIGHTS.get(n, 0.01) for n in lengths])[0]
-        candidates = by_length[length]
+        # The tier only matters inside a length: single kana are all "easy" by frequency but must appear.
+        candidates = [f for f in by_length[length] if f.tier == tier] or by_length[length]
         recent_firsts = {text[0] for text in recent[-RECENT_FIRSTS:]}
         fresh = [f for f in candidates if f.text[0] not in recent_firsts]
         candidates = fresh or candidates

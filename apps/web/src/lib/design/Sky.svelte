@@ -1,7 +1,7 @@
 <script lang="ts">
 	/**
-	 * Night festival backdrop. It does not depend on the screen shape: one even seigaiha pattern over the whole page,
-	 * a moon in the corner and low hills along the bottom edge. Nothing stretches with the window.
+	 * Night festival backdrop. It does not depend on the screen shape: one even seigaiha pattern over the whole page
+	 * and low hills along the bottom edge. Nothing stretches with the window.
 	 */
 </script>
 
@@ -25,8 +25,6 @@
 		<rect width="100%" height="100%" fill="url(#seigaiha)" />
 	</svg>
 
-	<div class="moon"></div>
-
 	<svg class="hills" viewBox="0 0 400 100" preserveAspectRatio="none" focusable="false">
 		<path
 			d="M0 62 L55 28 L120 56 L200 14 L280 52 L350 24 L400 44 V100 H0z"
@@ -48,7 +46,6 @@
 		--sky-wave: #15243b;
 		--sky-hill-far: #17263f;
 		--sky-hill-near: #1b2c49;
-		--sky-moon: #e7b94a;
 	}
 	:global(:root[data-theme='light']) .sky {
 		--sky-bg: #f5efe3;
@@ -66,24 +63,5 @@
 		bottom: 0;
 		width: 100%;
 		height: clamp(5rem, 18vh, 11rem);
-	}
-	/* flat moon: a disc with a crescent cut, drawn with two discs */
-	.moon {
-		position: absolute;
-		top: clamp(4.5rem, 12vh, 8rem);
-		right: clamp(1rem, 6vw, 6rem);
-		width: clamp(3rem, 6vw, 4.5rem);
-		aspect-ratio: 1;
-		border-radius: 50%;
-		background: var(--sky-moon);
-		border: 3px solid var(--sumi);
-		overflow: hidden;
-	}
-	.moon::after {
-		content: '';
-		position: absolute;
-		inset: -6% -34% 10% 22%;
-		border-radius: 50%;
-		background: var(--sky-bg);
 	}
 </style>
