@@ -122,11 +122,24 @@ Receive = Callable[[], Awaitable[Message]]
 Send = Callable[[Message], Awaitable[None]]
 
 
+_ADMIN_CSP = (
+    b"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; "
+    b"img-src 'self' data:; font-src 'self' data:; form-action 'self'; base-uri 'self'; "
+    b"frame-ancestors 'none'; object-src 'none'"
+)
+
+
 class SecurityHeadersMiddleware:
     """Adds hardening headers to every HTTP response of the API."""
 
-    def __init__(self, app: Callable[[Scope, Receive, Send], Awaitable[None]], hsts: bool = False) -> None:
+    def __init__(
+        self,
+        app: Callable[[Scope, Receive, Send], Awaitable[None]],
+        hsts: bool = False,
+        admin_path: str | None = None,
+    ) -> None:
         self.app = app
+        self._admin_prefix = admin_path
         headers = [
             (b"x-content-type-options", b"nosniff"),
             (b"x-frame-options", b"DENY"),
@@ -138,18 +151,26 @@ class SecurityHeadersMiddleware:
         if hsts:
             headers.append((b"strict-transport-security", b"max-age=63072000; includeSubDomains"))
         self._headers = headers
+        # The admin's pages carry their own scripts and styles; everything else keeps the strictest policy.
+        self._admin_headers = [(k, _ADMIN_CSP if k == b"content-security-policy" else v) for k, v in headers]
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":
             await self.app(scope, receive, send)
             return
 
+        path: str = scope.get("path", "")
+        is_admin = self._admin_prefix is not None and (
+            path == self._admin_prefix or path.startswith(self._admin_prefix + "/")
+        )
+        headers = self._admin_headers if is_admin else self._headers
+
         async def send_with_headers(message: Message) -> None:
             if message["type"] == "http.response.start":
                 existing = {k.lower() for k, _ in message.get("headers", [])}
                 message["headers"] = [
                     *message.get("headers", []),
-                    *[(k, v) for k, v in self._headers if k not in existing],
+                    *[(k, v) for k, v in headers if k not in existing],
                 ]
             await send(message)
 

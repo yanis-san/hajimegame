@@ -23,8 +23,17 @@
 	@private path /metrics /metrics/*
 	respond @private 404
 
-	# The game server: REST, WebSockets and health checks. Everything else is the web app.
-	@game path /api/* /ws/* /healthz /readyz
+	# The admin interface is for the operator. Optionally limit it to your own address(es) with
+	# ADMIN_ALLOWED_IPS in .env (for example "203.0.113.7"); everyone else gets a plain 404. The admin has its own
+	# login, rate limit and audit log either way.
+	@admin_blocked {
+		path /admin /admin/*
+		not remote_ip {$ADMIN_ALLOWED_IPS:0.0.0.0/0 ::/0}
+	}
+	respond @admin_blocked 404
+
+	# The game server: REST, WebSockets, health checks and the admin. Everything else is the web app.
+	@game path /api/* /ws/* /healthz /readyz /admin /admin/*
 	handle @game {
 		request_body {
 			max_size 64KB

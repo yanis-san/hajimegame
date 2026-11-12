@@ -63,3 +63,10 @@ async def test_metrics_need_the_exact_token_when_one_is_set() -> None:
     assert (await metrics(settings, "Bearer wrong")).status_code == 401
     assert (await metrics(settings, "Bearer s3cret")).status_code == 200
     assert "hajime_rooms_active" in (await metrics(settings, "Bearer s3cret")).text
+
+
+def test_an_empty_optional_value_means_it_is_not_set() -> None:
+    """docker compose passes an unset optional variable as an empty string."""
+    settings = AppSettings(admin_password_hash="", admin_secret="", turnstile_secret=" ", database_url="")
+    assert not settings.admin_enabled
+    assert settings.turnstile_secret is None and settings.database_url is None

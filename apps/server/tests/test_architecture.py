@@ -73,6 +73,7 @@ def test_a_game_never_imports_another_game() -> None:
         "app.games": [p for p in _game_modules(APP / "games") if p.is_dir()],
         "app.db.games": [p for p in _game_modules(APP / "db" / "games") if p.suffix == ".py"],
         "app.api.games": [p for p in _game_modules(APP / "api" / "games") if p.suffix == ".py"],
+        "app.admin.games": [p for p in _game_modules(APP / "admin" / "games") if p.suffix == ".py"],
     }
     for package, games in layers.items():
         names = {g.stem for g in games}
@@ -94,3 +95,11 @@ def test_the_common_database_model_knows_no_particular_game() -> None:
         )
     for imported in _imports(APP / "games" / "recording.py"):
         assert not imported.startswith("app.games.bomb"), f"the shared recording imports {imported}"
+
+
+def test_the_shared_admin_pages_know_no_particular_game() -> None:
+    for name in ("views.py", "auth.py", "audit.py", "__init__.py"):
+        for imported in _imports(APP / "admin" / name):
+            assert not imported.startswith(("app.db.games", "app.games.bomb", "app.admin.games.bomb")), (
+                f"app/admin/{name} imports {imported}: game pages are registered in app/admin/games"
+            )

@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import re
 from functools import lru_cache
 
-from pydantic import Field, model_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -39,6 +40,15 @@ class AppSettings(BaseSettings):
     turnstile_secret: str | None = Field(default=None, repr=False)
     session_days: int = 30
 
+    # Admin interface (SQLAdmin) for the operator, off unless a password hash is set. Make the three
+    # values with
+    # `uv run python -m app.admin.passwd`. It needs the database; the secret signs the admin's session cookie.
+    admin_path: str = "/admin"
+    admin_username: str = "admin"
+    admin_password_hash: str | None = Field(default=None, repr=False)
+    admin_secret: str | None = Field(default=None, repr=False)
+    admin_session_hours: int = 8
+
     # Rooms
     max_players_per_room: int = 8
     max_spectators_per_room: int = 20
@@ -66,6 +76,34 @@ class AppSettings(BaseSettings):
     @property
     def is_prod(self) -> bool:
         return self.env == "prod"
+
+    @field_validator("admin_password_hash", "admin_secret", "turnstile_secret", "database_url", mode="before")
+    @classmethod
+    def _empty_means_unset(cls, value: object) -> object:
+        """Docker compose passes an unset optional value as an empty string."""
+        return None if isinstance(value, str) and not value.strip() else value
+
+    @property
+    def admin_enabled(self) -> bool:
+        return self.admin_password_hash is not None
+
+    @model_validator(mode="after")
+    def _check_admin(self) -> AppSettings:
+        """The admin is all or nothing: a password without a database or a strong secret does not start."""
+        if self.admin_password_hash is None:
+            return self
+        problems: list[str] = []
+        if not self.database_url:
+            problems.append("HAJIME_ADMIN_PASSWORD_HASH needs HAJIME_DATABASE_URL")
+        if not self.admin_password_hash.startswith("$argon2"):
+            problems.append("HAJIME_ADMIN_PASSWORD_HASH must be an Argon2 hash (see app.admin.passwd)")
+        if not self.admin_secret or len(self.admin_secret) < 32:
+            problems.append("HAJIME_ADMIN_SECRET must be at least 32 characters")
+        if not re.fullmatch(r"/[a-z0-9][a-z0-9_-]*", self.admin_path):
+            problems.append("HAJIME_ADMIN_PATH must look like /admin")
+        if problems:
+            raise ValueError("invalid admin settings: " + "; ".join(problems))
+        return self
 
     @model_validator(mode="after")
     def _refuse_unsafe_production(self) -> AppSettings:

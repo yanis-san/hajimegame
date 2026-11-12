@@ -11,6 +11,7 @@ game (`bomb`) is the reference: copy its shape.
 | `app/games/base.py` (engine protocol), `app/games/recording.py` (the record of a finished game) | `app/games/<game>/`: engine, events, settings, `recording.py` |
 | `app/db/models.py`: `games` and `game_players` (who played, place, score, guest id, language) | `app/db/games/<game>.py`: the game's own tables, its `GameStore`, its statistics queries |
 | `app/api/me.py`: `GET /api/me/stats/{game}` (identity, rate limit, checks) | `app/api/games/<game>.py`: the game's statistics provider and view |
+| `app/admin/`: the operator's admin, login and shared tables | `app/admin/games/<game>.py`: the admin pages of the game's tables |
 | `app/db/recorder.py`: writes any finished game in the background | `app/realtime/protocol.py`: the game's wire structs, prefixed with its name (`Bomb...`) |
 | `src/lib/design/`: buttons, modals, cards | `src/lib/games/<game>/`: its screens and its statistics dashboard |
 
@@ -31,9 +32,11 @@ game, or if a pure game package imports FastAPI, a database or the network.
 4. **Its statistics.** The queries in the same module; a provider in `app/api/games/<game>.py` (a `modes` property and
    an async `view(...)` returning a msgspec struct); register it in `PROVIDERS` (`app/api/games/__init__.py`). The route,
    the identity check and the rate limit are already there.
-5. **Its wire types.** Structs in `app/realtime/protocol.py` named for the game, added to `views` in
+5. **Its admin pages.** `app/admin/games/<game>.py`: a `ModelView` for each of the game's tables (read-only for records),
+   registered in `app/admin/games/__init__.py` (ADR 0008).
+6. **Its wire types.** Structs in `app/realtime/protocol.py` named for the game, added to `views` in
    `tools/gen_protocol.py`, then `pnpm protocol`.
-6. **The room.** Today `Room` creates the bomb engine and its recording directly; a second game is the moment to make
+7. **The room.** Today `Room` creates the bomb engine and its recording directly; a second game is the moment to make
    that choice depend on the game (a small factory returning the engine and the recording). Everything it hands to the
    recorder is already game-neutral.
 

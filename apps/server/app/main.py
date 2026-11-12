@@ -11,6 +11,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from redis.asyncio import Redis
 
+from app.admin import mount_admin
 from app.api.auth import router as auth_router
 from app.api.me import router as me_router
 from app.api.routes import router as api_router
@@ -70,6 +71,8 @@ def create_app(
     recorder: Recorder | None = None,
 ) -> FastAPI:
     cfg = settings or get_settings()
+    # Created here, not in the lifespan: the admin needs it when it is mounted. It connects on first use.
+    engine = create_engine(cfg.database_url, cfg.db_pool_size) if cfg.database_url else None
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -81,7 +84,6 @@ def create_app(
             client = Redis.from_url(cfg.redis_url)
         the_registry = registry or (RedisRegistry(client) if client is not None else MemoryRegistry())
         the_limiter = limiter or (RedisWindowLimiter(client) if client is not None else MemoryWindowLimiter())
-        engine = create_engine(cfg.database_url, cfg.db_pool_size) if cfg.database_url else None
         the_recorder: Recorder = recorder or NullRecorder()
         if recorder is None and engine is not None:
             database_recorder = DatabaseRecorder(engine)
@@ -135,9 +137,13 @@ def create_app(
         allow_headers=["content-type", "x-hajime-client", "x-hajime-guest"],
         allow_credentials=False,
     )
-    app.add_middleware(SecurityHeadersMiddleware, hsts=cfg.is_prod)
+    app.add_middleware(
+        SecurityHeadersMiddleware, hsts=cfg.is_prod, admin_path=cfg.admin_path if cfg.admin_enabled else None
+    )
     app.include_router(api_router)
     app.include_router(auth_router)
     app.include_router(me_router)
     app.include_router(ws_router)
+    if engine is not None and cfg.admin_enabled:
+        mount_admin(app, engine, cfg)
     return app

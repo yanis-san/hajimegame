@@ -103,6 +103,10 @@ services:
       HAJIME_METRICS_TOKEN: ${HAJIME_METRICS_TOKEN:-}
       HAJIME_DATABASE_URL: postgresql+asyncpg://hajime:${POSTGRES_PASSWORD}@postgres:5432/hajime
       HAJIME_SENTRY_DSN: ${HAJIME_SENTRY_DSN:-}
+      # the operator's admin interface: off unless the hash is set (see docs/DEPLOY.md, "The admin interface")
+      HAJIME_ADMIN_USERNAME: ${HAJIME_ADMIN_USERNAME:-admin}
+      HAJIME_ADMIN_PASSWORD_HASH: ${HAJIME_ADMIN_PASSWORD_HASH:-}
+      HAJIME_ADMIN_SECRET: ${HAJIME_ADMIN_SECRET:-}
     mem_limit: 1g
     cpus: 1.0
     networks: [app]
@@ -149,6 +153,7 @@ services:
     environment:
       DOMAIN: ${DOMAIN}
       ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL in .env}
+      ADMIN_ALLOWED_IPS: ${ADMIN_ALLOWED_IPS:-0.0.0.0/0 ::/0}
     volumes:
       - ./Caddyfile.prod:/etc/caddy/Caddyfile:ro
       - caddy_data:/data      # certificates and the ACME account: keep it across deployments

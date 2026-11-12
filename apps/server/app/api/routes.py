@@ -31,6 +31,12 @@ class CreatedRoom(BaseModel):
 
 def client_ip(request: Request) -> str:
     settings: AppSettings = request.app.state.settings
+    return client_ip_for(settings, request)
+
+
+def client_ip_for(settings: AppSettings, request: Request) -> str:
+    """The caller's address. ``request.app`` is not the main app inside a mounted one (the admin), so the
+    settings are passed in."""
     if settings.trust_proxy_headers:
         for header in ("fly-client-ip", "x-forwarded-for"):
             value = request.headers.get(header)
