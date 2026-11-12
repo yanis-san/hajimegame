@@ -59,6 +59,7 @@ IMAGE_PREFIX=$IMAGE_PREFIX
 HAJIME_METRICS_TOKEN=$(head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n')
 POSTGRES_PASSWORD=$(head -c 24 /dev/urandom | od -An -tx1 | tr -d ' \n')
 HAJIME_SENTRY_DSN=
+TURNSTILE_SECRET=
 DRAIN_SECONDS=180
 EOF
   chown deploy:deploy /opt/hajime/.env
