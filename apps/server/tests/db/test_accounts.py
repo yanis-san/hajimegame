@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import uuid
+from typing import Any
 
 import httpx
 
@@ -133,7 +134,7 @@ async def test_the_captcha_is_checked_when_a_secret_is_set(database_url: str, di
 async def test_production_closes_sign_up_when_there_is_no_captcha(
     database_url: str, dictionary: Dictionary
 ) -> None:
-    prod = {
+    prod: dict[str, Any] = {
         "env": "prod",
         "allowed_origins": ["https://hajime.test.fr"],
         "allow_missing_origin": False,
