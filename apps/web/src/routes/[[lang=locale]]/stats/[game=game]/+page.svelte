@@ -2,6 +2,7 @@
 	import { page } from '$app/state';
 	import Button from '#lib/design/Button.svelte';
 	import HistoryTabs from '#lib/design/HistoryTabs.svelte';
+	import { account } from '#lib/game/account.svelte.ts';
 	import { GAME_IDS, isGameId } from '#lib/games/registry.ts';
 	import { GAME_NAMES, STATS_VIEWS } from '#lib/games/stats.ts';
 	import { href, t } from '#lib/i18n/index.ts';
@@ -30,7 +31,7 @@
 			{/each}
 		</nav>
 	{/if}
-	<p class="lead">{t('stats.lead')}</p>
+	<p class="lead">{account.user ? t('stats.leadAccount') : t('stats.lead')}</p>
 	<!-- keyed by game, so switching game starts from a clean view -->
 	{#key game}
 		<View />

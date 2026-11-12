@@ -13,9 +13,15 @@ Source of truth: `apps/server/app/realtime/protocol.py`. TypeScript types are ge
 
 ## Connection flow
 
-Statistics (REST, not the WebSocket): `GET /api/me/stats/{game}?mode=` with the header `X-Hajime-Guest: <uuid>`
-returns that game's view (`BombStatsView` for `bomb`) for the browser that owns the identifier. `401` without the
-header, `400` for a malformed one, `404` for an unknown game, `422` for an unknown mode, `429` when asked more
+Accounts (REST): `POST /api/auth/register` (username, password, optional email, `guest_id`, captcha token),
+`POST /api/auth/login`, `POST /api/auth/logout`, `POST /api/auth/delete` (needs the password), `GET /api/auth/me`
+(`{"user": null}` for a guest). Mutations need the same-site headers; the session is the httpOnly cookie
+`hajime_session`. Errors are short codes: `bad_username`, `bad_password`, `bad_email`, `username_taken` (409),
+`bad_credentials` (401), `captcha_failed` (403), `rate_limited` (429), `accounts_unavailable` (503).
+
+Statistics (REST, not the WebSocket): `GET /api/me/stats/{game}?mode=` returns that game's view (`BombStatsView` for
+`bomb`). Signed in, the session cookie is enough and the view covers every linked browser; as a guest, the header
+`X-Hajime-Guest: <uuid>` proves the browser owns the identifier. `401` without either, `400` for a malformed identifier, `404` for an unknown game, `422` for an unknown mode, `429` when asked more
 than 30 times a minute, `503` when the server has no database. Never cached.
 
 1. `POST /api/rooms` (headers `Origin` allowed, `X-Hajime-Client: web`) returns `{"code": "K7M2QX"}`.

@@ -4,6 +4,7 @@
 	import Button from '#lib/design/Button.svelte';
 	import LanguagePicker from '#lib/design/LanguagePicker.svelte';
 	import Sky from '#lib/design/Sky.svelte';
+	import { loadAccount } from '#lib/game/account.svelte.ts';
 	import { loadPref, savePref } from '#lib/game/session.ts';
 	import { sfx } from '#lib/game/sfx.ts';
 	import { goto } from '$app/navigation';
@@ -53,6 +54,7 @@
 	}
 
 	onMount(() => {
+		void loadAccount();
 		applyTheme(loadPref<'dark' | 'light'>('theme', 'dark'));
 		muted = sfx.muted;
 		// Audio can only start from a user gesture (iOS): unlock on the first tap or key press.
@@ -95,6 +97,14 @@
 	</a>
 	<div class="tools">
 		<LanguagePicker onchange={chooseLocale} />
+		<Button
+			size="sm"
+			variant="ghost"
+			iconOnly
+			icon="user"
+			label={t('account.open')}
+			href={href('/account')}
+		/>
 		<Button
 			size="sm"
 			variant="ghost"
@@ -180,7 +190,8 @@
 			font-size: 1.2rem;
 		}
 	}
-	@media (max-width: 340px) {
+	/* the seal alone is the logo on phones: the account button needs the room */
+	@media (max-width: 400px) {
 		.word {
 			display: none;
 		}

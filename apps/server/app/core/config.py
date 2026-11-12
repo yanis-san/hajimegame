@@ -81,6 +81,8 @@ class AppSettings(BaseSettings):
                 problems.append(f"HAJIME_ALLOWED_ORIGINS has a non-production origin: {origin}")
         if self.allow_missing_origin:
             problems.append("HAJIME_ALLOW_MISSING_ORIGIN must be false")
+        if not self.cookie_secure:
+            problems.append("HAJIME_COOKIE_SECURE must be true (the sign-in cookie only travels over https)")
         if problems:
             raise ValueError("unsafe production settings: " + "; ".join(problems))
         return self

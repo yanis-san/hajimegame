@@ -20,7 +20,7 @@ docs/         this file, PROTOCOL.md, ADR/
 Server modules (dependencies point downward only):
 
 ```text
-api/        REST (health, rooms, later accounts)
+api/        REST (health, rooms, accounts, statistics)
 realtime/   WebSocket handler, Room actor, RoomRegistry (memory + Redis), clock, rate limiting
 games/      GameEngine protocol + bomb/ (pure, no I/O, injected clock + RNG)
 japanese/   normalization, romaji table, dictionary loader, fragment table

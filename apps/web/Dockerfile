@@ -17,6 +17,9 @@ COPY apps/web apps/web
 # when the game server lives on another origin, and allow that origin in HAJIME_ALLOWED_ORIGINS.
 ARG VITE_API_URL=
 ENV VITE_API_URL=$VITE_API_URL
+# Public key of the sign-up captcha (Cloudflare Turnstile); empty builds a site without the captcha widget.
+ARG VITE_TURNSTILE_SITE_KEY=
+ENV VITE_TURNSTILE_SITE_KEY=$VITE_TURNSTILE_SITE_KEY
 RUN pnpm --filter web build
 
 FROM node:24-slim@sha256:dc26ae92c9fb15cf6b1d63e20f0944b2efe0f115b20e00be48fb23fceb061c54 AS runtime

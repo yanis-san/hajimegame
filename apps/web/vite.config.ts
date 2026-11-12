@@ -11,6 +11,10 @@ const API = process.env.HAJIME_API_TARGET ?? 'http://127.0.0.1:8000';
 const apiOrigin = (
 	process.env.VITE_API_URL ? [new URL(process.env.VITE_API_URL).origin] : []
 ) as `${string}://${string}.${string}`[];
+// The captcha widget (Cloudflare Turnstile) is only allowed when the interface is built with its key.
+const turnstile = (
+	process.env.VITE_TURNSTILE_SITE_KEY ? ['https://challenges.cloudflare.com'] : []
+) as `${string}://${string}.${string}`[];
 
 export default defineConfig({
 	plugins: [
@@ -27,7 +31,8 @@ export default defineConfig({
 				mode: 'auto',
 				directives: {
 					'default-src': ['none'],
-					'script-src': ['self'],
+					'script-src': ['self', ...turnstile],
+					'frame-src': turnstile.length ? turnstile : ['none'],
 					'style-src': ['self'],
 					// inline style="..." attributes (a style attribute cannot run code)
 					'style-src-attr': ['unsafe-inline'],
@@ -36,7 +41,7 @@ export default defineConfig({
 					'media-src': ['self', 'blob:'],
 					'manifest-src': ['self'],
 					// the game server over a WebSocket (ws: only matters for local development)
-					'connect-src': ['self', 'ws:', 'wss:', ...apiOrigin],
+					'connect-src': ['self', 'ws:', 'wss:', ...apiOrigin, ...turnstile],
 					'object-src': ['none'],
 					'base-uri': ['self'],
 					'form-action': ['self'],

@@ -11,6 +11,7 @@ GOOD = {
     "env": "prod",
     "allowed_origins": ["https://hajime.dev"],
     "allow_missing_origin": False,
+    "cookie_secure": True,
 }
 
 
@@ -27,6 +28,7 @@ def test_a_proper_production_configuration_is_accepted() -> None:
         ({"allowed_origins": ["https://hajime.example"]}, "non-production origin"),
         ({"allowed_origins": ["https://*.hajime.dev"]}, "non-production origin"),
         ({"allow_missing_origin": True}, "ALLOW_MISSING_ORIGIN"),
+        ({"cookie_secure": False}, "COOKIE_SECURE"),
     ],
 )
 def test_an_unsafe_production_configuration_does_not_start(override: dict[str, object], message: str) -> None:

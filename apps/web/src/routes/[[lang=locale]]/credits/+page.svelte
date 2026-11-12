@@ -28,6 +28,11 @@
 	</section>
 
 	<section>
+		<h2>{t('credits.account.title')}</h2>
+		<p>{t('credits.account.body')}</p>
+	</section>
+
+	<section>
 		<h2>{t('credits.dictionary.title')}</h2>
 		<p>{t('credits.dictionary.body')}</p>
 		<p>

@@ -94,6 +94,9 @@ services:
       HAJIME_ENV: prod
       HAJIME_ALLOWED_ORIGINS: '["https://${DOMAIN:?set DOMAIN in .env}"]'
       HAJIME_ALLOW_MISSING_ORIGIN: "false"
+      HAJIME_COOKIE_SECURE: "true"
+      # sign-up needs the captcha: without this secret production closes sign-up (guests can still play)
+      HAJIME_TURNSTILE_SECRET: ${TURNSTILE_SECRET:-}
       # the port is not published: the only client is Caddy, which sets X-Forwarded-For itself
       HAJIME_TRUST_PROXY_HEADERS: "true"
       HAJIME_INSTANCE_ID: ${HAJIME_INSTANCE_ID:-prod-1}

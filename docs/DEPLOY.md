@@ -120,7 +120,7 @@ game). Rooms and the players' browser-side history are not in the database.
   container, point the server at it, or restore into the existing one after emptying it).
 - **Privacy.** What is stored is described to players on the game's credits page. Decide how long to keep it (for
   example 24 months) and delete older games with `delete from games where ended_at < now() - interval '24 months'`;
-  turns and players go with them. When accounts exist, deleting a person's data will be a feature, not a query.
+  turns and players go with them. A player can delete their own account from the Account page (it removes the login and detaches their games).
 
 The other state on the server is the certificate volume (`caddy_data`), which Caddy recreates if lost.
 

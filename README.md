@@ -4,7 +4,8 @@ A free multiplayer browser game for learners of Japanese: find a Japanese word b
 
 - **Two modes.** *Classic*: the prompt is a short kana fragment and your word must contain it. *Shiritori*: your word
   must start with the last kana of the previous one.
-- **2 to 8 players** on phone or desktop, **no account**: pick a nickname and an avatar and share the link. You can
+- **2 to 8 players** on phone or desktop, **no account needed**: pick a nickname and an avatar and share the link. An optional account (username and
+  password) keeps your history and statistics on all your devices. You can
   also play against CPU players (easy, normal, hard).
 - **Learn as you play.** Every accepted word shows its meaning in English (and French when the dictionary has it) and,
   for many words, an example sentence. After a game you can review every word, and the last 10 games are kept on your

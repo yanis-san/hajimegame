@@ -20,11 +20,19 @@ designed for now so that nobody's history is lost when they arrive.
 - **Statistics for a player.** `GET /api/me/stats/{game}` returns one game's numbers for the browser that asks
   (its guest id, sent in a header). For the bomb game: totals, activity, the words played most with their meaning
   and an example, and the last ten. With accounts the same view will be computed over every linked browser.
-- **Accounts (next).** Guest or account: playing as a guest stays the default and stays complete. Signing up (Google or
-  email) creates a `players` and an `accounts` row, then one statement links the browser's past games:
-  `update game_players set player_id = :player where guest_id = :guest and player_id is null`. Ranks, leaderboards
-  and friends build on `player_id`. Open decisions for that step: the sign-in methods and an email provider for
-  verification and password reset, session handling (an httpOnly cookie), and account deletion.
+- **Accounts.** Guest or account: playing as a guest stays the default and stays complete. An account is a username,
+  a password (Argon2id, hashed off the event loop) and an optional email; sign-up is protected by a captcha
+  (Cloudflare Turnstile, free) and rate limits, and there is no activation step to play. Sign-in is a random secret in
+  an httpOnly, SameSite=Lax cookie (Secure in production); the database keeps only its hash (`login_sessions`).
+  Unknown user and wrong password give the same answer and take the same time, and a username is locked after ten
+  wrong guesses in 15 minutes. Signing up or in hands over the browser's guest id: it is recorded in
+  `player_guests`, and `game_players.player_id` is filled for that browser's past games. Statistics read through
+  `player_guests`, so every device the person signs in on shows the same history. A browser already linked to one
+  account cannot be claimed by another. A player deletes their own account from the Account page: the login,
+  sessions and links are erased, and the past games stay with nobody attached.
+- **Next for accounts.** Confirming the email after sign-up (needs an SMTP server; `accounts.email_verified_at` is
+  there), password reset by email once the address is confirmed, and "Sign in with Google". Apple is left out: it
+  needs a paid developer account. Ranks, leaderboards and friends build on `player_id`.
 - **Only what is needed.** No IP address, no device information, no tracking cookie. What is stored is described to
   players on the credits page.
 - **Operations.** Migrations only add, are applied by `deploy.sh` before the new version starts, and a failure stops the
