@@ -8,7 +8,8 @@ A free multiplayer browser game for learners of Japanese: find a Japanese word b
   also play against CPU players (easy, normal, hard).
 - **Learn as you play.** Every accepted word shows its meaning in English (and French when the dictionary has it) and,
   for many words, an example sentence. After a game you can review every word, and the last 10 games are kept on your
-  device.
+  device. A statistics page shows the words you play most (with meanings and examples), your last words, and
+  your totals, per game mode.
 - **Three interface languages** (French, English, Japanese), chosen by the URL (`/en`, `/ja`), so a shared link always
   opens in its own language. Players in the same room can each use a different one.
 - **Fair and fast.** The server is authoritative (FastAPI, WebSocket), the interface is SvelteKit (Svelte 5).
@@ -53,7 +54,7 @@ apps/server        FastAPI: pure game engine, rooms, WebSocket, Japanese text ha
 apps/web           SvelteKit: home, lobby, game, results, history, /design component page
 packages/protocol  JSON schema and generated TypeScript types
 tools/             build_dictionary.py, gen_protocol.py, loadtest.py, tasks.ts
-docs/              ARCHITECTURE, PROTOCOL, DICTIONARY, DEPLOY, ADR/
+docs/              ARCHITECTURE, PROTOCOL, DICTIONARY, DEPLOY, ADDING_A_GAME, ADR/
 deploy/            production stack (Compose, Caddy), deployment scripts, Fly.io examples
 .github/           CI/CD, security scans, Dependabot
 ```

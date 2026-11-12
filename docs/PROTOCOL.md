@@ -13,6 +13,11 @@ Source of truth: `apps/server/app/realtime/protocol.py`. TypeScript types are ge
 
 ## Connection flow
 
+Statistics (REST, not the WebSocket): `GET /api/me/stats/{game}?mode=` with the header `X-Hajime-Guest: <uuid>`
+returns that game's view (`BombStatsView` for `bomb`) for the browser that owns the identifier. `401` without the
+header, `400` for a malformed one, `404` for an unknown game, `422` for an unknown mode, `429` when asked more
+than 30 times a minute, `503` when the server has no database. Never cached.
+
 1. `POST /api/rooms` (headers `Origin` allowed, `X-Hajime-Client: web`) returns `{"code": "K7M2QX"}`.
 2. Open `/ws/K7M2QX` (the `Origin` header must be allowed). On unknown code the server sends `error: room_not_found`
    and closes with 4404. If the room lives on another instance the handshake is denied with HTTP 409 and

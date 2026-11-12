@@ -10,8 +10,16 @@ designed for now so that nobody's history is lost when they arrive.
   writes it, with retries, and drops the oldest records if the database stays down (counted in
   `hajime_game_records_total`). The database being down never slows or stops a game. Without `HAJIME_DATABASE_URL`
   nothing is stored (development and tests).
+- **One game, one set of tables.** Every game stores the same common rows (`games`, `game_players`); what only
+  one game has lives in tables named for it (`bomb_turns`), written by that game's own store, read by that game's
+  statistics, and shown by that game's dashboard. Adding a game touches none of the others, and an architecture
+  test enforces it (docs/ADDING_A_GAME.md). The detail rows are written after the common ones, explicitly: they
+  are not tied to the common model by a relationship, and PostgreSQL checks the foreign key at once.
 - **Guest identity.** The browser makes a random UUID once, keeps it in localStorage and sends it when joining. It is
   stored in `game_players.guest_id` and never sent to other players. It names a browser, not a person.
+- **Statistics for a player.** `GET /api/me/stats/{game}` returns one game's numbers for the browser that asks
+  (its guest id, sent in a header). For the bomb game: totals, activity, the words played most with their meaning
+  and an example, and the last ten. With accounts the same view will be computed over every linked browser.
 - **Accounts (next).** Guest or account: playing as a guest stays the default and stays complete. Signing up (Google or
   email) creates a `players` and an `accounts` row, then one statement links the browser's past games:
   `update game_players set player_id = :player where guest_id = :guest and player_id is null`. Ranks, leaderboards

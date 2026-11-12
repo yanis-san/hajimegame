@@ -44,7 +44,7 @@ db/         SQLAlchemy models + Alembic (accounts, games, scores, seasons, group
 | Dictionary | JMdict compiled by `tools/build_dictionary.py` into a versioned gzip JSON (committed). Loaded into immutable dicts at startup. |
 | Difficulty | No word levels: every dictionary word is playable. Difficulty is only the fuse time and the lives; the fragment tier follows how fast a player answers. See `docs/DICTIONARY.md`. |
 | Fragments | Units are a kana plus following small kana. 1-3 unit n-grams with at least N (default 80) valid words. Plain substring test that never cuts a unit. |
-| Data schema | Alembic migration 0001 creates players, games, game_players, seasons, groups, challenges up front; 0002 adds the per-turn record (`turns`) and each player's guest id and language. Finished games are written after `game_over` by a background recorder (`app/db/recorder.py`), never during a game; without `HAJIME_DATABASE_URL` nothing is stored. See ADR 0007. |
+| Data schema | Alembic migration 0001 creates players, games, game_players, seasons, groups, challenges up front; 0002 adds the per-turn record (`turns`) and each player's guest id and language. Finished games are written after `game_over` by a background recorder (`app/db/recorder.py`), never during a game; without `HAJIME_DATABASE_URL` nothing is stored. See ADR 0007. Each game owns its tables (`bomb_turns`) and its statistics; see `docs/ADDING_A_GAME.md`. |
 
 ## 4. Ambiguities and defaults chosen
 

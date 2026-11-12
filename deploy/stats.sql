@@ -34,8 +34,8 @@ group by 1 order by 1 desc;
 
 \echo
 \echo '=== Modes'
-select mode, count(*) as games, round(100.0 * count(*) / sum(count(*)) over (), 1) as pct
-from games group by mode order by games desc;
+select kind as game, mode, count(*) as games, round(100.0 * count(*) / sum(count(*)) over (), 1) as pct
+from games group by kind, mode order by games desc;
 
 \echo
 \echo '=== Interface languages (human players, one count per game played)'
@@ -64,24 +64,24 @@ select count(*)                                                       as turns,
        round(100.0 * count(*) filter (where outcome <> 'word') / count(*), 1) as explosion_pct,
        round(avg(response_ms) filter (where outcome = 'word'))        as avg_answer_ms,
        round(avg(rejected_attempts), 2)                               as avg_refused_words_per_turn
-from turns;
+from bomb_turns;
 
 \echo
 \echo '=== Prompt length vs difficulty'
 select char_length(fragment) as kana, count(*) as turns,
        round(100.0 * count(*) filter (where outcome <> 'word') / count(*), 1) as explosion_pct,
        round(avg(response_ms) filter (where outcome = 'word')) as avg_answer_ms
-from turns group by 1 order by 1;
+from bomb_turns group by 1 order by 1;
 
 \echo
 \echo '=== Hardest prompts (at least 20 turns)'
 select fragment, count(*) as turns,
        round(100.0 * count(*) filter (where outcome <> 'word') / count(*), 1) as explosion_pct,
        round(avg(response_ms) filter (where outcome = 'word')) as avg_answer_ms
-from turns group by fragment having count(*) >= 20
+from bomb_turns group by fragment having count(*) >= 20
 order by explosion_pct desc, turns desc limit 15;
 
 \echo
 \echo '=== Most played words'
-select word, count(*) as times from turns where outcome = 'word' and word <> ''
+select word, count(*) as times from bomb_turns where outcome = 'word' and word <> ''
 group by word order by times desc, word limit 15;
