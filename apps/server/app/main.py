@@ -11,6 +11,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from redis.asyncio import Redis
 
+from app.api.auth import router as auth_router
 from app.api.me import router as me_router
 from app.api.routes import router as api_router
 from app.core import metrics
@@ -136,6 +137,7 @@ def create_app(
     )
     app.add_middleware(SecurityHeadersMiddleware, hsts=cfg.is_prod)
     app.include_router(api_router)
+    app.include_router(auth_router)
     app.include_router(me_router)
     app.include_router(ws_router)
     return app

@@ -1,8 +1,8 @@
-"""`GET /api/me/stats/{game}`: the statistics of the browser that asks, for one game.
+"""`GET /api/me/stats/{game}`: the statistics of whoever asks, for one game.
 
-There are no accounts yet, so "me" is the guest identifier the browser sends in `X-Hajime-Guest`: the same
-random value it sent when joining games. Knowing it is what proves a browser played those games, so it is
-never shown to anyone else, and this endpoint only returns data tied to the identifier it was given.
+A signed-in player (session cookie) gets the games of every browser linked to their account. A guest sends the
+random identifier their browser made, in `X-Hajime-Guest`: knowing it is what proves a browser played those
+games, so it is never shown to anyone else, and only data tied to it is returned.
 
 The route is the same for every game. What a game's statistics contain comes from its provider
 (``app.api.games``)."""
@@ -15,10 +15,12 @@ from datetime import date
 import msgspec
 from fastapi import APIRouter, Header, HTTPException, Request, Response
 
+from app.api.auth import current_me
 from app.api.games import PROVIDERS
 from app.api.routes import client_ip
 from app.core import metrics
 from app.core.ratelimit import WindowLimiter
+from app.db import accounts
 from app.japanese.dictionary import Dictionary
 
 router = APIRouter()
@@ -42,17 +44,22 @@ async def my_stats(
     engine = request.app.state.engine
     if engine is None:
         raise HTTPException(status_code=503, detail="stats_unavailable")  # no database: nothing was stored
-    if not x_hajime_guest:
+    who = await current_me(request)
+    if who is not None:
+        # Signed in: the player's games are those of every browser linked to the account.
+        guests = await accounts.linked_guests(engine, who.player_id)
+    elif not x_hajime_guest:
         raise HTTPException(status_code=401, detail="guest_required")
-    try:
-        guest = uuid.UUID(x_hajime_guest)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail="bad_guest") from exc
+    else:
+        try:
+            guests = [uuid.UUID(x_hajime_guest)]
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="bad_guest") from exc
     if not await limiter.allow(f"stats:{client_ip(request)}", STATS_PER_MINUTE, 60):
         metrics.RATE_LIMITED.labels("stats").inc()
         raise HTTPException(status_code=429, detail="rate_limited")
     dictionary: Dictionary = request.app.state.dictionary
-    view = await provider.view(engine, [guest], mode, dictionary, date.today())
+    view = await provider.view(engine, guests, mode, dictionary, date.today())
     # Private to the browser that asked: never cached by a proxy or the browser.
     return Response(
         msgspec.json.encode(view), media_type="application/json", headers={"cache-control": "no-store"}

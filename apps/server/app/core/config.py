@@ -34,6 +34,11 @@ class AppSettings(BaseSettings):
     # /metrics is hidden in production unless a token is set; then it needs `Authorization: Bearer <token>`
     metrics_token: str | None = Field(default=None, repr=False)
 
+    # Accounts. Signing up needs the captcha: with a Cloudflare Turnstile secret it is checked, without one
+    # (development, tests) it is skipped; in production a missing secret closes sign-up instead.
+    turnstile_secret: str | None = Field(default=None, repr=False)
+    session_days: int = 30
+
     # Rooms
     max_players_per_room: int = 8
     max_spectators_per_room: int = 20

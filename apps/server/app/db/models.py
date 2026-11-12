@@ -68,9 +68,35 @@ class Account(Base):
     subject: Mapped[str] = mapped_column(sa.String(255))  # google sub or lowercase email
     email: Mapped[str | None] = mapped_column(sa.String(255))
     password_hash: Mapped[str | None] = mapped_column(sa.String(255))
+    email_verified_at: Mapped[datetime | None] = mapped_column(
+        sa.DateTime
+    )  # null until the address is confirmed
     created_at: Mapped[datetime] = mapped_column(sa.DateTime, default=_now)
 
     player: Mapped[Player] = relationship(back_populates="account")
+
+
+class PlayerGuest(Base):
+    """A browser (its guest identifier) that belongs to an account. Statistics are read through this table, so
+    a person who signs in on several devices sees all of their games."""
+
+    __tablename__ = "player_guests"
+
+    guest_id: Mapped[uuid.UUID] = mapped_column(sa.Uuid, primary_key=True)
+    player_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey("players.id", ondelete="CASCADE"), index=True)
+    linked_at: Mapped[datetime] = mapped_column(sa.DateTime, default=_now)
+
+
+class LoginSession(Base):
+    """A signed-in browser. Only the hash of the cookie's token is stored, so a copy of the database cannot
+    be used to sign in."""
+
+    __tablename__ = "login_sessions"
+
+    token_hash: Mapped[str] = mapped_column(sa.String(64), primary_key=True)
+    player_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey("players.id", ondelete="CASCADE"), index=True)
+    created_at: Mapped[datetime] = mapped_column(sa.DateTime, default=_now)
+    expires_at: Mapped[datetime] = mapped_column(sa.DateTime)
 
 
 class Season(Base):
