@@ -57,6 +57,7 @@ DOMAIN=$DOMAIN
 ACME_EMAIL=$ACME_EMAIL
 IMAGE_PREFIX=$IMAGE_PREFIX
 HAJIME_METRICS_TOKEN=$(head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n')
+POSTGRES_PASSWORD=$(head -c 24 /dev/urandom | od -An -tx1 | tr -d ' \n')
 HAJIME_SENTRY_DSN=
 DRAIN_SECONDS=180
 EOF
@@ -64,7 +65,13 @@ EOF
   chmod 600 /opt/hajime/.env
   echo "    wrote /opt/hajime/.env"
 else
-  echo "    /opt/hajime/.env already exists: left untouched"
+  # an .env from before the database existed gets its password, nothing else is changed
+  if ! grep -q '^POSTGRES_PASSWORD=' /opt/hajime/.env; then
+    (umask 077; printf 'POSTGRES_PASSWORD=%s\n' "$(head -c 24 /dev/urandom | od -An -tx1 | tr -d ' \n')" >>/opt/hajime/.env)
+    echo "    added POSTGRES_PASSWORD to the existing /opt/hajime/.env"
+  else
+    echo "    /opt/hajime/.env already exists: left untouched"
+  fi
 fi
 
 echo "==> firewall (ssh, http, https)"

@@ -3,7 +3,8 @@
 #
 # 1. pulls the images of that tag (an immutable tag: the commit hash),
 # 2. waits a little for games in progress to finish (rooms live in memory: a restart ends them),
-# 3. starts the new containers and waits for their health checks,
+# 3. makes sure the database is up and applies its migrations (before the new version starts),
+#    then starts the new containers and waits for their health checks,
 # 4. on any failure, puts the previous version back and exits with an error.
 #
 # Needs docker compose, a .env next to this script (see production.env.example) and, to pull private images,
@@ -55,12 +56,24 @@ if [[ -n "$previous" ]]; then
   done
 fi
 
+echo "==> database: up, then migrations"
+compose up -d --wait --wait-timeout 120 postgres
+# Migrations only add (see docs/DEPLOY.md), so the version that is still running keeps working while they
+# apply, and so does a rollback to it. If one fails nothing else has been touched: stop here.
+if ! compose run --rm --no-deps server alembic upgrade head; then
+  echo "!! the database migration failed: nothing was changed, $previous is still running" >&2
+  exit 1
+fi
+
 echo "==> starting $TAG"
 if compose up -d --remove-orphans --wait --wait-timeout 180; then
   echo "$TAG" >.deployed-tag
   # keep a week of older images (a fast rollback needs them), drop the rest
   docker image prune -f --filter "until=168h" >/dev/null || true
   echo "==> deployed $TAG (previous: ${previous:-none})"
+  # A backup that silently stopped working is worse than none: say how fresh the last one is.
+  newest="$(compose exec -T backup sh -c 'find /backups -name "hajime-*.sql.gz" -mmin -1560 | sort | tail -n 1' 2>/dev/null || true)"
+  if [[ -n "$newest" ]]; then echo "==> last backup: $newest"; else echo "!! no database backup in the last 26 hours: see docs/DEPLOY.md" >&2; fi
   exit 0
 fi
 

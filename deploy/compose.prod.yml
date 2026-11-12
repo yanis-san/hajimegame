@@ -18,6 +18,75 @@ x-hardened: &hardened
     options: { max-size: "10m", max-file: "5" }
 
 services:
+  postgres:
+    image: postgres:17-alpine@sha256:e5d2edd28b1f8d40a0a6c0c9cdc545b19b56a0d5d88f94bc11a97d970d4700d0
+    restart: unless-stopped
+    read_only: true
+    # The image starts as root to prepare the data folder, then runs PostgreSQL as its own user: it needs
+    # these few capabilities for that and nothing else.
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: ["/tmp:size=64m", "/var/run/postgresql:size=1m"]
+    environment:
+      POSTGRES_USER: hajime
+      POSTGRES_DB: hajime
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data   # the game's data: keep it across deployments, and back it up
+    mem_limit: 512m
+    pids_limit: 200
+    networks: [app]   # no published port: only the other containers reach it
+    stop_grace_period: 30s
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hajime -d hajime"]
+      interval: 10s
+      timeout: 4s
+      start_period: 20s
+      retries: 5
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "5" }
+
+  # A dump of the whole database every 24 hours, kept for 14 days. See docs/DEPLOY.md to restore one and to
+  # copy the dumps off the server (a backup that lives only on the same disk is not enough).
+  backup:
+    image: postgres:17-alpine@sha256:e5d2edd28b1f8d40a0a6c0c9cdc545b19b56a0d5d88f94bc11a97d970d4700d0
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: ["/tmp:size=16m"]
+    # Runs as root so it can write in its own volume (created root-owned), but with every capability dropped
+    # and a read-only filesystem: it can write nowhere else.
+    environment:
+      PGHOST: postgres
+      PGUSER: hajime
+      PGDATABASE: hajime
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgbackups:/backups
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        while true; do
+          file=/backups/hajime-$$(date -u +%Y-%m-%d-%H%M).sql.gz
+          if pg_dump --no-owner | gzip > "$$file.tmp" && mv "$$file.tmp" "$$file"; then
+            echo "backup written: $$file"
+          else
+            rm -f "$$file.tmp"; echo "backup FAILED" >&2
+          fi
+          find /backups -name 'hajime-*.sql.gz' -mtime +14 -delete
+          sleep 86400
+        done
+    mem_limit: 128m
+    networks: [app]
+    depends_on:
+      postgres: { condition: service_healthy }
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "5" }
+
   server:
     <<: *hardened
     image: ${IMAGE_PREFIX:?set IMAGE_PREFIX in .env}/server:${TAG:?run through deploy.sh}
@@ -29,11 +98,14 @@ services:
       HAJIME_TRUST_PROXY_HEADERS: "true"
       HAJIME_INSTANCE_ID: ${HAJIME_INSTANCE_ID:-prod-1}
       HAJIME_METRICS_TOKEN: ${HAJIME_METRICS_TOKEN:-}
+      HAJIME_DATABASE_URL: postgresql+asyncpg://hajime:${POSTGRES_PASSWORD}@postgres:5432/hajime
       HAJIME_SENTRY_DSN: ${HAJIME_SENTRY_DSN:-}
     mem_limit: 1g
     cpus: 1.0
     networks: [app]
     stop_grace_period: 30s
+    depends_on:
+      postgres: { condition: service_healthy }
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8000/readyz', timeout=3)"]
       interval: 15s
@@ -98,3 +170,5 @@ networks:
 volumes:
   caddy_data:
   caddy_config:
+  pgdata:
+  pgbackups:

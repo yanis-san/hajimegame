@@ -1,7 +1,8 @@
 # Local stack to try the real containers on your machine (not for production: see deploy/compose.prod.yml).
 #   docker compose up --build              # web + game server behind one address: http://localhost:8080
-#   docker compose --profile db up -d postgres redis   # only the backing services, run the apps with `pnpm dev`
-# The game server uses no database today: Postgres is there for the accounts planned later.
+#   docker compose up -d postgres                      # only the database, then run the apps with `pnpm dev`
+# Finished games are stored in PostgreSQL (accounts will use it too). Without HAJIME_DATABASE_URL the game still
+# runs and simply does not store them.
 services:
   server:
     build: { context: ., dockerfile: apps/server/Dockerfile }
@@ -9,7 +10,11 @@ services:
       HAJIME_ENV: dev
       HAJIME_ALLOWED_ORIGINS: '["http://localhost:8080"]'
       HAJIME_TRUST_PROXY_HEADERS: "true"
+      # Finished games are stored here: run `docker compose run --rm server alembic upgrade head` once first.
+      HAJIME_DATABASE_URL: postgresql+asyncpg://hajime:hajime@postgres:5432/hajime
     expose: ["8000"]
+    depends_on:
+      postgres: { condition: service_healthy }
 
   web:
     build: { context: ., dockerfile: apps/web/Dockerfile }
@@ -26,8 +31,7 @@ services:
     depends_on: [server, web]
 
   postgres:
-    profiles: [db]
-    image: postgres:17-alpine
+    image: postgres:17-alpine@sha256:e5d2edd28b1f8d40a0a6c0c9cdc545b19b56a0d5d88f94bc11a97d970d4700d0
     environment:
       POSTGRES_USER: hajime
       POSTGRES_PASSWORD: hajime
@@ -40,7 +44,7 @@ services:
       retries: 10
 
   redis:
-    profiles: [db]
+    profiles: [scale]   # only needed with several game servers
     image: redis:7-alpine@sha256:7b1753b4c5ad8458906c272a8132b8c15f5557b000379eb115fb239706a384b7
     ports: ["127.0.0.1:6379:6379"]
     healthcheck:

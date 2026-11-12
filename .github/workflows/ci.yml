@@ -25,6 +25,16 @@ jobs:
     name: Server (lint, types, tests)
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    # A real PostgreSQL for the database tests (the same ones also run on SQLite).
+    services:
+      postgres:
+        image: postgres:17-alpine@sha256:e5d2edd28b1f8d40a0a6c0c9cdc545b19b56a0d5d88f94bc11a97d970d4700d0
+        env:
+          POSTGRES_USER: hajime
+          POSTGRES_PASSWORD: hajime
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U hajime" --health-interval 5s --health-timeout 3s --health-retries 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }
@@ -42,6 +52,7 @@ jobs:
         working-directory: apps/server
         env:
           HAJIME_SIM_GAMES: "10000"
+          HAJIME_TEST_DATABASE_URL: postgresql+asyncpg://hajime:hajime@127.0.0.1:5432/postgres
       - name: Protocol types are up to date
         run: uv run --project apps/server python tools/gen_protocol.py --check
 
@@ -166,6 +177,22 @@ jobs:
               echo "an unsafe production configuration was accepted"; exit 1
             fi
           fi
+      - name: Server image applies its migrations and connects to PostgreSQL
+        if: matrix.app == 'server'
+        run: |
+          set -euo pipefail
+          docker network create hajime-ci
+          docker run -d --name pg --network hajime-ci -e POSTGRES_USER=hajime -e POSTGRES_PASSWORD=ci -e POSTGRES_DB=hajime             postgres:17-alpine@sha256:e5d2edd28b1f8d40a0a6c0c9cdc545b19b56a0d5d88f94bc11a97d970d4700d0
+          for _ in $(seq 1 30); do docker exec pg pg_isready -U hajime -d hajime >/dev/null 2>&1 && break; sleep 1; done
+          env_args=(-e HAJIME_DATABASE_URL=postgresql+asyncpg://hajime:ci@pg:5432/hajime
+                    -e HAJIME_ALLOWED_ORIGINS='["https://ci.hajime.dev"]' -e HAJIME_ALLOW_MISSING_ORIGIN=false)
+          docker run --rm --network hajime-ci "${env_args[@]}" hajime-server:ci alembic upgrade head
+          docker run -d --name server-db --network hajime-ci -p 8001:8000 "${env_args[@]}" hajime-server:ci
+          for _ in $(seq 1 60); do
+            [ "$(docker inspect -f '{{.State.Health.Status}}' server-db)" = healthy ] && break
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:8001/readyz | tee /dev/stderr | grep -q '"database":true'
       - name: Container logs
         if: always()
         run: docker logs "hajime-${{ matrix.app }}" || true
@@ -183,6 +210,7 @@ jobs:
           TAG: ci
           DOMAIN: ci.hajime.dev
           ACME_EMAIL: ci@hajime.dev
+          POSTGRES_PASSWORD: ci
         run: docker compose -f deploy/compose.prod.yml config --quiet
       - name: Caddyfile is valid
         run: |
@@ -191,7 +219,7 @@ jobs:
             caddy:2-alpine@sha256:78bd35025c7ba85961dd149ae670315129954e77abe2383ac47c89106b35ade9 \
             caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
       - name: Shell scripts pass ShellCheck
-        run: shellcheck deploy/deploy.sh deploy/bootstrap-server.sh
+        run: shellcheck deploy/deploy.sh deploy/bootstrap-server.sh deploy/provision.sh deploy/stats.sh
       - name: Smoke test script compiles
         run: python3 -m py_compile deploy/smoke.py
 
