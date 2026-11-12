@@ -19,6 +19,10 @@ export interface JoinInfo {
 	name: string;
 	avatar: number;
 	spectator: boolean;
+	/** Private identifier of this browser (see guest.ts); sent so finished games can be linked to an account later. */
+	guest_id?: string;
+	/** Interface language, for statistics. */
+	lang?: 'fr' | 'en' | 'ja';
 }
 
 export interface SessionStore {

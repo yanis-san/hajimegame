@@ -13,7 +13,10 @@ from app.core.config import get_settings
 from app.db.models import Base
 
 config = context.config
-config.set_main_option("sqlalchemy.url", config.get_main_option("sqlalchemy.url") or get_settings().database_url)
+DATABASE_URL = config.get_main_option("sqlalchemy.url") or get_settings().database_url
+if not DATABASE_URL:
+    raise RuntimeError("HAJIME_DATABASE_URL is not set: there is no database to migrate")
+config.set_main_option("sqlalchemy.url", DATABASE_URL)
 target_metadata = Base.metadata
 
 

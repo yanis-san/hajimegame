@@ -14,6 +14,7 @@ from app.japanese.candidates import CandidateIndex
 from app.japanese.dictionary import Dictionary
 from app.japanese.fragments import FragmentTable
 from app.realtime.clock import RoomClock
+from app.realtime.recording import NullRecorder, Recorder
 from app.realtime.registry import ROOM_TTL_SECONDS, RoomRegistry
 from app.realtime.room import Room, RoomDeps
 
@@ -49,12 +50,14 @@ class RoomManager:
         registry: RoomRegistry,
         clock: RoomClock,
         instance_id: str | None = None,
+        recorder: Recorder | None = None,
     ) -> None:
         self._settings = settings
         self._dictionary = dictionary
         self._fragments = fragments
         self._registry = registry
         self._clock = clock
+        self._recorder: Recorder = recorder or NullRecorder()
         self.instance_id = instance_id or settings.instance_id
         self._rooms: dict[str, Room] = {}
         self._by_ip: dict[str, set[str]] = defaultdict(set)
@@ -114,6 +117,7 @@ class RoomManager:
             get_candidates=lambda: self.candidates,
             clock=self._clock,
             on_close=self._on_room_closed,
+            recorder=self._recorder,
         )
         room = Room(code, deps, host_ip=ip, mode=mode)
         self._rooms[code] = room

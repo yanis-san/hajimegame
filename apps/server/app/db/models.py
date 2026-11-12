@@ -1,8 +1,9 @@
 """Database schema (PostgreSQL; also runs on SQLite for tests).
 
-The database is never touched during a game: results are written after ``game_over`` by a background task.
-Tables for later milestones (seasons, groups, challenges) exist from the start so they plug in without a
-refactor, but no API or UI exposes them until milestone A is complete.
+The database is never touched during a game: results are written after ``game_over`` by a background task
+(``app.db.recorder``). Every game is stored with each player's random guest identifier, so that when accounts
+arrive a person's past games can be attached to their account. Tables for later milestones (seasons, groups,
+challenges) exist from the start so they plug in without a refactor.
 """
 
 from __future__ import annotations
@@ -120,6 +121,7 @@ class Game(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(sa.Uuid, primary_key=True, default=_uuid)
     kind: Mapped[str] = mapped_column(sa.String(16), default="bomb")
+    mode: Mapped[str] = mapped_column(sa.String(16), default="classic")  # classic | shiritori
     room_code: Mapped[str] = mapped_column(sa.String(8))
     settings: Mapped[dict[str, Any]] = mapped_column(JSONType, default=dict)
     started_at: Mapped[datetime] = mapped_column(sa.DateTime)
@@ -129,13 +131,23 @@ class Game(Base):
         sa.ForeignKey("challenges.id", ondelete="SET NULL")
     )
 
+    duration_ms: Mapped[int] = mapped_column(default=0)
+    players_count: Mapped[int] = mapped_column(default=0)
+    bots_count: Mapped[int] = mapped_column(default=0)
+
     players: Mapped[list[GamePlayer]] = relationship(back_populates="game", cascade="all, delete-orphan")
+    turns: Mapped[list[Turn]] = relationship(back_populates="game", cascade="all, delete-orphan")
 
 
 class GamePlayer(Base):
-    """One participant of one game. ``player_id`` is null for anonymous guests."""
+    """One participant of one game.
+
+    ``guest_id`` is the random identifier the player's browser generated. ``player_id`` stays null for a guest
+    and is filled in (for every game with that ``guest_id``) when they create an account.
+    """
 
     __tablename__ = "game_players"
+    __table_args__ = (sa.Index("ix_game_players_guest_id", "guest_id"),)
 
     game_id: Mapped[uuid.UUID] = mapped_column(
         sa.ForeignKey("games.id", ondelete="CASCADE"), primary_key=True
@@ -147,5 +159,33 @@ class GamePlayer(Base):
     score: Mapped[int] = mapped_column(default=0)
     words: Mapped[int] = mapped_column(default=0)
     longest_word: Mapped[str] = mapped_column(sa.String(32), default="")
+    guest_id: Mapped[uuid.UUID | None] = mapped_column(sa.Uuid)
+    lang: Mapped[str | None] = mapped_column(sa.String(2))  # interface language: fr | en | ja
+    is_bot: Mapped[bool] = mapped_column(default=False)
+    bot_difficulty: Mapped[str | None] = mapped_column(sa.String(8))
+    explosions: Mapped[int] = mapped_column(default=0)
+    avg_response_ms: Mapped[int | None]
 
     game: Mapped[Game] = relationship(back_populates="players")
+
+
+class Turn(Base):
+    """One turn of one game: the prompt, what happened, and how long it took. Feeds balance and statistics."""
+
+    __tablename__ = "turns"
+    __table_args__ = (sa.Index("ix_turns_fragment", "fragment"),)
+
+    game_id: Mapped[uuid.UUID] = mapped_column(
+        sa.ForeignKey("games.id", ondelete="CASCADE"), primary_key=True
+    )
+    turn: Mapped[int] = mapped_column(primary_key=True)
+    seat: Mapped[int]
+    fragment: Mapped[str] = mapped_column(sa.String(16))
+    outcome: Mapped[str] = mapped_column(sa.String(12))  # word | explosion | n_ending
+    word: Mapped[str] = mapped_column(sa.String(32), default="")
+    reading: Mapped[str] = mapped_column(sa.String(32), default="")
+    response_ms: Mapped[int | None]
+    fuse_ms: Mapped[int] = mapped_column(default=0)
+    rejected_attempts: Mapped[int] = mapped_column(default=0)
+
+    game: Mapped[Game] = relationship(back_populates="turns")

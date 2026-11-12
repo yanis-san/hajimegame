@@ -94,6 +94,33 @@
             "type": "boolean",
             "default": false
           },
+          "guest_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "lang": {
+            "anyOf": [
+              {
+                "enum": [
+                  "en",
+                  "fr",
+                  "ja"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
           "v": {
             "type": "integer",
             "default": 1
@@ -1460,6 +1487,33 @@
         "spectator": {
           "type": "boolean",
           "default": false
+        },
+        "guest_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "lang": {
+          "anyOf": [
+            {
+              "enum": [
+                "en",
+                "fr",
+                "ja"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         },
         "v": {
           "type": "integer",

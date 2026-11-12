@@ -47,6 +47,10 @@ ChatText = Annotated[str, Meta(min_length=1, max_length=200)]
 Token = Annotated[str, Meta(min_length=16, max_length=64)]
 PlayerId = Annotated[str, Meta(min_length=1, max_length=32)]
 Avatar = Annotated[int, Meta(ge=0, le=11)]
+GuestId = Annotated[
+    str, Meta(pattern=r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+]
+Lang = Literal["fr", "en", "ja"]
 
 
 class _Msg(Struct, frozen=True, forbid_unknown_fields=True, omit_defaults=True):
@@ -61,6 +65,10 @@ class Join(_Msg, tag_field="t", tag="join"):
     name: Name
     avatar: Avatar = 0
     spectator: bool = False
+    # Random identifier the browser generates and keeps, to link a player's games to an account later.
+    # It is stored with finished games and never sent to other players.
+    guest_id: GuestId | None = None
+    lang: Lang | None = None  # interface language, for statistics
     v: int = PROTOCOL_VERSION
 
 

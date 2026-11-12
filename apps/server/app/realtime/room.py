@@ -12,8 +12,10 @@ import contextlib
 import random
 import secrets
 import time
+import uuid
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from typing import Any
 
 from msgspec import UNSET
@@ -34,6 +36,7 @@ from app.japanese.fragments import FragmentTable
 from app.realtime import protocol as pr
 from app.realtime.clock import RoomClock, to_ms
 from app.realtime.connection import Connection
+from app.realtime.recording import GameRecording, NullRecorder, Recorder, SeatInfo, settings_as_dict
 
 log = get_logger("room")
 
@@ -45,6 +48,16 @@ BOT_NAMES = (
     "Hana", "Sora", "Mochi", "Kaito", "Tako", "Ume", "Nori", "Riku", "Yuzu", "Momo", "Kiri", "Taro",
     "Sakura", "Daichi", "Mika", "Ren",
 )  # fmt: skip
+
+
+def _parse_uuid(value: str | None) -> uuid.UUID | None:
+    """The guest identifier a browser sent, or None when absent or malformed (it is only ever a hint)."""
+    if not value:
+        return None
+    try:
+        return uuid.UUID(value)
+    except ValueError:
+        return None
 
 
 @dataclass(eq=False)
@@ -59,6 +72,8 @@ class Member:
     ready: bool = False
     chat_bucket: TokenBucket = field(default_factory=lambda: TokenBucket(1.0, 3))
     bot_difficulty: Difficulty | None = None  # set for CPU players
+    guest_id: uuid.UUID | None = None  # private identifier the browser generated; never sent to other players
+    lang: str | None = None  # interface language, for statistics
 
     @property
     def is_bot(self) -> bool:
@@ -83,6 +98,7 @@ class RoomDeps:
     get_candidates: Callable[[], CandidateIndex | None] = lambda: None
     rng_factory: Callable[[], random.Random] = lambda: random.Random(secrets.randbits(64))  # noqa: S311
     on_close: Callable[[Room], None] | None = None
+    recorder: Recorder = field(default_factory=NullRecorder)  # where finished games go
 
 
 class Room:
@@ -107,6 +123,7 @@ class Room:
         self._typing_sent_at = 0.0
         self._words: list[pr.WordView] = []
         self._results: list[pr.ResultRow] | None = None
+        self._recording: GameRecording | None = None
         self._countdown_ends: float | None = None
         self._bot_rng = deps.rng_factory()
         self._bot_plan: tuple[int, str, str | None] | None = None  # (turn, bot id, word)
@@ -429,6 +446,8 @@ class Room:
             spectator=spectator,
             order=self._join_counter,
             conn=conn,
+            guest_id=_parse_uuid(msg.guest_id),
+            lang=msg.lang,
         )
         self._members[member.id] = member
         conn.member_id = member.id
@@ -629,6 +648,7 @@ class Room:
         self._turn = None
         self._typing = ""
         self._results = None
+        self._recording = None
         self._countdown_ends = None
         self._words.clear()
         self._phase = "lobby"
@@ -689,6 +709,14 @@ class Room:
             rng=self._deps.rng_factory(),
         )
         self._engine = engine
+        self._recording = GameRecording(
+            self.code,
+            self._settings.mode,
+            settings_as_dict(settings),
+            [SeatInfo(m.id, m.name, m.guest_id, m.lang, m.bot_difficulty) for m in players],
+            started_at=datetime.now(UTC).replace(tzinfo=None),
+            started=self.clock.now(),
+        )
         self._words.clear()
         self._results = None
         self._countdown_ends = None
@@ -826,6 +854,8 @@ class Room:
 
     def _apply(self, events: list[GameEvent]) -> None:
         for event in events:
+            if self._recording is not None:
+                self._recording.on_event(event, self.clock.now())
             if isinstance(event, ev.TurnStarted):
                 self._typing = ""
                 self._disarm("bot_type")
@@ -898,6 +928,20 @@ class Room:
             elif isinstance(event, ev.GameOver):
                 self._on_game_over(event)
 
+    def _submit_record(self, rows: list[pr.ResultRow]) -> None:
+        """Hand the finished game to the recorder: it only queues it, and a failure never reaches the game."""
+        recording, self._recording = self._recording, None
+        if recording is None:
+            return
+        try:
+            results = {r.player_id: (r.place, r.score, r.words, r.longest) for r in rows}
+            record = recording.finish(
+                results, ended_at=datetime.now(UTC).replace(tzinfo=None), now=self.clock.now()
+            )
+            self._deps.recorder.submit(record)
+        except Exception:
+            log.exception("game_record_failed", room=self.code)
+
     def _on_game_over(self, event: ev.GameOver) -> None:
         engine = self._engine
         assert engine is not None
@@ -917,6 +961,7 @@ class Room:
             rows.append(pr.ResultRow(player_id, place, state.score, state.words, longest))
         self._results = rows
         metrics.GAMES_FINISHED.inc()
+        self._submit_record(rows)
         self._emit(pr.GameOver, winner_id=event.winner_id, results=rows, words=list(self._words))
         self._patch(phase="finished")
         assert engine.phase is Phase.FINISHED

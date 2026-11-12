@@ -67,6 +67,8 @@ export interface Join {
   name: string;
   avatar?: number;
   spectator?: boolean;
+  guest_id?: string | null;
+  lang?: "en" | "fr" | "ja" | null;
   v?: number;
 }
 

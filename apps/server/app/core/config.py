@@ -12,7 +12,10 @@ class AppSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="HAJIME_", env_file=".env", extra="ignore")
 
     env: str = "dev"
-    database_url: str = "postgresql+asyncpg://hajime:hajime@localhost:5432/hajime"
+    # PostgreSQL, e.g. postgresql+asyncpg://user:password@host:5432/hajime. Empty: the game runs without a
+    # database and finished games are simply not stored (development, tests).
+    database_url: str | None = Field(default=None, repr=False)
+    db_pool_size: int = 5
     redis_url: str | None = None
     sentry_dsn: str | None = None
     instance_id: str = "local"

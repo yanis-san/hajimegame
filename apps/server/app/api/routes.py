@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import asyncio
 import secrets
 from typing import Any, Literal
 
+import sqlalchemy as sa
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -49,6 +51,14 @@ async def readyz(request: Request) -> JSONResponse:
     manager: RoomManager = request.app.state.manager
     settings: AppSettings = request.app.state.settings
     checks["bots"] = manager.candidates is not None or not settings.preload_bots
+    engine = request.app.state.engine
+    if engine is not None:
+        try:
+            async with engine.connect() as connection:
+                await asyncio.wait_for(connection.execute(sa.text("SELECT 1")), 3)
+            checks["database"] = True
+        except Exception:
+            checks["database"] = False
     redis = request.app.state.redis
     if redis is not None:
         try:

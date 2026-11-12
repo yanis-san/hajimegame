@@ -35,6 +35,12 @@ RATE_LIMITED = Counter(
     "hajime_rate_limited_total", "Requests refused by a rate limiter", ["kind"], registry=REGISTRY
 )
 GAMES_FINISHED = Counter("hajime_games_finished_total", "Completed games", registry=REGISTRY)
+GAME_RECORDS = Counter(
+    "hajime_game_records_total", "Finished games written to the database", ["result"], registry=REGISTRY
+)
+GAME_RECORDS_QUEUED = Gauge(
+    "hajime_game_records_queued", "Finished games waiting to be written", registry=REGISTRY
+)
 
 
 def render() -> bytes:

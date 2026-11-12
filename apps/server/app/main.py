@@ -17,11 +17,14 @@ from app.core.config import AppSettings, get_settings
 from app.core.logging import configure_logging, get_logger
 from app.core.ratelimit import MemoryWindowLimiter, RedisWindowLimiter, WindowLimiter
 from app.core.security import SecurityHeadersMiddleware
+from app.db.recorder import DatabaseRecorder
+from app.db.session import create_engine
 from app.japanese.candidates import CandidateIndex
 from app.japanese.dictionary import Dictionary
 from app.japanese.fragments import FragmentTable
 from app.realtime.clock import RoomClock, SystemClock
 from app.realtime.manager import RoomManager
+from app.realtime.recording import NullRecorder, Recorder
 from app.realtime.registry import MemoryRegistry, RedisRegistry, RoomRegistry
 from app.realtime.ws import router as ws_router
 
@@ -62,6 +65,7 @@ def create_app(
     dictionary: Dictionary | None = None,
     redis: Redis | None = None,
     candidates: CandidateIndex | None = None,
+    recorder: Recorder | None = None,
 ) -> FastAPI:
     cfg = settings or get_settings()
 
@@ -75,7 +79,15 @@ def create_app(
             client = Redis.from_url(cfg.redis_url)
         the_registry = registry or (RedisRegistry(client) if client is not None else MemoryRegistry())
         the_limiter = limiter or (RedisWindowLimiter(client) if client is not None else MemoryWindowLimiter())
-        manager = RoomManager(cfg, words, fragments, the_registry, clock or SystemClock())
+        engine = create_engine(cfg.database_url, cfg.db_pool_size) if cfg.database_url else None
+        the_recorder: Recorder = recorder or NullRecorder()
+        if recorder is None and engine is not None:
+            database_recorder = DatabaseRecorder(engine)
+            database_recorder.start()
+            the_recorder = database_recorder
+        manager = RoomManager(
+            cfg, words, fragments, the_registry, clock or SystemClock(), recorder=the_recorder
+        )
         manager.start()
         index_task = None
         if candidates is not None:
@@ -88,7 +100,14 @@ def create_app(
         app.state.manager = manager
         app.state.limiter = the_limiter
         app.state.redis = client
-        log.info("started", instance=manager.instance_id, words=len(words), redis=client is not None)
+        app.state.engine = engine
+        log.info(
+            "started",
+            instance=manager.instance_id,
+            words=len(words),
+            redis=client is not None,
+            database=engine is not None,
+        )
         try:
             yield
         finally:
@@ -96,6 +115,10 @@ def create_app(
             if index_task is not None:
                 index_task.cancel()
             await manager.shutdown()
+            if isinstance(the_recorder, DatabaseRecorder):
+                await the_recorder.stop()  # write the games that finished just before the shutdown
+            if engine is not None:
+                await engine.dispose()
             if client is not None and redis is None:
                 await client.aclose()
 

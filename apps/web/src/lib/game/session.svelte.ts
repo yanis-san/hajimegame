@@ -3,6 +3,8 @@ import { GameClient, type JoinInfo } from './client';
 import { sessionTokens } from './session';
 import { GameStore } from './store.svelte';
 import { wsUrl } from './config';
+import { getGuestId } from './guest';
+import { getLocale } from '#lib/i18n/index.ts';
 
 /** Wires the websocket client to the reactive store and exposes the intents a player can send. */
 export class GameSession {
@@ -28,7 +30,9 @@ export class GameSession {
 
 	connect(join: JoinInfo): void {
 		this.store.reset();
-		this.client.connect(this.code, join);
+		// A spectator is not recorded, so nothing identifying is sent for one.
+		const identity = join.spectator ? {} : { guest_id: getGuestId(), lang: getLocale() };
+		this.client.connect(this.code, { ...join, ...identity });
 	}
 
 	ready(ready: boolean): void {
