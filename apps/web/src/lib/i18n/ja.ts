@@ -181,6 +181,11 @@ export const ja: Record<MessageKey, string> = {
 	'common.close': '閉じる',
 	'game.region': 'ゲーム',
 	'mascot.label': '爆弾のバクロ',
+	'credits.code.title': 'このゲーム',
+	'credits.code.body':
+		'Hajime Game は無料で、コードはMITライセンスの下で公開されています（© 2026 yanis-san）。この表示を残せば、自由に使用・改変・共有できます。',
+	'credits.code.source': 'ソースコード',
+	'credits.code.licence': 'MITライセンス',
 	'credits.dictionary.title': '辞書',
 	'credits.dictionary.body':
 		'言葉とその意味（英語、JMdictにあればフランス語）は、JMdictファイル（© Electronic Dictionary Research and Development Group / EDRDG）に由来します。ゲーム用の辞書は、このファイルをフィルタリング・再構成したものです。フィルタリングの規則はリポジトリに記載されています。',

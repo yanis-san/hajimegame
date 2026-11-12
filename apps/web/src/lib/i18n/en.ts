@@ -182,6 +182,11 @@ export const en: Record<MessageKey, string> = {
 	'common.close': 'Close',
 	'game.region': 'Game',
 	'mascot.label': 'Bakuro, the bomb',
+	'credits.code.title': 'The game',
+	'credits.code.body':
+		'Hajime Game is free and its code is open, under the MIT licence, © 2026 yanis-san. You may use, modify and share it as long as you keep this notice.',
+	'credits.code.source': 'Source code',
+	'credits.code.licence': 'MIT licence',
 	'credits.dictionary.title': 'Dictionary',
 	'credits.dictionary.body':
 		'Words and their meanings (English, and French when JMdict provides it) come from the JMdict file, © Electronic Dictionary Research and Development Group (EDRDG). The game dictionary is a filtered, reformatted version of that file; the filtering rules are documented in the repository.',

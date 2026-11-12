@@ -9,6 +9,20 @@
 	<h1>{t('credits.title')}</h1>
 
 	<section>
+		<h2>{t('credits.code.title')}</h2>
+		<p>{t('credits.code.body')}</p>
+		<p>
+			<a href="https://github.com/yanis-san/hajimegame" rel="noreferrer"
+				>{t('credits.code.source')}</a
+			>
+			·
+			<a href="https://github.com/yanis-san/hajimegame/blob/main/LICENSE" rel="noreferrer"
+				>{t('credits.code.licence')}</a
+			>
+		</p>
+	</section>
+
+	<section>
 		<h2>{t('credits.dictionary.title')}</h2>
 		<p>{t('credits.dictionary.body')}</p>
 		<p>

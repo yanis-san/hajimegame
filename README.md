@@ -1,69 +1,92 @@
 # Hajime Game
 
-Jeu multijoueur en ligne : trouve un mot japonais avant que la bombe explose. Deux modes : Classique (le mot contient
-un fragment de kana, difficulté adaptative) et Shiritori (le mot commence par le dernier kana du précédent).
-2 à 8 joueurs, sans inscription, sur téléphone ou PC. Serveur autoritaire (FastAPI), interface SvelteKit.
+A free multiplayer browser game for learners of Japanese: find a Japanese word before the bomb explodes.
 
-## Démarrer en 5 minutes (Windows, macOS, Linux)
+- **Two modes.** *Classic*: the prompt is a short kana fragment and your word must contain it. *Shiritori*: your word
+  must start with the last kana of the previous one.
+- **2 to 8 players** on phone or desktop, **no account**: pick a nickname and an avatar and share the link. You can
+  also play against CPU players (easy, normal, hard).
+- **Learn as you play.** Every accepted word shows its meaning in English (and French when the dictionary has it) and,
+  for many words, an example sentence. After a game you can review every word, and the last 10 games are kept on your
+  device.
+- **Three interface languages** (French, English, Japanese), chosen by the URL (`/en`, `/ja`), so a shared link always
+  opens in its own language. Players in the same room can each use a different one.
+- **Fair and fast.** The server is authoritative (FastAPI, WebSocket), the interface is SvelteKit (Svelte 5).
 
-Prérequis : [uv](https://docs.astral.sh/uv/) (Python), [Node.js](https://nodejs.org) 24+ et pnpm (`npm i -g pnpm`).
-Docker est facultatif (ni base de données ni Redis ne sont nécessaires pour jouer).
+## Quick start (Windows, macOS, Linux)
+
+Requirements: [uv](https://docs.astral.sh/uv/) (Python), [Node.js](https://nodejs.org) 24+ and pnpm
+(`npm i -g pnpm`). Docker is optional: the game needs no database and no Redis.
 
 ```bash
 git clone https://github.com/yanis-san/hajimegame.git && cd hajimegame
 pnpm install
-pnpm bootstrap      # installe les dépendances Python et le navigateur de test
-pnpm dev        # serveur de jeu :8000 + interface :5173
+pnpm bootstrap   # installs the Python dependencies and the test browser
+pnpm dev         # game server on :8000 + web app on :5173
 ```
 
-Ouvre <http://localhost:5173>, crée une partie, puis ouvre le lien d'invitation dans un second onglet (ou sur ton
-téléphone avec l'adresse réseau affichée par Vite).
+Open <http://localhost:5173>, create a game, then open the invitation link in a second tab (or on your phone, with the
+network address Vite prints).
 
-## Commandes
+## Commands
 
-| Commande | Rôle |
+| Command | What it does |
 | --- | --- |
-| `pnpm dev` | Lance serveur et interface avec rechargement automatique |
-| `pnpm test` | Tests serveur (pytest) et interface (vitest) |
-| `pnpm lint` | ruff, mypy, eslint, prettier, types du protocole à jour |
-| `pnpm typecheck` | mypy strict et svelte-check |
-| `pnpm e2e` | Parties complètes dans de vrais navigateurs (bureau et mobile) |
-| `pnpm build` | Build de production de l'interface |
-| `pnpm protocol` | Régénère les types TypeScript depuis le protocole serveur |
-| `pnpm dictionary` | Reconstruit le dictionnaire depuis JMdict |
-| `pnpm load` | Test de charge : 200 salles de 6 joueurs |
+| `pnpm dev` | Runs the server and the web app with live reload |
+| `pnpm test` | Server tests (pytest) and web unit tests (vitest) |
+| `pnpm lint` | ruff, mypy, eslint, prettier, and a check that the protocol types are up to date |
+| `pnpm typecheck` | Strict mypy and svelte-check |
+| `pnpm e2e` | Whole games in real browsers (desktop and mobile). `E2E_PREVIEW=1` tests the production build |
+| `pnpm build` | Production build of the web app |
+| `pnpm protocol` | Regenerates the TypeScript types from the server protocol |
+| `pnpm dictionary` | Rebuilds the dictionary from JMdict (downloads the source files) |
+| `pnpm load` | Load test: 200 rooms of 6 players |
 
-Sous Linux et macOS, `make dev`, `make test`, etc. font la même chose.
+On Linux and macOS, `make dev`, `make test`, etc. do the same. The task runner is `tools/tasks.ts`, plain TypeScript
+run by Node.
 
-## Où est quoi
+## Project layout
 
 ```text
-apps/server   FastAPI : moteur de jeu pur, salles, WebSocket, japonais, base de données
-apps/web      SvelteKit : accueil, salle d'attente, partie, résultats, route /design
-packages/protocol  Schéma JSON et types TypeScript générés
-tools/        build_dictionary.py, gen_protocol.py, loadtest.py, tasks.mjs
-docs/         ARCHITECTURE, PROTOCOL, DICTIONARY, DEPLOY (déploiement automatisé), ADR/
-deploy/       pile de production (compose, Caddy), scripts de déploiement, exemples Fly.io
+apps/server        FastAPI: pure game engine, rooms, WebSocket, Japanese text handling
+apps/web           SvelteKit: home, lobby, game, results, history, /design component page
+packages/protocol  JSON schema and generated TypeScript types
+tools/             build_dictionary.py, gen_protocol.py, loadtest.py, tasks.ts
+docs/              ARCHITECTURE, PROTOCOL, DICTIONARY, DEPLOY, ADR/
+deploy/            production stack (Compose, Caddy), deployment scripts, Fly.io examples
+.github/           CI/CD, security scans, Dependabot
 ```
 
-## Qualité mesurée
+## Quality
 
-| Critère | Résultat |
+| What | Result |
 | --- | --- |
-| Tests serveur | 181, couverture 93 %, `mypy --strict` et `ruff` propres |
-| Sens des mots | toujours en anglais, et en français en plus quand JMdict le fournit (environ 10 500 mots) |
-| Simulation | 10 000 parties de bots, invariants tenus (`make sim`) |
-| Validation d'un mot | environ 3 µs (budget : 50 µs) |
-| Charge | 200 salles x 6 joueurs, toutes les parties terminées, p95 de traitement environ 5 ms, mémoire stable |
-| E2E | 14 scénarios verts (bureau et mobile), axe-core sans violation sérieuse |
-| Lighthouse mobile (accueil) | performance 99, accessibilité 100, JS 22 Ko compressé |
+| Server | 218 tests, strict `mypy` and `ruff`, coverage reported in CI |
+| Game engine | 10 000 simulated bot games per CI run, invariants checked after every move |
+| Web | 43 unit tests, `svelte-check` and `eslint` clean |
+| End to end | 42 browser tests (desktop and mobile) on the production build, including accessibility checks and a strict Content-Security-Policy that blocks injected scripts |
+| Word validation | about 3 µs per word (budget 50 µs) |
 
-## Licences
+## Deploying
 
-Code du projet : à définir par l'auteur. Dictionnaire : JMdict, © EDRDG, CC BY-SA 4.0 (voir la page
-« Crédits et licences » dans l'application). Polices : SIL OFL 1.1.
+A push to `main` is tested, built into hardened container images, scanned, published, deployed to your server over SSH
+and smoke-tested, with an automatic rollback if the new version is not healthy. One command prepares the server and
+the GitHub repository (`deploy/provision.sh`). See [docs/DEPLOY.md](docs/DEPLOY.md).
 
-## Licence
+## Licence and credits
 
-Code sous licence [MIT](LICENSE). Le dictionnaire (JMdict, CC BY-SA 4.0), les phrases d'exemple (Tatoeba, CC BY 2.0 FR)
-et les polices (OFL) gardent leur propre licence : voir [NOTICE.md](NOTICE.md).
+Hajime Game is free and its **code is open source under the [MIT licence](LICENSE)**: you may use, modify and
+redistribute it, keeping the copyright notice. © 2026 yanis-san.
+
+The game relies on data and fonts that are **not** under the MIT licence and keep their own. They are also shown to
+players on the game's "Credits and licences" page.
+
+| What | Licence |
+| --- | --- |
+| Source code (server, web app, tools) | [MIT](LICENSE) |
+| Dictionary: [JMdict](https://www.edrdg.org/jmdict/j_jmdict.html), © Electronic Dictionary Research and Development Group | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). The compiled file is an adaptation of it and stays under the same licence |
+| Example sentences and their translations: [Tatoeba](https://tatoeba.org) and its contributors | [CC BY 2.0 FR](https://creativecommons.org/licenses/by/2.0/fr/) |
+| Fonts: JetBrains Mono, Shippori Mincho, Zen Kaku Gothic New, Zen Maru Gothic | SIL Open Font Licence 1.1 |
+| Dependencies (npm, Python) | their own licences, mostly MIT, BSD and Apache-2.0 |
+
+Details are in [NOTICE.md](NOTICE.md); how the dictionary is built is in [docs/DICTIONARY.md](docs/DICTIONARY.md).

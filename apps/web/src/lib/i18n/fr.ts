@@ -183,6 +183,11 @@ export const fr = {
 	'common.close': 'Fermer',
 	'game.region': 'Partie',
 	'mascot.label': 'Bakuro, la bombe',
+	'credits.code.title': 'Le jeu',
+	'credits.code.body':
+		'Hajime Game est gratuit et son code est libre, sous licence MIT, © 2026 yanis-san. Tu peux l’utiliser, le modifier et le partager en gardant cette mention.',
+	'credits.code.source': 'Code source',
+	'credits.code.licence': 'Licence MIT',
 	'credits.dictionary.title': 'Dictionnaire',
 	'credits.dictionary.body':
 		'Les mots et leurs sens (anglais, et français quand JMdict le fournit) viennent du fichier JMdict, © Electronic Dictionary Research and Development Group (EDRDG). Le dictionnaire de jeu est une version filtrée et reformatée de ce fichier ; ses règles de filtrage sont documentées dans le dépôt.',
