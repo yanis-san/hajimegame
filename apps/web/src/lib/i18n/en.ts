@@ -187,6 +187,9 @@ export const en: Record<MessageKey, string> = {
 		'Hajime Game is free and its code is open, under the MIT licence, © 2026 yanis-san. You may use, modify and share it as long as you keep this notice.',
 	'credits.code.source': 'Source code',
 	'credits.code.licence': 'MIT licence',
+	'credits.data.title': 'Your data',
+	'credits.data.body':
+		'When a game ends, the server stores the nickname chosen, the words played, the scores, the interface language and a random identifier created by your browser (never shown to other players). Nothing else: no IP address, no tracking cookie, no information about your device. This data is used to improve the game and, later, to link your history to an account if you create one. It is neither sold nor shared. If you clear the site’s data in your browser you start over with a new identifier: your past games are no longer linked to you.',
 	'credits.dictionary.title': 'Dictionary',
 	'credits.dictionary.body':
 		'Words and their meanings (English, and French when JMdict provides it) come from the JMdict file, © Electronic Dictionary Research and Development Group (EDRDG). The game dictionary is a filtered, reformatted version of that file; the filtering rules are documented in the repository.',

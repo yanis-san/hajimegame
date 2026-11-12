@@ -6,9 +6,9 @@ provenance, deployed over SSH with a health-checked rollback, and smoke-tested f
 - **One origin.** Caddy sends `/api` and `/ws` to the game server and the rest to the web app, so the browser makes
   no cross-origin request: no CORS, WebSockets just work, origin checks stay strict, and the Content-Security-Policy
   needs no third-party origin. This rules out the two-app Fly.io layout for the default path (kept as an example).
-- **No database in the deployed stack.** The game keeps nothing between games (a player's history lives in their
-  browser), so there is nothing to back up or migrate. The old container start ran `alembic upgrade head || echo`
-  against a database that did not exist, hiding any failure; it is gone. Postgres comes back with accounts.
+- **The database is part of the stack, migrated by the pipeline.** The first version had none, and its container
+  start ran `alembic upgrade head || echo` against a database that did not exist, hiding any failure. That is gone:
+  `deploy.sh` migrates explicitly, before the new version starts, and stops if a migration fails (ADR 0007).
 - **One instance on one server.** Rooms live in the memory of one process, so a deployment ends the games in
   progress; `deploy.sh` waits for quiet (bounded) first. Scaling out needs Redis and room-affine routing (ADR 0003).
 - **Fail early, in the pipeline.** The production server refuses unsafe settings, the Dockerfiles and the Caddyfile

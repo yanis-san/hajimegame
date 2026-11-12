@@ -31,7 +31,7 @@ the current `seq` without advancing it, so they never create gaps.
 
 | `t` | Fields | Notes |
 | --- | --- | --- |
-| `join` | `room`, `name` (1-40, cleaned to 20), `avatar` 0-11, `spectator` | Players only in lobby with free seats. Spectators any time. |
+| `join` | `room`, `name` (1-40, cleaned to 20), `avatar` 0-11, `spectator`, optional `guest_id` (a UUID the browser generated and keeps) and `lang` (`fr`, `en` or `ja`) | Players only in lobby with free seats. Spectators any time. `guest_id` and `lang` are stored with finished games; the guest id is never sent to any other player. A malformed `guest_id` is refused as `bad_message`. |
 | `rejoin` | `room`, `token` | Replaces an older connection of the same player (old one gets `error: replaced`, closes 4000). |
 | `ready` | `ready` | Lobby only. |
 | `start` | | Host only, needs 2+ connected players, all non-host players ready. Starts the countdown. |

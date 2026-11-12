@@ -23,6 +23,11 @@
 	</section>
 
 	<section>
+		<h2>{t('credits.data.title')}</h2>
+		<p>{t('credits.data.body')}</p>
+	</section>
+
+	<section>
 		<h2>{t('credits.dictionary.title')}</h2>
 		<p>{t('credits.dictionary.body')}</p>
 		<p>

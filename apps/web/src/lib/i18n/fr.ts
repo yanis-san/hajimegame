@@ -188,6 +188,9 @@ export const fr = {
 		'Hajime Game est gratuit et son code est libre, sous licence MIT, © 2026 yanis-san. Tu peux l’utiliser, le modifier et le partager en gardant cette mention.',
 	'credits.code.source': 'Code source',
 	'credits.code.licence': 'Licence MIT',
+	'credits.data.title': 'Tes données',
+	'credits.data.body':
+		'Quand une partie se termine, le serveur enregistre le pseudo choisi, les mots joués, les scores, la langue de l’interface et un identifiant aléatoire créé par ton navigateur (jamais montré aux autres joueurs). Rien d’autre : ni adresse IP, ni cookie de suivi, ni information sur ton appareil. Ces données servent à améliorer le jeu et, plus tard, à relier ton historique à un compte si tu en crées un. Elles ne sont ni vendues ni partagées. Si tu effaces les données du site dans ton navigateur, tu repars avec un nouvel identifiant : tes anciennes parties ne sont plus reliées à toi.',
 	'credits.dictionary.title': 'Dictionnaire',
 	'credits.dictionary.body':
 		'Les mots et leurs sens (anglais, et français quand JMdict le fournit) viennent du fichier JMdict, © Electronic Dictionary Research and Development Group (EDRDG). Le dictionnaire de jeu est une version filtrée et reformatée de ce fichier ; ses règles de filtrage sont documentées dans le dépôt.',

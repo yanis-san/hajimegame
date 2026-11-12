@@ -186,6 +186,9 @@ export const ja: Record<MessageKey, string> = {
 		'Hajime Game は無料で、コードはMITライセンスの下で公開されています（© 2026 yanis-san）。この表示を残せば、自由に使用・改変・共有できます。',
 	'credits.code.source': 'ソースコード',
 	'credits.code.licence': 'MITライセンス',
+	'credits.data.title': 'あなたのデータ',
+	'credits.data.body':
+		'試合が終わると、サーバーは選んだニックネーム、使った単語、得点、表示言語、そしてブラウザが作ったランダムな識別子（他のプレイヤーには見えません）を保存します。それ以外は保存しません。IPアドレスも、追跡用のクッキーも、端末の情報も使いません。このデータはゲームの改善と、将来アカウントを作ったときに履歴を結び付けるために使われ、販売も共有もされません。ブラウザでこのサイトのデータを消すと新しい識別子になり、過去の試合はあなたと結び付かなくなります。',
 	'credits.dictionary.title': '辞書',
 	'credits.dictionary.body':
 		'言葉とその意味（英語、JMdictにあればフランス語）は、JMdictファイル（© Electronic Dictionary Research and Development Group / EDRDG）に由来します。ゲーム用の辞書は、このファイルをフィルタリング・再構成したものです。フィルタリングの規則はリポジトリに記載されています。',

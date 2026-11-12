@@ -93,13 +93,44 @@ of `provision.sh` to turn off SSH password logins (only if you log in with a key
 | Containers | Non-root user, read-only filesystem, all capabilities dropped, `no-new-privileges`, memory and process limits, no published ports except Caddy, health checks, rotated logs |
 | Host | Firewall (22, 80, 443), automatic security updates, fail2ban, optional SSH password login off |
 
-There is nothing to back up: the game keeps no database (rooms live in memory, a player's history stays in their
-own browser). The only state on the server is the certificate volume (`caddy_data`), which Caddy recreates if lost.
+## Data: the database, backups and statistics
+
+PostgreSQL (a container with no published port) stores every finished game: its settings, each player (nickname,
+interface language, a random identifier their browser made, score, words) and each turn (prompt, outcome, word,
+time taken). It holds no IP address, cookie or device information. Games in progress live in the server's memory
+and are written after they end, in the background: if the database is down the game carries on, the finished game
+is retried, and it is written when the database comes back (tested by stopping PostgreSQL in the middle of a
+game). Rooms and the players' browser-side history are not in the database.
+
+- **Statistics.** On the server, `cd /opt/hajime && ./stats.sh` (`--days 30` for a longer window) prints games and
+  players per day, modes, interface languages, how many players come back, how fast people answer, how often the
+  bomb wins, and which prompts are hardest. It only reads. A "player" is a browser, not a person.
+- **Migrations.** `deploy.sh` runs `alembic upgrade head` from the new image before starting it, and stops without
+  touching the running version if it fails. **Migrations must only add** (new tables, new nullable or defaulted
+  columns): the previous version keeps running while they apply, and a rollback to it must still work. To remove
+  or rename something, do it in two deployments (stop using it, then drop it).
+- **Backups.** A `backup` container writes a compressed dump every 24 hours to the `pgbackups` volume and keeps
+  14 days. `deploy.sh` prints the age of the latest one after every deployment and warns when there is none from
+  the last 26 hours. A backup on the same disk does not survive losing the server, so copy the dumps elsewhere:
+  `docker compose --env-file .env -f compose.prod.yml cp backup:/backups/<file>.sql.gz .` on the server, then
+  `scp` it to your computer (list them with `... exec -T backup ls -l /backups`).
+- **Restore** (tested: a dump restored into a new database gave identical data). On the server, in `/opt/hajime`:
+  `docker compose --env-file .env -f compose.prod.yml exec -T backup sh -c 'gunzip -c /backups/<file>.sql.gz |
+  psql -q -v ON_ERROR_STOP=1'` into an empty database (create one first with `createdb` through the `postgres`
+  container, point the server at it, or restore into the existing one after emptying it).
+- **Privacy.** What is stored is described to players on the game's credits page. Decide how long to keep it (for
+  example 24 months) and delete older games with `delete from games where ended_at < now() - interval '24 months'`;
+  turns and players go with them. When accounts exist, deleting a person's data will be a feature, not a query.
+
+The other state on the server is the certificate volume (`caddy_data`), which Caddy recreates if lost.
 
 ## Know before you rely on it
 
 - **A deployment ends the games in progress**, because rooms live in the game server's memory. `deploy.sh` waits up
   to `DRAIN_SECONDS` (default 180) for the rooms to empty, then deploys anyway. Deploy at quiet hours.
+- **PostgreSQL is a single container on the same server**, backed up daily on the same disk (see above). It is
+  fine for this game; if losing a day of statistics matters, copy the dumps off the server or use a managed
+  database and change `HAJIME_DATABASE_URL`.
 - **One server, one instance.** That is a single point of failure, fine for a game of this size. Several instances
   need Redis (`HAJIME_REDIS_URL`) and a load balancer that keeps a room's connections on its instance
   (see ADR 0003); the Fly.io files (`deploy/fly.*.toml`) sketch that and are **not** part of this pipeline.

@@ -16,7 +16,8 @@ A free multiplayer browser game for learners of Japanese: find a Japanese word b
 ## Quick start (Windows, macOS, Linux)
 
 Requirements: [uv](https://docs.astral.sh/uv/) (Python), [Node.js](https://nodejs.org) 24+ and pnpm
-(`npm i -g pnpm`). Docker is optional: the game needs no database and no Redis.
+(`npm i -g pnpm`). Docker is optional: the game runs without a database and without Redis. With PostgreSQL it stores finished
+games (see `.env.example`).
 
 ```bash
 git clone https://github.com/yanis-san/hajimegame.git && cd hajimegame
