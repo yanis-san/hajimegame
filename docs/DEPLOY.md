@@ -24,34 +24,52 @@ git push main
 One small server runs three containers: **Caddy** (the only public one: HTTPS certificate obtained and renewed by
 itself, HTTP/2 and HTTP/3, security headers), the **web app** and the **game server**. See `deploy/compose.prod.yml`.
 
-## One-time setup (about 15 minutes)
+## One-time setup (about 10 minutes, one command)
 
-You need a server (any VPS with Ubuntu 24.04 or Debian 12, 1 vCPU and 2 GB of memory is enough: the game server
-uses about 400 MB) and a domain name.
+What you need: a **server** (any VPS with Ubuntu 24.04 or Debian 12; 1 vCPU and 2 GB of memory is enough, the game
+server uses about 400 MB) and a **domain name** whose DNS you can edit. For a French-speaking audience, pick a
+data centre in Europe. You also need the GitHub CLI logged in (`gh auth login`) and `ssh` (both are in Git for
+Windows / the GitHub CLI installer).
 
-1. **Create an SSH key for the pipeline** (on your computer, no passphrase, used only for this):
-   `ssh-keygen -t ed25519 -f hajime-deploy -N "" -C hajime-pipeline`
-2. **Prepare the server.** Copy `deploy/bootstrap-server.sh` to it and run, as root:
-   `bash bootstrap-server.sh "$(cat hajime-deploy.pub)" hajime.yourdomain.com you@yourmail.com ghcr.io/<github-user>/<repo>`
-   It installs Docker, creates the `deploy` user, opens only ports 22, 80 and 443, enables automatic security
-   updates and fail2ban, and writes `/opt/hajime/.env` (with a generated metrics token). It prints the value for
-   `DEPLOY_KNOWN_HOSTS` at the end (replace `<server-address>` with the address you will use in `DEPLOY_HOST`).
-3. **DNS:** point `hajime.yourdomain.com` (A, and AAAA if you have IPv6) to the server.
-4. **GitHub**, repository *Settings → Secrets and variables → Actions*:
+1. **Create the server** at your provider and note its IP address and the root password (or key) it gives you.
+2. **Run one command** from your computer, in the repository (Git Bash on Windows):
+
+   ```bash
+   ./deploy/provision.sh root@<server-ip> hajime.yourdomain.com you@yourmail.com
+   ```
+
+   It creates the pipeline's SSH key, shows the server's fingerprint for you to compare with your provider's
+   console, prepares the server (Docker, a `deploy` user, firewall on ports 22/80/443, automatic security updates,
+   fail2ban), checks that the key works, and stores every secret and variable in the GitHub repository. Try
+   `--dry-run` first to see exactly what it would do without touching anything.
+3. **DNS:** create an `A` record `hajime.yourdomain.com` → the server IP (and `AAAA` for IPv6).
+4. **Push:** `git push origin main`. Open the repository's *Actions* tab: when *Deploy to production* is green the
+   site is live over HTTPS (the first deployment also obtains the certificate; give it a minute).
+
+Optional, once it works: *Settings → Environments → production → Required reviewers* (one-click approval before
+each deployment), *Settings → Branches* (require the CI checks before merging), and `--harden-ssh` on a later run
+of `provision.sh` to turn off SSH password logins (only if you log in with a key).
+
+<details>
+<summary>What the command does by hand (if you prefer to do it step by step)</summary>
+
+1. `ssh-keygen -t ed25519 -N "" -f ~/.ssh/hajime-deploy -C hajime-pipeline`
+2. On the server, as root: `bash bootstrap-server.sh "$(cat hajime-deploy.pub)" <domain> <email> ghcr.io/<user>/<repo>`.
+   It prints the line for `DEPLOY_KNOWN_HOSTS` (replace `<server-address>` with the address you use in `DEPLOY_HOST`).
+3. GitHub, *Settings → Secrets and variables → Actions*:
 
    | Kind | Name | Value |
    | --- | --- | --- |
    | secret | `DEPLOY_HOST` | the server address |
    | secret | `DEPLOY_USER` | `deploy` |
-   | secret | `DEPLOY_SSH_KEY` | the **private** key (`hajime-deploy`) |
-   | secret | `DEPLOY_KNOWN_HOSTS` | the line printed by the bootstrap script |
+   | secret | `DEPLOY_SSH_KEY` | the **private** key |
+   | secret | `DEPLOY_KNOWN_HOSTS` | the host key line |
    | variable | `DEPLOY_DOMAIN` | `hajime.yourdomain.com` |
-   | variable | `DEPLOY_ENABLED` | `true` (until then, a push only tests and publishes) |
+   | variable | `DEPLOY_ENABLED` | `true` (until then a push only tests and publishes) |
 
-5. **Recommended:** *Settings → Environments → production → Required reviewers* adds a one-click approval before
-   each deployment. *Settings → Branches* can require the CI checks before merging to `main`.
-6. **Push to `main`.** The first deployment also obtains the certificate (it can take a minute).
-7. Once SSH works with your key: `HARDEN_SSH=1 sudo -E bash bootstrap-server.sh ...` turns off password logins.
+4. Create the `production` environment, point the DNS, push.
+
+</details>
 
 ## Every day
 
