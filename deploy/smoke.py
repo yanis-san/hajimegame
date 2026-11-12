@@ -45,6 +45,16 @@ def fetch(
         return error.code, {k.lower(): v for k, v in error.headers.items()}, error.read()
 
 
+def pin_address(hostname: str, address: str) -> None:
+    """Make `hostname` resolve to `address` (the Host header and the TLS name stay the real ones)."""
+    real = socket.getaddrinfo
+
+    def patched(host, *args, **kwargs):  # type: ignore[no-untyped-def]
+        return real(address if host == hostname else host, *args, **kwargs)
+
+    socket.getaddrinfo = patched  # type: ignore[assignment]
+
+
 def expect(condition: bool, message: str) -> None:
     if not condition:
         raise Check(message)
@@ -133,6 +143,7 @@ def main() -> int:
     parser.add_argument("url", help="https://your.domain")
     parser.add_argument("--wait", type=float, default=90, help="seconds to wait for the first checks")
     parser.add_argument("--insecure", action="store_true", help="accept a self-signed certificate (local tests only)")
+    parser.add_argument("--resolve", metavar="IP", help="connect to this address instead of the DNS answer (test before the DNS record exists)")
     parser.add_argument("--no-redirect-check", action="store_true", help="skip the http:// redirect (local tests)")
     args = parser.parse_args()
     base = args.url.rstrip("/")
@@ -140,6 +151,8 @@ def main() -> int:
         print("the site must be served over https://", file=sys.stderr)
         return 2
     host = urlparse(base).netloc
+    if args.resolve:
+        pin_address(urlparse(base).hostname or "", args.resolve)
     if args.insecure:
         TLS.check_hostname = False
         TLS.verify_mode = ssl.CERT_NONE

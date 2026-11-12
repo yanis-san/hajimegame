@@ -103,11 +103,15 @@ own browser). The only state on the server is the certificate volume (`caddy_dat
 - **One server, one instance.** That is a single point of failure, fine for a game of this size. Several instances
   need Redis (`HAJIME_REDIS_URL`) and a load balancer that keeps a room's connections on its instance
   (see ADR 0003); the Fly.io files (`deploy/fly.*.toml`) sketch that and are **not** part of this pipeline.
-- **This pipeline has been written and checked statically, but not run end to end.** Workflows pass `actionlint`,
-  scripts pass ShellCheck, the production server and the production web build were started locally under the exact
-  settings the containers use, and the browser tests run against the production build. The Docker images, the Caddy
-  configuration and the GitHub runs themselves are exercised for the first time by the first push: the `containers`
-  and `deploy-config` jobs validate them before anything is published or deployed, so a mistake stops there.
+- **What was tested, and what was not.** Tested with real Docker: both images build; they start, become healthy, run
+  as a non-root user without `pip` or `npm`, and pass the vulnerability scan (no fixable HIGH or CRITICAL finding);
+  the whole production stack ran locally behind Caddy with HTTPS, and `deploy/smoke.py` passed against it (pages in
+  three languages, security headers, `/metrics` closed, a room created, a WebSocket through the proxy);
+  `deploy/deploy.sh` was run against a local registry, including the **automatic rollback** of a version that never
+  became healthy and the wait for games in progress. Workflows pass `actionlint` and scripts pass ShellCheck.
+  **Not exercised yet:** the GitHub runners themselves, publishing to GHCR, the SSH hop to a real server, and the
+  Let's Encrypt certificate (the local test used Caddy's own certificate authority). The first real deployment is the
+  test of those four; the `containers` and `deploy-config` jobs stop a broken image or configuration before that.
 - **Another proxy or CDN in front of Caddy** (Cloudflare, a load balancer) hides the visitors' addresses from the
   rate limits unless Caddy is told to trust it (`trusted_proxies` in `deploy/Caddyfile.prod`). Without one in front,
   the defaults are right.
