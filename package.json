@@ -5,15 +5,15 @@
 	"type": "module",
 	"packageManager": "pnpm@12.18.0",
 	"scripts": {
-		"dev": "node tools/tasks.mjs dev",
-		"test": "node tools/tasks.mjs test",
-		"lint": "node tools/tasks.mjs lint",
-		"typecheck": "node tools/tasks.mjs typecheck",
-		"build": "node tools/tasks.mjs build",
-		"e2e": "node tools/tasks.mjs e2e",
-		"protocol": "node tools/tasks.mjs protocol",
-		"dictionary": "node tools/tasks.mjs dictionary",
-		"load": "node tools/tasks.mjs load",
-		"bootstrap": "node tools/tasks.mjs bootstrap"
+		"dev": "node tools/tasks.ts dev",
+		"test": "node tools/tasks.ts test",
+		"lint": "node tools/tasks.ts lint",
+		"typecheck": "node tools/tasks.ts typecheck",
+		"build": "node tools/tasks.ts build",
+		"e2e": "node tools/tasks.ts e2e",
+		"protocol": "node tools/tasks.ts protocol",
+		"dictionary": "node tools/tasks.ts dictionary",
+		"load": "node tools/tasks.ts load",
+		"bootstrap": "node tools/tasks.ts bootstrap"
 	}
 }

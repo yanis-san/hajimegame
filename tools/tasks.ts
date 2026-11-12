@@ -1,4 +1,5 @@
 // Cross-platform task runner (works on Windows without make): `pnpm dev`, `pnpm test`, ...
+// Plain TypeScript run by Node itself (type stripping, Node 24+): there is nothing to compile.
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -7,8 +8,11 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SERVER = path.join(ROOT, 'apps', 'server');
 const WEB = path.join(ROOT, 'apps', 'web');
 
+/** A command to run: program, arguments, working directory, extra environment. */
+type Step = [cmd: string, args: string[], cwd?: string, env?: Record<string, string>];
+
 /** Run a command to completion; returns its exit code. */
-function run(cmd, args, cwd = ROOT, env = {}) {
+function run(...[cmd, args, cwd = ROOT, env = {}]: Step): number {
 	console.log(`\n> ${cmd} ${args.join(' ')}   (${path.relative(ROOT, cwd) || '.'})`);
 	const result = spawnSync(cmd, args, {
 		cwd,
@@ -19,13 +23,14 @@ function run(cmd, args, cwd = ROOT, env = {}) {
 	return result.status ?? 1;
 }
 
-function all(steps) {
+/** Run every step (even after a failure, to show all problems at once), then exit with the overall result. */
+function all(steps: Step[]): never {
 	let failed = 0;
 	for (const step of steps) failed += run(...step) === 0 ? 0 : 1;
 	process.exit(failed ? 1 : 0);
 }
 
-const tasks = {
+const tasks: Record<string, () => void> = {
 	bootstrap() {
 		all([
 			['uv', ['sync'], SERVER],
@@ -50,7 +55,7 @@ const tasks = {
 		});
 		console.log('\n  Game server : http://localhost:8000  (docs: /docs)');
 		console.log('  Web app     : http://localhost:5173\n');
-		const stop = () => {
+		const stop = (): void => {
 			for (const child of [server, web]) {
 				if (process.platform === 'win32' && child.pid) {
 					spawnSync('taskkill', ['/pid', String(child.pid), '/t', '/f'], { stdio: 'ignore' });
@@ -112,7 +117,7 @@ const tasks = {
 
 const name = process.argv[2];
 if (!name || !(name in tasks)) {
-	console.log(`Usage: node tools/tasks.mjs <${Object.keys(tasks).join('|')}>`);
+	console.log(`Usage: node tools/tasks.ts <${Object.keys(tasks).join('|')}>`);
 	process.exit(name ? 1 : 0);
 }
 tasks[name]();

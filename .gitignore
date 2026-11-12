@@ -22,3 +22,6 @@ prompt-hajime-game.md
 guide.md
 guide.mdr
 docs/GUIDE.md
+
+# local helper scripts (screenshots, measurements), not part of the product
+apps/web/scripts/

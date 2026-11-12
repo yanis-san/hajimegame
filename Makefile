@@ -1,8 +1,8 @@
-# Thin wrapper over tools/tasks.mjs so `make dev` works on Linux/macOS. On Windows use `pnpm dev`.
+# Thin wrapper over tools/tasks.ts so `make dev` works on Linux/macOS. On Windows use `pnpm dev`.
 .PHONY: bootstrap dev test lint typecheck build e2e protocol dictionary load sim docker-up
 
 bootstrap dev test lint typecheck build e2e protocol dictionary load:
-	node tools/tasks.mjs $@
+	node tools/tasks.ts $@
 
 # 10 000 simulated games (the default test run plays 1 000)
 sim:

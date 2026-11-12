@@ -1,5 +1,7 @@
-/** @type {import("prettier").Config} */
-const config = {
+import type { Config } from 'prettier';
+
+// `tailwindStylesheet` belongs to prettier-plugin-tailwindcss, which prettier's own Config type does not know.
+const config: Config & { tailwindStylesheet: string } = {
 	useTabs: true,
 	singleQuote: true,
 	trailingComma: 'none',

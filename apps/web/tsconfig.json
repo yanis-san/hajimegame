@@ -7,8 +7,9 @@
 	"include": [
 		"src",
 		"vite.config.ts",
-		"prettier.config.js",
-		"eslint.config.js",
-		"playwright.config.ts"
+		"prettier.config.ts",
+		"eslint.config.ts",
+		"playwright.config.ts",
+		"../../tools/tasks.ts"
 	]
 }
