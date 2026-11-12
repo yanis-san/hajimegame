@@ -1,27 +1,90 @@
-.venv/
-__pycache__/
-*.pyc
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.coverage
-htmlcov/
-node_modules/
-.svelte-kit/
-build/
-dist/
+# ---------------------------------------------------------------------------
+# Secrets and environment: never commit these (only the *.example files are tracked)
+# ---------------------------------------------------------------------------
 .env
-.scratch/
-tools/.cache/
-test-results/
-playwright-report/
-*.log
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+id_rsa*
+id_ed25519*
+hajime-deploy*
+.deployed-tag
 
-# personal notes, never published
+# ---------------------------------------------------------------------------
+# Personal notes and local-only files
+# ---------------------------------------------------------------------------
 prompt-hajime-game.md
 guide.md
 guide.mdr
 docs/GUIDE.md
-
-# local helper scripts (screenshots, measurements), not part of the product
+.scratch/
 apps/web/scripts/
+
+# ---------------------------------------------------------------------------
+# Editors and operating systems
+# ---------------------------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---------------------------------------------------------------------------
+# Python (apps/server, tools)
+# ---------------------------------------------------------------------------
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# ---------------------------------------------------------------------------
+# Node and SvelteKit (apps/web, packages)
+# ---------------------------------------------------------------------------
+node_modules/
+.pnpm-store/
+.svelte-kit/
+.output/
+.vercel/
+.netlify/
+.wrangler/
+vite.config.*.timestamp-*
+*.tsbuildinfo
+
+# ---------------------------------------------------------------------------
+# Build output and caches
+# ---------------------------------------------------------------------------
+build/
+dist/
+tools/.cache/
+
+# ---------------------------------------------------------------------------
+# Test output
+# ---------------------------------------------------------------------------
+test-results/
+playwright-report/
+blob-report/
+apps/web/.shots/
+apps/web/.sounds/
+
+# ---------------------------------------------------------------------------
+# Logs and temporary files
+# ---------------------------------------------------------------------------
+*.log
+npm-debug.log*
+pnpm-debug.log*
+*.tmp
+*.bak
