@@ -62,3 +62,8 @@ deploy/       pile de production (compose, Caddy), scripts de déploiement, exem
 
 Code du projet : à définir par l'auteur. Dictionnaire : JMdict, © EDRDG, CC BY-SA 4.0 (voir la page
 « Crédits et licences » dans l'application). Polices : SIL OFL 1.1.
+
+## Licence
+
+Code sous licence [MIT](LICENSE). Le dictionnaire (JMdict, CC BY-SA 4.0), les phrases d'exemple (Tatoeba, CC BY 2.0 FR)
+et les polices (OFL) gardent leur propre licence : voir [NOTICE.md](NOTICE.md).
