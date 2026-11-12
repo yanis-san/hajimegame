@@ -3,14 +3,19 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime
 from typing import Any
 
 import httpx
 import pytest
+import sqlalchemy as sa
 from argon2 import PasswordHasher
 from pydantic import ValidationError
+from sqlalchemy.ext.asyncio import create_async_engine
 
 from app.core.config import AppSettings
+from app.db.games.bomb import BombTurn
+from app.db.models import Game, GamePlayer
 from app.japanese.dictionary import Dictionary
 from tests.realtime.helpers import CSRF, running_server
 
@@ -138,3 +143,51 @@ def test_an_unsafe_admin_configuration_does_not_start(override: dict[str, Any], 
     good: dict[str, Any] = {**ADMIN, "database_url": "sqlite+aiosqlite:///x.db"}
     with pytest.raises(ValidationError, match=message):
         AppSettings(**{**good, **override})
+
+
+async def test_deleting_a_game_takes_its_seats_and_turns_with_it(
+    database_url: str, dictionary: Dictionary
+) -> None:
+    now = datetime.now()
+    kept, removed = uuid.uuid4(), uuid.uuid4()
+    engine = create_async_engine(database_url)
+    async with engine.begin() as connection:
+        for game_id in (kept, removed):
+            await connection.execute(
+                sa.insert(Game).values(
+                    id=game_id,
+                    kind="bomb",
+                    mode="classic",
+                    room_code="ROOM",
+                    settings={},
+                    started_at=now,
+                    ended_at=now,
+                )
+            )
+            await connection.execute(
+                sa.insert(GamePlayer).values(
+                    game_id=game_id, seat=0, display_name="Aya", place=1, score=1, words=1, longest_word=""
+                )
+            )
+            await connection.execute(
+                sa.insert(BombTurn).values(
+                    game_id=game_id,
+                    turn=0,
+                    seat=0,
+                    fragment="さ",
+                    outcome="word",
+                    word="さくら",
+                    reading="さくら",
+                )
+            )
+
+    async with running_server(dictionary, database_url=database_url, **ADMIN) as server:
+        await log_in(server.http)
+        response = await server.http.request("DELETE", f"/admin/game/delete?pks={removed}")
+        assert response.status_code == 200
+
+    async with engine.connect() as connection:
+        for table in (Game, GamePlayer, BombTurn):
+            left = (await connection.execute(sa.select(sa.func.count()).select_from(table))).scalar()
+            assert left == 1, table.__tablename__  # only the game that was not deleted remains
+    await engine.dispose()
