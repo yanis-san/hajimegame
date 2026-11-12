@@ -16,3 +16,9 @@ tools/.cache/
 test-results/
 playwright-report/
 *.log
+
+# personal notes, never published
+prompt-hajime-game.md
+guide.md
+guide.mdr
+docs/GUIDE.md

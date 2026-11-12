@@ -17,7 +17,7 @@ pnpm dev        # serveur de jeu :8000 + interface :5173
 ```
 
 Ouvre <http://localhost:5173>, crée une partie, puis ouvre le lien d'invitation dans un second onglet (ou sur ton
-téléphone avec l'adresse réseau affichée par Vite). Le guide complet est dans [docs/GUIDE.md](docs/GUIDE.md).
+téléphone avec l'adresse réseau affichée par Vite).
 
 ## Commandes
 
@@ -42,7 +42,7 @@ apps/server   FastAPI : moteur de jeu pur, salles, WebSocket, japonais, base de 
 apps/web      SvelteKit : accueil, salle d'attente, partie, résultats, route /design
 packages/protocol  Schéma JSON et types TypeScript générés
 tools/        build_dictionary.py, gen_protocol.py, loadtest.py, tasks.mjs
-docs/         ARCHITECTURE, PROTOCOL, DICTIONARY, GUIDE, DEPLOY (déploiement automatisé), ADR/
+docs/         ARCHITECTURE, PROTOCOL, DICTIONARY, DEPLOY (déploiement automatisé), ADR/
 deploy/       pile de production (compose, Caddy), scripts de déploiement, exemples Fly.io
 ```
 

@@ -1,6 +1,6 @@
 # Hajime Game - Architecture
 
-Status: milestone A (phases 0 to 4) in progress. Source of truth for requirements: `prompt-hajime-game.md`.
+Status: milestone A (phases 0 to 4) in progress.
 
 ## 1. Goals
 
