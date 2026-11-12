@@ -152,7 +152,7 @@ jobs:
           name="hajime-${{ matrix.app }}"
           if [ "${{ matrix.app }}" = server ]; then
             docker run -d --name "$name" -p 8000:8000 \
-              -e HAJIME_ALLOWED_ORIGINS='["https://ci.hajime.dev"]' -e HAJIME_ALLOW_MISSING_ORIGIN=false \
+              -e HAJIME_ALLOWED_ORIGINS='["https://ci.hajime.dev"]' -e HAJIME_ALLOW_MISSING_ORIGIN=false               -e HAJIME_COOKIE_SECURE=true \
               "hajime-server:ci"
             port=8000; ready=/readyz
           else
@@ -185,7 +185,8 @@ jobs:
           docker run -d --name pg --network hajime-ci -e POSTGRES_USER=hajime -e POSTGRES_PASSWORD=ci -e POSTGRES_DB=hajime             postgres:17-alpine@sha256:e5d2edd28b1f8d40a0a6c0c9cdc545b19b56a0d5d88f94bc11a97d970d4700d0
           for _ in $(seq 1 30); do docker exec pg pg_isready -U hajime -d hajime >/dev/null 2>&1 && break; sleep 1; done
           env_args=(-e HAJIME_DATABASE_URL=postgresql+asyncpg://hajime:ci@pg:5432/hajime
-                    -e HAJIME_ALLOWED_ORIGINS='["https://ci.hajime.dev"]' -e HAJIME_ALLOW_MISSING_ORIGIN=false)
+                    -e HAJIME_ALLOWED_ORIGINS='["https://ci.hajime.dev"]' -e HAJIME_ALLOW_MISSING_ORIGIN=false
+                    -e HAJIME_COOKIE_SECURE=true)
           docker run --rm --network hajime-ci "${env_args[@]}" hajime-server:ci alembic upgrade head
           docker run -d --name server-db --network hajime-ci -p 8001:8000 "${env_args[@]}" hajime-server:ci
           for _ in $(seq 1 60); do
