@@ -3,3 +3,6 @@ packages:
   - packages/*
 allowBuilds:
   esbuild: true
+overrides:
+  # eslint pulls minimatch 10, which has a denial-of-service advisory fixed in 11.0.1 (dev tool only, not shipped)
+  "minimatch@>=7.0.0 <11.0.1": ">=11.0.1"
