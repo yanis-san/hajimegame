@@ -21,6 +21,11 @@ RUN pnpm --filter web build
 
 FROM node:24-slim@sha256:dc26ae92c9fb15cf6b1d63e20f0944b2efe0f115b20e00be48fb23fceb061c54 AS runtime
 WORKDIR /app
+# The app only needs `node`. The package managers that ship with the base image (npm, yarn, corepack) are never
+# used at runtime and carry their own vulnerabilities, so they are removed: less to patch, less to attack.
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+    /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \
+    /usr/local/bin/yarn /usr/local/bin/yarnpkg /opt/yarn-*
 # adapter-node bundles its dependencies: the build folder is all the app needs, no node_modules
 ENV NODE_ENV=production PORT=3000
 COPY --from=build --chown=node:node /repo/apps/web/build ./build

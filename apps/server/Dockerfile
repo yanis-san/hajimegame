@@ -15,8 +15,14 @@ RUN uv sync --frozen --no-dev --no-install-project
 COPY apps/server/app ./app
 
 FROM python:3.13-slim-bookworm@sha256:a5a7017efc5969e00ae2b91c8eb0631049a569652aa4ffc4501769049ae45c72 AS runtime
+# The system pip, setuptools and wheel are build tools: the app runs from its own virtualenv and never needs them,
+# so they are removed (they and the libraries pip vendors are a regular source of vulnerability reports).
 RUN groupadd --gid 10001 hajime \
- && useradd --uid 10001 --gid 10001 --no-create-home --shell /usr/sbin/nologin hajime
+ && useradd --uid 10001 --gid 10001 --no-create-home --shell /usr/sbin/nologin hajime \
+ && rm -rf /usr/local/lib/python3.13/site-packages/pip* /usr/local/lib/python3.13/site-packages/setuptools* \
+    /usr/local/lib/python3.13/site-packages/wheel* /usr/local/lib/python3.13/site-packages/pkg_resources \
+    /usr/local/lib/python3.13/site-packages/_distutils_hack /usr/local/bin/pip /usr/local/bin/pip3 \
+    /usr/local/bin/pip3.13 /usr/local/bin/wheel
 WORKDIR /app
 COPY --from=build --chown=10001:10001 /app /app
 ENV PATH="/app/.venv/bin:$PATH" \
