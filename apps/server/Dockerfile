@@ -13,6 +13,8 @@ ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy UV_PYTHON_DOWNLOADS=never
 COPY apps/server/pyproject.toml apps/server/uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
 COPY apps/server/app ./app
+# `alembic upgrade head` runs from this image at deployment time (see deploy/deploy.sh)
+COPY apps/server/alembic.ini ./
 
 FROM python:3.13-slim-bookworm@sha256:a5a7017efc5969e00ae2b91c8eb0631049a569652aa4ffc4501769049ae45c72 AS runtime
 # The system pip, setuptools and wheel are build tools: the app runs from its own virtualenv and never needs them,
