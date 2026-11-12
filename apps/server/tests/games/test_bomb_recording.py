@@ -4,19 +4,25 @@ import uuid
 from datetime import datetime
 
 from app.games.bomb import events as ev
-from app.realtime.recording import GameRecording, NullRecorder, SeatInfo
+from app.games.bomb.recording import BombDetail, BombRecording, BombTurn
+from app.games.recording import GameRecord, NullRecorder, SeatInfo
 
 START = datetime(2026, 11, 12, 10, 0, 0)
 GUEST = uuid.UUID("11111111-2222-3333-4444-555555555555")
 
 
-def recording() -> GameRecording:
+def turns_of(record: GameRecord) -> tuple[BombTurn, ...]:
+    assert isinstance(record.detail, BombDetail)
+    return record.detail.turns
+
+
+def recording() -> BombRecording:
     seats = [
         SeatInfo("a", "Aya", guest_id=GUEST, lang="fr"),
         SeatInfo("b", "Ben", lang="en"),
         SeatInfo("c", "Momo", bot_difficulty="hard"),
     ]
-    return GameRecording("ABC234", "classic", {"lives": 2}, seats, started_at=START, started=100.0)
+    return BombRecording("ABC234", "classic", {"lives": 2}, seats, started_at=START, started=100.0)
 
 
 def turn(turn_number: int, member: str, fragment: str, started: float, fuse: float = 10.0) -> ev.TurnStarted:
@@ -45,15 +51,20 @@ def test_a_game_becomes_one_record_with_every_turn() -> None:
         now=160.0,
     )
 
-    assert (record.room_code, record.mode, record.settings) == ("ABC234", "classic", {"lives": 2})
+    assert (record.kind, record.room_code, record.mode, record.settings) == (
+        "bomb",
+        "ABC234",
+        "classic",
+        {"lives": 2},
+    )
     assert record.started_at == START
     assert record.duration_ms == 60_000
-    assert [(t.turn, t.seat, t.fragment, t.outcome) for t in record.turns] == [
+    assert [(t.turn, t.seat, t.fragment, t.outcome) for t in turns_of(record)] == [
         (1, 0, "しょ", "word"),
         (2, 1, "く", "explosion"),
         (3, 2, "ん", "n_ending"),
     ]
-    first = record.turns[0]
+    first = turns_of(record)[0]
     assert (first.word, first.reading, first.response_ms, first.rejected_attempts) == (
         "しょくじ",
         "しょくじ",
@@ -61,7 +72,7 @@ def test_a_game_becomes_one_record_with_every_turn() -> None:
         2,
     )
     assert first.fuse_ms == 10_000
-    assert record.turns[1].response_ms is None and record.turns[1].word == ""
+    assert turns_of(record)[1].response_ms is None and turns_of(record)[1].word == ""
 
 
 def test_players_carry_their_stats_and_identity() -> None:
@@ -95,7 +106,7 @@ def test_events_of_another_turn_are_ignored_and_a_missing_result_gets_last_place
     r.on_event(turn(1, "a", "か", 100.0), 100.0)
     r.on_event(ev.WordRejected(turn=9, player_id="a", text="x", reason="too_late"), 101.0)  # stale turn
     record = r.finish({}, ended_at=datetime(2026, 11, 12, 10, 1, 0), now=101.0)
-    assert record.turns == ()  # a turn that never ended is not invented
+    assert turns_of(record) == ()  # a turn that never ended is not invented
     assert [p.place for p in record.players] == [3, 3, 3]
 
 

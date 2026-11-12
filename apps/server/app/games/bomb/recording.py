@@ -1,62 +1,24 @@
-"""What happened in a finished game, as plain data.
-
-The room feeds the engine's events to a ``GameRecording``; at ``game_over`` it becomes a ``GameRecord`` that a
-``Recorder`` stores (PostgreSQL in production, nothing in development). Nothing here touches a database or the
-network, and a recorder never runs on the game's path: ``submit`` only queues the record.
-
-Privacy: a record holds the nickname a player chose, a random guest identifier their browser generated (never
-shown to other players), the interface language, scores, and the words played. It holds no address, no device
-information and no cookie.
-"""
+"""The bomb game's recording: every turn, with its prompt, how it ended and how long it took."""
 
 from __future__ import annotations
 
-import dataclasses
 import uuid
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Literal, Protocol
+from typing import Any, Literal
 
 from app.games.base import GameEvent
 from app.games.bomb import events as ev
+from app.games.recording import GameRecord, PlayerRecord, SeatInfo
+
+KIND = "bomb"
 
 Outcome = Literal["word", "explosion", "n_ending"]
 
 
 @dataclass(frozen=True, slots=True)
-class SeatInfo:
-    """Who sits at a seat when the game starts."""
-
-    member_id: str
-    name: str
-    guest_id: uuid.UUID | None = None
-    lang: str | None = None
-    bot_difficulty: str | None = None
-
-    @property
-    def is_bot(self) -> bool:
-        return self.bot_difficulty is not None
-
-
-@dataclass(frozen=True, slots=True)
-class PlayerRecord:
-    seat: int
-    name: str
-    guest_id: uuid.UUID | None
-    lang: str | None
-    is_bot: bool
-    bot_difficulty: str | None
-    place: int
-    score: int
-    words: int
-    longest_word: str
-    explosions: int
-    avg_response_ms: int | None
-
-
-@dataclass(frozen=True, slots=True)
-class TurnRecord:
+class BombTurn:
     turn: int
     seat: int
     fragment: str
@@ -69,29 +31,10 @@ class TurnRecord:
 
 
 @dataclass(frozen=True, slots=True)
-class GameRecord:
-    id: uuid.UUID
-    room_code: str
-    mode: str
-    settings: dict[str, Any]
-    started_at: datetime  # UTC, naive (the schema stores naive UTC)
-    ended_at: datetime
-    duration_ms: int
-    players: tuple[PlayerRecord, ...]
-    turns: tuple[TurnRecord, ...]
+class BombDetail:
+    """The part of a bomb game's record that only this game has."""
 
-
-class Recorder(Protocol):
-    """Where finished games go. ``submit`` must return at once and never raise."""
-
-    def submit(self, record: GameRecord) -> None: ...
-
-
-class NullRecorder:
-    """Development and tests without a database: finished games are simply not stored."""
-
-    def submit(self, record: GameRecord) -> None:
-        return None
+    turns: tuple[BombTurn, ...]
 
 
 @dataclass(slots=True)
@@ -104,8 +47,8 @@ class _OpenTurn:
     rejected: int = 0
 
 
-class GameRecording:
-    """Collects the events of one running game."""
+class BombRecording:
+    """Collects the events of one running bomb game."""
 
     def __init__(
         self,
@@ -125,7 +68,7 @@ class GameRecording:
         self._started_at = started_at
         self._started = started
         self._open: _OpenTurn | None = None
-        self._turns: list[TurnRecord] = []
+        self._turns: list[BombTurn] = []
         self._explosions = [0] * len(seats)
         self._responses: list[list[int]] = [[] for _ in seats]
 
@@ -167,7 +110,7 @@ class GameRecording:
         response_ms: int | None = None,
     ) -> None:
         self._turns.append(
-            TurnRecord(
+            BombTurn(
                 turn=current.turn,
                 seat=self._seat_of.get(current.member_id, -1),
                 fragment=current.fragment,
@@ -188,7 +131,6 @@ class GameRecording:
         ended_at: datetime,
         now: float,
     ) -> GameRecord:
-        """``results`` maps a member id to (place, score, words, longest word)."""
         players = []
         for index, seat in enumerate(self._seats):
             place, score, words, longest = results.get(seat.member_id, (len(self._seats), 0, 0, ""))
@@ -210,6 +152,7 @@ class GameRecording:
                 )
             )
         return GameRecord(
+            kind=KIND,
             id=uuid.uuid4(),
             room_code=self._room_code,
             mode=self._mode,
@@ -218,12 +161,5 @@ class GameRecording:
             ended_at=ended_at,
             duration_ms=max(0, round((now - self._started) * 1000)),
             players=tuple(players),
-            turns=tuple(self._turns),
+            detail=BombDetail(turns=tuple(self._turns)),
         )
-
-
-def settings_as_dict(settings: object) -> dict[str, Any]:
-    """The game settings as plain JSON-friendly values."""
-    if dataclasses.is_dataclass(settings) and not isinstance(settings, type):
-        return dataclasses.asdict(settings)
-    return {}

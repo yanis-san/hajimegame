@@ -71,7 +71,9 @@ async def test_a_played_game_is_stored_and_guest_ids_stay_private(
         }
         guests = {str(row[0]) for row in await query(database_url, "select guest_id from game_players")}
         assert {g.replace("-", "") for g in guests} == {AYA.replace("-", ""), BEN.replace("-", "")}
-        turns = await query(database_url, "select turn, fragment, outcome, word from turns order by turn")
+        turns = await query(
+            database_url, "select turn, fragment, outcome, word from bomb_turns order by turn"
+        )
         assert turns[0][:2] == (1, turn["fragment"]) and turns[0][2:] == ("word", word)
         assert turns[-1][2] == "explosion"
 

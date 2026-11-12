@@ -11,13 +11,15 @@ from __future__ import annotations
 import asyncio
 import contextlib
 from collections import deque
+from collections.abc import Sequence
 
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
 from app.core import metrics
 from app.core.logging import get_logger
-from app.db.models import Game, GamePlayer, Turn
-from app.realtime.recording import GameRecord
+from app.db.games import store_for
+from app.db.models import Base, Game, GamePlayer
+from app.games.recording import GameRecord
 
 log = get_logger("recorder")
 
@@ -26,11 +28,11 @@ RETRY_PAUSES = (1.0, 5.0, 20.0)  # seconds between attempts: three retries after
 STOP_TIMEOUT = 15.0  # at shutdown, how long to keep trying to write what is still queued
 
 
-def to_rows(record: GameRecord) -> Game:
-    """The ORM objects for one finished game (the game, its players and its turns)."""
-    return Game(
+def to_rows(record: GameRecord) -> tuple[Game, Sequence[Base]]:
+    """The ORM objects for one finished game: the common rows, and the rows only that game has."""
+    game = Game(
         id=record.id,
-        kind="bomb",
+        kind=record.kind,
         mode=record.mode,
         room_code=record.room_code,
         settings=record.settings,
@@ -56,21 +58,8 @@ def to_rows(record: GameRecord) -> Game:
             )
             for p in record.players
         ],
-        turns=[
-            Turn(
-                turn=t.turn,
-                seat=t.seat,
-                fragment=t.fragment,
-                outcome=t.outcome,
-                word=t.word,
-                reading=t.reading,
-                response_ms=t.response_ms,
-                fuse_ms=t.fuse_ms,
-                rejected_attempts=t.rejected_attempts,
-            )
-            for t in record.turns
-        ],
     )
+    return game, store_for(record.kind).detail_rows(record)
 
 
 class DatabaseRecorder:
@@ -150,5 +139,11 @@ class DatabaseRecorder:
 
     async def save(self, record: GameRecord) -> None:
         """Write one finished game in a single transaction."""
+        game, detail = to_rows(record)
         async with self._sessions() as session, session.begin():
-            session.add(to_rows(record))
+            session.add(game)
+            # The common rows go first: a game's own rows refer to them (a foreign key) and are not
+            # tied to the common model by a relationship, so the order must be stated. SQLite does not
+            # check foreign keys by default and would hide a wrong order; PostgreSQL refuses it.
+            await session.flush()
+            session.add_all(detail)

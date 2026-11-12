@@ -10,11 +10,11 @@ from collections import defaultdict
 from app.core import metrics
 from app.core.config import AppSettings
 from app.core.logging import get_logger
+from app.games.recording import NullRecorder, Recorder
 from app.japanese.candidates import CandidateIndex
 from app.japanese.dictionary import Dictionary
 from app.japanese.fragments import FragmentTable
 from app.realtime.clock import RoomClock
-from app.realtime.recording import NullRecorder, Recorder
 from app.realtime.registry import ROOM_TTL_SECONDS, RoomRegistry
 from app.realtime.room import Room, RoomDeps
 

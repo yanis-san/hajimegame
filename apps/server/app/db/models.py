@@ -4,6 +4,9 @@ The database is never touched during a game: results are written after ``game_ov
 (``app.db.recorder``). Every game is stored with each player's random guest identifier, so that when accounts
 arrive a person's past games can be attached to their account. Tables for later milestones (seasons, groups,
 challenges) exist from the start so they plug in without a refactor.
+
+This module is the part every game shares. What only one game has (the bomb game's turns, say) lives in that
+game's own module under ``app.db.games``, never here.
 """
 
 from __future__ import annotations
@@ -136,7 +139,6 @@ class Game(Base):
     bots_count: Mapped[int] = mapped_column(default=0)
 
     players: Mapped[list[GamePlayer]] = relationship(back_populates="game", cascade="all, delete-orphan")
-    turns: Mapped[list[Turn]] = relationship(back_populates="game", cascade="all, delete-orphan")
 
 
 class GamePlayer(Base):
@@ -167,25 +169,3 @@ class GamePlayer(Base):
     avg_response_ms: Mapped[int | None]
 
     game: Mapped[Game] = relationship(back_populates="players")
-
-
-class Turn(Base):
-    """One turn of one game: the prompt, what happened, and how long it took. Feeds balance and statistics."""
-
-    __tablename__ = "turns"
-    __table_args__ = (sa.Index("ix_turns_fragment", "fragment"),)
-
-    game_id: Mapped[uuid.UUID] = mapped_column(
-        sa.ForeignKey("games.id", ondelete="CASCADE"), primary_key=True
-    )
-    turn: Mapped[int] = mapped_column(primary_key=True)
-    seat: Mapped[int]
-    fragment: Mapped[str] = mapped_column(sa.String(16))
-    outcome: Mapped[str] = mapped_column(sa.String(12))  # word | explosion | n_ending
-    word: Mapped[str] = mapped_column(sa.String(32), default="")
-    reading: Mapped[str] = mapped_column(sa.String(32), default="")
-    response_ms: Mapped[int | None]
-    fuse_ms: Mapped[int] = mapped_column(default=0)
-    rejected_attempts: Mapped[int] = mapped_column(default=0)
-
-    game: Mapped[Game] = relationship(back_populates="turns")

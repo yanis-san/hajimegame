@@ -103,6 +103,15 @@ class Dictionary:
             normalized = romaji_to_hiragana(normalized)
         return normalized
 
+    def lookup(self, text: str) -> WordMatch | None:
+        """The first entry written as ``text`` (kanji or kana), whatever the fragment: for showing a word that
+        was played earlier with its reading, meanings and example."""
+        text = self.canonical(text)
+        for entry_id in self._index.get(text, ()):
+            entry = self._entries[entry_id]
+            return _match(entry_id, entry, entry.readings[0], text)
+        return None
+
     def check(self, raw: str, fragment: str, *, starts_with: bool = False) -> WordMatch | WordRejected:
         """Validate ``raw`` against the dictionary and ``fragment``.
 

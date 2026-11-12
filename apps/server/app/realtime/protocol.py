@@ -205,6 +205,65 @@ class WordView(Struct, frozen=True, omit_defaults=False):
     example_fr: str = ""
 
 
+# Statistics views. Each game has its own, named for it (the bomb game's are the ``Bomb*`` ones).
+BombStatsMode = Literal["all", "classic", "shiritori"]
+
+
+class BombWordStat(Struct, frozen=True, omit_defaults=False):
+    """A word a player submitted, and how many times."""
+
+    word: str
+    reading: str
+    count: int
+    last_played: str  # ISO date
+    meaning_fr: str = ""
+    meaning_en: str = ""
+    example_ja: str = ""
+    example_en: str = ""
+    example_fr: str = ""
+
+
+class BombRecentWord(Struct, frozen=True, omit_defaults=False):
+    """One of the latest words a player submitted."""
+
+    word: str
+    reading: str
+    played_at: str  # ISO date and time (UTC)
+    mode: Mode
+    response_ms: int | None
+    meaning_fr: str = ""
+    meaning_en: str = ""
+    example_ja: str = ""
+    example_en: str = ""
+    example_fr: str = ""
+
+
+class DayStat(Struct, frozen=True, omit_defaults=False):
+    day: str  # ISO date
+    games: int
+
+
+class BombStatsSummary(Struct, frozen=True, omit_defaults=False):
+    games: int
+    wins: int
+    words: int  # words submitted
+    distinct_words: int  # different words submitted: the size of the vocabulary used
+    explosions: int
+    avg_response_ms: int | None
+    fastest_ms: int | None
+    longest_word: str
+
+
+class BombStatsView(Struct, frozen=True, omit_defaults=False):
+    """What `GET /api/me/stats/bomb` returns: the statistics of one browser (or, later, one account)."""
+
+    mode: BombStatsMode
+    summary: BombStatsSummary
+    top_words: list[BombWordStat]
+    recent_words: list[BombRecentWord]
+    activity: list[DayStat]  # games per day over the last 30 days, oldest first
+
+
 class ResultRow(Struct, frozen=True, omit_defaults=False):
     player_id: str
     place: int

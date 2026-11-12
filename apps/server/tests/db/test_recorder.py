@@ -12,13 +12,15 @@ from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
 from app.core import metrics
 from app.db.recorder import DatabaseRecorder
-from app.realtime.recording import GameRecord, PlayerRecord, TurnRecord
+from app.games.bomb.recording import BombDetail, BombTurn
+from app.games.recording import GameRecord, PlayerRecord
 
 GUEST = uuid.UUID("11111111-2222-3333-4444-555555555555")
 
 
 def make_record(room: str = "ABC234") -> GameRecord:
     return GameRecord(
+        kind="bomb",
         id=uuid.uuid4(),
         room_code=room,
         mode="classic",
@@ -30,9 +32,11 @@ def make_record(room: str = "ABC234") -> GameRecord:
             PlayerRecord(0, "Aya", GUEST, "fr", False, None, 1, 5, 2, "きもの", 0, 2000),
             PlayerRecord(1, "Momo", None, None, True, "hard", 2, 0, 0, "", 2, None),
         ),
-        turns=(
-            TurnRecord(1, 0, "か", "word", "かさ", "かさ", 1000, 10_000, 1),
-            TurnRecord(2, 1, "き", "explosion", "", "", None, 10_000, 0),
+        detail=BombDetail(
+            turns=(
+                BombTurn(1, 0, "か", "word", "かさ", "かさ", 1000, 10_000, 1),
+                BombTurn(2, 1, "き", "explosion", "", "", None, 10_000, 0),
+            )
         ),
     )
 
@@ -74,7 +78,7 @@ async def test_a_finished_game_is_stored_with_its_players_and_turns(engine: Asyn
     guest = (await rows(engine, "select guest_id from game_players where seat = 0"))[0][0]
     assert uuid.UUID(str(guest)) == GUEST
     turns = await rows(
-        engine, "select turn, seat, fragment, outcome, word, response_ms from turns order by turn"
+        engine, "select turn, seat, fragment, outcome, word, response_ms from bomb_turns order by turn"
     )
     assert turns == [
         (1, 0, "か", "word", "かさ", 1000),

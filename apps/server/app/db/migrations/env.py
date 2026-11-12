@@ -10,6 +10,7 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from app.core.config import get_settings
+import app.db.games  # noqa: F401  (registers every game's tables on the metadata)
 from app.db.models import Base
 
 config = context.config

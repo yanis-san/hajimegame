@@ -29,14 +29,15 @@ from app.games.base import GameEvent, Phase, PlayerInfo
 from app.games.bomb import events as ev
 from app.games.bomb.bots import Difficulty, plan_turn
 from app.games.bomb.engine import BombEngine
+from app.games.bomb.recording import BombRecording
 from app.games.bomb.settings import BombSettings
+from app.games.recording import NullRecorder, Recorder, RunRecording, SeatInfo, settings_as_dict
 from app.japanese.candidates import CandidateIndex
 from app.japanese.dictionary import Dictionary
 from app.japanese.fragments import FragmentTable
 from app.realtime import protocol as pr
 from app.realtime.clock import RoomClock, to_ms
 from app.realtime.connection import Connection
-from app.realtime.recording import GameRecording, NullRecorder, Recorder, SeatInfo, settings_as_dict
 
 log = get_logger("room")
 
@@ -123,7 +124,7 @@ class Room:
         self._typing_sent_at = 0.0
         self._words: list[pr.WordView] = []
         self._results: list[pr.ResultRow] | None = None
-        self._recording: GameRecording | None = None
+        self._recording: RunRecording | None = None
         self._countdown_ends: float | None = None
         self._bot_rng = deps.rng_factory()
         self._bot_plan: tuple[int, str, str | None] | None = None  # (turn, bot id, word)
@@ -709,7 +710,7 @@ class Room:
             rng=self._deps.rng_factory(),
         )
         self._engine = engine
-        self._recording = GameRecording(
+        self._recording = BombRecording(
             self.code,
             self._settings.mode,
             settings_as_dict(settings),

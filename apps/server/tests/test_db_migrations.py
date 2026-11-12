@@ -8,6 +8,7 @@ from alembic.autogenerate import compare_metadata
 from alembic.config import Config
 from alembic.migration import MigrationContext
 
+import app.db.games  # noqa: F401  (every game's tables belong to the metadata)
 from app.db.models import Base
 
 SERVER = Path(__file__).resolve().parent.parent

@@ -11,6 +11,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from redis.asyncio import Redis
 
+from app.api.me import router as me_router
 from app.api.routes import router as api_router
 from app.core import metrics
 from app.core.config import AppSettings, get_settings
@@ -19,12 +20,12 @@ from app.core.ratelimit import MemoryWindowLimiter, RedisWindowLimiter, WindowLi
 from app.core.security import SecurityHeadersMiddleware
 from app.db.recorder import DatabaseRecorder
 from app.db.session import create_engine
+from app.games.recording import NullRecorder, Recorder
 from app.japanese.candidates import CandidateIndex
 from app.japanese.dictionary import Dictionary
 from app.japanese.fragments import FragmentTable
 from app.realtime.clock import RoomClock, SystemClock
 from app.realtime.manager import RoomManager
-from app.realtime.recording import NullRecorder, Recorder
 from app.realtime.registry import MemoryRegistry, RedisRegistry, RoomRegistry
 from app.realtime.ws import router as ws_router
 
@@ -130,10 +131,11 @@ def create_app(
         CORSMiddleware,
         allow_origins=cfg.allowed_origins,
         allow_methods=["GET", "POST"],
-        allow_headers=["content-type", "x-hajime-client"],
+        allow_headers=["content-type", "x-hajime-client", "x-hajime-guest"],
         allow_credentials=False,
     )
     app.add_middleware(SecurityHeadersMiddleware, hsts=cfg.is_prod)
     app.include_router(api_router)
+    app.include_router(me_router)
     app.include_router(ws_router)
     return app

@@ -29,7 +29,7 @@ class CreatedRoom(BaseModel):
     ws_path: str
 
 
-def _ip(request: Request) -> str:
+def client_ip(request: Request) -> str:
     settings: AppSettings = request.app.state.settings
     if settings.trust_proxy_headers:
         for header in ("fly-client-ip", "x-forwarded-for"):
@@ -94,7 +94,7 @@ async def create_room(request: Request, body: CreateRoomBody | None = None) -> C
     settings: AppSettings = request.app.state.settings
     manager: RoomManager = request.app.state.manager
     limiter: WindowLimiter = request.app.state.limiter
-    ip = _ip(request)
+    ip = client_ip(request)
     if not await limiter.allow(f"create:{ip}", settings.room_creations_per_minute, 60):
         metrics.RATE_LIMITED.labels("create_room").inc()
         raise HTTPException(status_code=429, detail="rate_limited")
@@ -112,7 +112,7 @@ async def room_info(code: str, request: Request) -> dict[str, Any]:
     manager: RoomManager = request.app.state.manager
     settings: AppSettings = request.app.state.settings
     limiter: WindowLimiter = request.app.state.limiter
-    if not await limiter.allow(f"lookup:{_ip(request)}", settings.join_attempts_per_minute * 2, 60):
+    if not await limiter.allow(f"lookup:{client_ip(request)}", settings.join_attempts_per_minute * 2, 60):
         raise HTTPException(status_code=429, detail="rate_limited")
     resolved = await manager.resolve(code)
     if resolved is None:

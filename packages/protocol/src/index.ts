@@ -7,6 +7,7 @@ export type Difficulty = "easy" | "normal" | "hard";
 export type RoomPhase = "lobby" | "countdown" | "playing" | "finished";
 export type RejectCode = "not_in_dictionary" | "missing_fragment" | "already_used" | "not_your_turn" | "too_late" | "ends_with_n";
 export type ErrorCode = "bad_version" | "bad_message" | "room_not_found" | "room_full" | "bad_token" | "name_invalid" | "rate_limited" | "not_host" | "not_allowed" | "wrong_phase" | "need_more_players" | "players_not_ready" | "kicked" | "replaced" | "server_restarting" | "wrong_instance" | "bots_loading";
+export type BombStatsMode = "all" | "classic" | "shiritori";
 
 export interface SettingsView {
   lives: number;
@@ -58,6 +59,55 @@ export interface ResultRow {
   score: number;
   words: number;
   longest: string;
+}
+
+export interface DayStat {
+  day: string;
+  games: number;
+}
+
+export interface BombWordStat {
+  word: string;
+  reading: string;
+  count: number;
+  last_played: string;
+  meaning_fr: string;
+  meaning_en: string;
+  example_ja: string;
+  example_en: string;
+  example_fr: string;
+}
+
+export interface BombRecentWord {
+  word: string;
+  reading: string;
+  played_at: string;
+  mode: Mode;
+  response_ms: number | null;
+  meaning_fr: string;
+  meaning_en: string;
+  example_ja: string;
+  example_en: string;
+  example_fr: string;
+}
+
+export interface BombStatsSummary {
+  games: number;
+  wins: number;
+  words: number;
+  distinct_words: number;
+  explosions: number;
+  avg_response_ms: number | null;
+  fastest_ms: number | null;
+  longest_word: string;
+}
+
+export interface BombStatsView {
+  mode: BombStatsMode;
+  summary: BombStatsSummary;
+  top_words: BombWordStat[];
+  recent_words: BombRecentWord[];
+  activity: DayStat[];
 }
 
 // ---- client -> server

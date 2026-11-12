@@ -1,7 +1,10 @@
-"""record finished games: players' guest ids and languages, and every turn
+"""record finished games: players' guest ids and languages, and the bomb game's turns
 
 Additive only: every new column on an existing table is nullable or has a default, so the previous version of the
 server keeps working against this schema (a deployment can be rolled back without undoing the migration).
+
+A game's own data goes in tables named for the game (``bomb_turns``): the common tables stay the same for
+every game. This migration was reworked before any deployment existed, so no database has the older shape.
 
 Revision ID: 0002
 Revises: 0001
@@ -35,7 +38,7 @@ def upgrade() -> None:
         batch_op.create_index("ix_game_players_guest_id", ["guest_id"], unique=False)
 
     op.create_table(
-        "turns",
+        "bomb_turns",
         sa.Column("game_id", sa.Uuid(), nullable=False),
         sa.Column("turn", sa.Integer(), nullable=False),
         sa.Column("seat", sa.Integer(), nullable=False),
@@ -47,18 +50,18 @@ def upgrade() -> None:
         sa.Column("fuse_ms", sa.Integer(), nullable=False),
         sa.Column("rejected_attempts", sa.Integer(), nullable=False),
         sa.ForeignKeyConstraint(
-            ["game_id"], ["games.id"], name=op.f("fk_turns_game_id_games"), ondelete="CASCADE"
+            ["game_id"], ["games.id"], name=op.f("fk_bomb_turns_game_id_games"), ondelete="CASCADE"
         ),
-        sa.PrimaryKeyConstraint("game_id", "turn", name=op.f("pk_turns")),
+        sa.PrimaryKeyConstraint("game_id", "turn", name=op.f("pk_bomb_turns")),
     )
-    with op.batch_alter_table("turns", schema=None) as batch_op:
-        batch_op.create_index("ix_turns_fragment", ["fragment"], unique=False)
+    with op.batch_alter_table("bomb_turns", schema=None) as batch_op:
+        batch_op.create_index("ix_bomb_turns_fragment", ["fragment"], unique=False)
 
 
 def downgrade() -> None:
-    with op.batch_alter_table("turns", schema=None) as batch_op:
-        batch_op.drop_index("ix_turns_fragment")
-    op.drop_table("turns")
+    with op.batch_alter_table("bomb_turns", schema=None) as batch_op:
+        batch_op.drop_index("ix_bomb_turns_fragment")
+    op.drop_table("bomb_turns")
 
     with op.batch_alter_table("game_players", schema=None) as batch_op:
         batch_op.drop_index("ix_game_players_guest_id")
