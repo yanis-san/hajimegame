@@ -8,3 +8,6 @@ bun.lockb
 # Miscellaneous
 /static/
 e2e/.cache
+
+# local helper scripts (ignored by git too)
+scripts

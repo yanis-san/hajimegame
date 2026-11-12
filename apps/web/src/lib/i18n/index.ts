@@ -9,7 +9,8 @@ export { LOCALES };
 export { detectLocale, isLocale, localeFromPath, localizePath, stripLocale } from './path.ts';
 
 /** Keys that exist in a `.one` and a `.other` form, picked by `tn()` with the language's plural rules. */
-export type PluralKey = 'lobby.spectators' | 'game.lives' | 'results.words' | 'history.players';
+export type PluralKey =
+	'lobby.spectators' | 'game.lives' | 'results.words' | 'history.players' | 'stats.times';
 
 type Dictionary = Record<MessageKey, string>;
 

@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import Avatar from '#lib/design/Avatar.svelte';
 	import Button from '#lib/design/Button.svelte';
+	import HistoryTabs from '#lib/design/HistoryTabs.svelte';
 	import Modal from '#lib/design/Modal.svelte';
 	import WordReview from '#lib/design/WordReview.svelte';
 	import { clearHistory, deleteGame, loadHistory, type SavedGame } from '#lib/game/history.ts';
@@ -44,6 +45,7 @@
 		<h1>{t('history.title')}</h1>
 		<Button href={href('/')} variant="ghost" size="sm" icon="back">{t('history.back')}</Button>
 	</header>
+	<HistoryTabs current="games" />
 	<p class="lead">{t('history.lead')}</p>
 
 	{#if games === null}
