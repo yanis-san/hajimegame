@@ -6,7 +6,7 @@
 	import Meanings from '#lib/design/Meanings.svelte';
 	import Segmented from '#lib/design/Segmented.svelte';
 	import { ApiError, getMyStats } from '#lib/game/api.ts';
-	import { toHiragana } from '#lib/game/kana.ts';
+	import { toHiragana } from '#lib/game/script.ts';
 	import { getLocale, href, t, tn } from '#lib/i18n/index.ts';
 
 	/** The bomb game's dashboard: totals, activity, the words played most, and the latest ones. */

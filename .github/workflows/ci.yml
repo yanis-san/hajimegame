@@ -171,6 +171,10 @@ jobs:
           [ "$uid" != 0 ] || { echo "the container runs as root"; exit 1; }
           if [ "${{ matrix.app }}" = web ]; then
             curl -fsSI -H 'accept: text/html' "http://127.0.0.1:3000/" | grep -i '^content-security-policy: default-src .none.'
+            # the pages are really rendered by the production image (a library missing from it only shows there)
+            for page in / /ja /en /history /ja/history /credits /r/ABCDEF; do
+              curl -fsS -o /dev/null "http://127.0.0.1:3000${page}" || { echo "page ${page} fails"; docker logs "$name" | tail -20; exit 1; }
+            done
           else
             # production refuses to start with unsafe settings: this must fail
             if docker run --rm -e HAJIME_ALLOWED_ORIGINS='["http://localhost:3000"]' hajime-server:ci                  python -c "from app.core.config import AppSettings; AppSettings()" >/dev/null 2>&1; then

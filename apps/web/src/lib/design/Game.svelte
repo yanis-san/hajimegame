@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
 	import { t } from '#lib/i18n/index.ts';
-	import { toHiragana } from '#lib/game/kana.ts';
+	import { toHiragana } from '#lib/game/script.ts';
 	import { haptic } from '#lib/game/haptics.ts';
 	import { sfx } from '#lib/game/sfx.ts';
 	import type { GameSession } from '#lib/game/session.svelte.ts';

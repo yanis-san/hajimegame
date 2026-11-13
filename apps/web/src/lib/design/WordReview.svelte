@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { WordView } from '@hajime/protocol';
-	import { toHiragana } from '#lib/game/kana.ts';
+	import { toHiragana } from '#lib/game/script.ts';
 	import { t, tn } from '#lib/i18n/index.ts';
 	import Example from './Example.svelte';
 	import Meanings from './Meanings.svelte';
