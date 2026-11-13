@@ -71,6 +71,14 @@ if compose up -d --remove-orphans --wait --wait-timeout 180; then
   # keep a week of older images (a fast rollback needs them), drop the rest
   docker image prune -f --filter "until=168h" >/dev/null || true
   echo "==> deployed $TAG (previous: ${previous:-none})"
+  # Caddy keeps running from one deployment to the next (same image, same definition), so it does not notice a
+  # changed Caddyfile by itself: tell it to read it again. A reload is graceful (nobody is disconnected), and
+  # if the file is wrong Caddy refuses it and keeps the configuration it has.
+  if compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile >/dev/null 2>&1; then
+    echo "==> proxy configuration reloaded"
+  else
+    echo "!! could not reload the proxy configuration: the previous one is still active" >&2
+  fi
   # A backup that silently stopped working is worse than none: say how fresh the last one is.
   newest="$(compose exec -T backup sh -c 'find /backups -name "hajime-*.sql.gz" -mmin -1560 | sort | tail -n 1' 2>/dev/null || true)"
   if [[ -n "$newest" ]]; then echo "==> last backup: $newest"; else echo "!! no database backup in the last 26 hours: see docs/DEPLOY.md" >&2; fi
