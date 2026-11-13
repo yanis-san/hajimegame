@@ -68,6 +68,7 @@ class Explosion(GameEvent):
     player_id: str
     lives: int
     cause: Literal["timeout", "n_ending"] = "timeout"
+    score: int = 0  # the player's score after the explosion (a timed game takes points, not a life)
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)

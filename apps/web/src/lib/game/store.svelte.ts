@@ -53,6 +53,7 @@ const DEFAULT_SETTINGS: SettingsView = {
 	max_players: 8,
 	bonus_kana: false,
 	n_penalty: false,
+	duration: 0,
 	levels: [5, 4]
 };
 
@@ -160,7 +161,8 @@ export class GameStore {
 					player_id: msg.player_id,
 					fragment: msg.fragment,
 					deadline: msg.deadline,
-					fuse_ms: msg.fuse_ms
+					fuse_ms: msg.fuse_ms,
+					ends_at: msg.ends_at ?? null
 				};
 				this.typing = '';
 				break;
@@ -200,7 +202,7 @@ export class GameStore {
 				this.rejected = { id: this.#id(), reason: msg.reason, text: msg.text };
 				break;
 			case 'explosion':
-				this.#patchPlayer(msg.player_id, { lives: msg.lives });
+				this.#patchPlayer(msg.player_id, { lives: msg.lives, score: msg.score });
 				this.explosion = {
 					id: this.#id(),
 					playerId: msg.player_id,

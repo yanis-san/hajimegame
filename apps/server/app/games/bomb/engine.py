@@ -44,6 +44,7 @@ QUICK_RATIO = 0.25
 LATE_RATIO = 0.70
 QUICK_FACTOR = 1.5
 LATE_FACTOR = 0.8
+EXPLOSION_PENALTY = 10  # timed game: an explosion costs a normal word (the score never goes below 0)
 MAX_CREDIT = 0.25  # seconds of latency a connection may be credited, whatever it reports
 
 
@@ -80,6 +81,7 @@ class PlayerState:
     score: int = 0
     words: int = 0
     skill: int = SKILL_START  # 0 easy fragments, 2 hard fragments (classic mode)
+    explosions: int = 0
     bonus_left: set[str] = field(default_factory=set)
 
 
@@ -126,6 +128,7 @@ class BombEngine:
         self._fragment = ""
         self._deadline: float | None = None
         self._turn_started = 0.0
+        self._ends_at: float | None = None  # timed game: when the clock ends
         self._difficulty = 0  # of the prompt of the current turn, 0 to 2
         self._next_start = ""  # shiritori: the kana the next word must start with
         self._recent: list[str] = []
@@ -143,6 +146,11 @@ class BombEngine:
     @property
     def next_deadline(self) -> float | None:
         return self._deadline if self._phase is Phase.PLAYING else None
+
+    @property
+    def ends_at(self) -> float | None:
+        """When a timed game ends (None: no clock)."""
+        return self._ends_at if self._phase is Phase.PLAYING else None
 
     @property
     def turn(self) -> int:
@@ -176,8 +184,13 @@ class BombEngine:
         return [i for i in self._order if self._players[i].alive]
 
     def ranking(self) -> tuple[str, ...]:
-        """Best first: winner, then players in reverse order of elimination."""
+        """Best first: winner, then players in reverse order of elimination. A timed game ranks those still in
+        by score, then by words, then by fewer explosions."""
         alive = self.alive_ids()
+        if self.settings.duration:
+            alive.sort(
+                key=lambda i: (-self._players[i].score, -self._players[i].words, self._players[i].explosions)
+            )
         return (*alive, *reversed(self._eliminated))
 
     # ------------------------------------------------------------------ actions
@@ -186,7 +199,9 @@ class BombEngine:
         if self._started:
             raise RuntimeError("game already started")
         self._started = True
-        if self.settings.bonus_kana:
+        if self.settings.duration:
+            self._ends_at = self._clock.now() + self.settings.duration
+        if self.settings.bonus_kana and not self.settings.duration:  # a timed game has no lives to win
             for state in self._players.values():
                 state.bonus_left = set(self._rng.sample(BONUS_POOL, BONUS_LIST_SIZE))
         out: list[GameEvent] = [ev.GameStarted(player_ids=self._order, lives=self.settings.lives)]
@@ -201,6 +216,9 @@ class BombEngine:
             return []
         now = self._clock.now() if at is None else at
         out: list[GameEvent] = []
+        if self._ends_at is not None and now >= self._ends_at:
+            self._finish(out)  # the clock ran out before this word arrived
+            return out
         if player_id != self._current:
             if player_id in self._players:
                 out.append(
@@ -280,7 +298,20 @@ class BombEngine:
         if now < self._deadline:
             return []
         out: list[GameEvent] = []
+        if self._ends_at is not None and now >= self._ends_at:
+            self._finish(out)
+            return out
         self._explode(out)
+        return out
+
+    def time_up(self, at: float | None = None) -> list[GameEvent]:
+        """The clock of a timed game ran out: the game ends now, whatever the bomb was doing."""
+        if self._phase is not Phase.PLAYING or self._ends_at is None:
+            return []
+        if (self._clock.now() if at is None else at) < self._ends_at:
+            return []
+        out: list[GameEvent] = []
+        self._finish(out)
         return out
 
     def leave(self, player_id: str, at: float | None = None) -> list[GameEvent]:
@@ -355,9 +386,23 @@ class BombEngine:
         assert self._current is not None
         player_id = self._current
         state = self._players[player_id]
-        state.lives -= 1
         state.skill = SKILL_MIN  # the next fragment will be an easy one
-        out.append(ev.Explosion(turn=self._turn, player_id=player_id, lives=state.lives, cause=cause))
+        state.explosions += 1
+        if self.settings.duration:  # timed game: nobody is eliminated, the explosion costs points
+            state.score = max(0, state.score - EXPLOSION_PENALTY)
+            out.append(
+                ev.Explosion(
+                    turn=self._turn, player_id=player_id, lives=state.lives, cause=cause, score=state.score
+                )
+            )
+            self._begin_turn(self._next_alive(player_id), out)
+            return
+        state.lives -= 1
+        out.append(
+            ev.Explosion(
+                turn=self._turn, player_id=player_id, lives=state.lives, cause=cause, score=state.score
+            )
+        )
         successor = self._next_alive(player_id)
         if state.lives <= 0:
             self._eliminate(state, "explosion", out)
@@ -380,7 +425,7 @@ class BombEngine:
     def _finish(self, out: list[GameEvent]) -> None:
         alive = self.alive_ids()
         self._phase = Phase.FINISHED
-        self._winner = alive[0] if alive else None
+        self._winner = self.ranking()[0] if alive else None
         self._current = None
         self._deadline = None
         out.append(ev.GameOver(winner_id=self._winner, ranking=self.ranking()))

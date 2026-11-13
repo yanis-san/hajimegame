@@ -18,6 +18,7 @@
 
 	// kanji mode: the JLPT levels a kanji may come from; at least one stays on
 	const LEVELS = [5, 4, 3, 2, 1] as const;
+	const DURATIONS = [0, 120, 180, 300] as const; // seconds; 0 = no clock
 	function chooseLevel(level: number, on: boolean): void {
 		const next = LEVELS.filter((n) => (n === level ? on : store.settings.levels.includes(n)));
 		if (next.length > 0) session.settings({ levels: next });
@@ -233,15 +234,34 @@
 		<div class="card settings">
 			<h2><Icon name="gear" size={22} /> {t('lobby.settings')}</h2>
 			<div class="setting">
-				<span class="lbl">{t('lobby.lives')}</span>
+				<span class="lbl">{t('lobby.duration')}</span>
 				<Segmented
-					label={t('lobby.lives')}
+					label={t('lobby.duration')}
 					disabled={!isHost}
-					value={store.settings.lives}
-					options={[1, 2, 3, 4, 5].map((n) => ({ value: n, label: String(n) }))}
-					onchange={(lives) => session.settings({ lives })}
+					value={store.settings.duration}
+					options={DURATIONS.map((n) => ({
+						value: n,
+						label: n === 0 ? t('lobby.duration.none') : t('lobby.minutes', { n: n / 60 })
+					}))}
+					onchange={(duration) =>
+						session.settings({ duration: duration as (typeof DURATIONS)[number] })}
 				/>
+				{#if store.settings.duration > 0}
+					<span class="levelnote">{t('lobby.duration.note')}</span>
+				{/if}
 			</div>
+			{#if store.settings.duration === 0}
+				<div class="setting">
+					<span class="lbl">{t('lobby.lives')}</span>
+					<Segmented
+						label={t('lobby.lives')}
+						disabled={!isHost}
+						value={store.settings.lives}
+						options={[1, 2, 3, 4, 5].map((n) => ({ value: n, label: String(n) }))}
+						onchange={(lives) => session.settings({ lives })}
+					/>
+				</div>
+			{/if}
 			<div class="setting">
 				<span class="lbl">{t('lobby.fuse')}</span>
 				<Segmented
@@ -285,7 +305,7 @@
 						onchange={(n_penalty) => session.settings({ n_penalty })}
 					/>
 				{/if}
-				{#if store.settings.mode !== 'kanji'}
+				{#if store.settings.mode !== 'kanji' && store.settings.duration === 0}
 					<Toggle
 						label={t('lobby.bonus')}
 						disabled={!isHost}

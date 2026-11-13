@@ -253,6 +253,8 @@ class Room:
             self._on_turn_timeout(due)
         elif name == "countdown":
             self._on_countdown_done()
+        elif name == "game_end":
+            self._on_game_end(due)
         elif name == "typing":
             self._flush_typing()
         elif name == "bot_type":
@@ -304,6 +306,7 @@ class Room:
             n_penalty=s.n_penalty,
             max_players=s.max_players,
             bonus_kana=s.bonus_kana,
+            duration=s.duration,
             levels=list(s.levels),
         )
 
@@ -603,6 +606,7 @@ class Room:
                 n_penalty=current.n_penalty if msg.n_penalty is UNSET else msg.n_penalty,
                 max_players=current.max_players if msg.max_players is UNSET else msg.max_players,
                 bonus_kana=current.bonus_kana if msg.bonus_kana is UNSET else msg.bonus_kana,
+                duration=current.duration if msg.duration is UNSET else msg.duration,
                 levels=current.levels
                 if msg.levels is UNSET
                 else tuple(sorted(set(msg.levels), reverse=True)),
@@ -661,6 +665,7 @@ class Room:
         self._words.clear()
         self._phase = "lobby"
         self._disarm("turn")
+        self._disarm("game_end")
         self._disarm("countdown")
         for m in self._members.values():
             m.ready = False
@@ -733,6 +738,19 @@ class Room:
         self._phase = "playing"
         self._patch_all_players(phase="playing", countdown_ends=None)
         self._apply(engine.start())
+        if engine.ends_at is not None:
+            self._arm_at("game_end", engine.ends_at)
+
+    def _ends_at_ms(self) -> float | None:
+        ends = self._engine.ends_at if self._engine is not None else None
+        return to_ms(ends) if ends is not None else None
+
+    def _on_game_end(self, due: float) -> None:
+        """The clock of a timed game ran out."""
+        engine = self._engine
+        if engine is None or self._phase != "playing" or engine.ends_at is None:
+            return
+        self._apply(engine.time_up(at=max(due, engine.ends_at)))
 
     def _on_turn_timeout(self, due: float) -> None:
         engine = self._engine
@@ -884,6 +902,7 @@ class Room:
                     fragment=event.fragment,
                     deadline=to_ms(event.deadline),
                     fuse_ms=to_ms(event.fuse_seconds),
+                    ends_at=self._ends_at_ms(),
                 )
                 self._arm_at("turn", event.deadline)
                 self._emit(
@@ -893,6 +912,7 @@ class Room:
                     fragment=event.fragment,
                     deadline=self._turn.deadline,
                     fuse_ms=self._turn.fuse_ms,
+                    ends_at=self._turn.ends_at,
                 )
                 self._schedule_bot(event)
             elif isinstance(event, ev.WordAccepted):
@@ -937,6 +957,7 @@ class Room:
                     player_id=event.player_id,
                     lives=event.lives,
                     cause=event.cause,
+                    score=event.score,
                 )
             elif isinstance(event, ev.PlayerEliminated):
                 self._emit(pr.Elimination, player_id=event.player_id, place=event.place, reason=event.reason)
@@ -965,6 +986,7 @@ class Room:
         engine = self._engine
         assert engine is not None
         self._disarm("turn")
+        self._disarm("game_end")
         self._disarm("typing")
         self._disarm("bot_type")
         self._disarm("bot_submit")

@@ -9,6 +9,7 @@ const settings: SettingsView = {
 	max_players: 8,
 	bonus_kana: false,
 	n_penalty: false,
+	duration: 0,
 	levels: [5, 4]
 };
 

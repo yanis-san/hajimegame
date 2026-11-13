@@ -93,6 +93,7 @@ class SetSettings(_Msg, tag_field="t", tag="settings"):
     max_players: Annotated[int, Meta(ge=2, le=8)] | UnsetType = UNSET
     n_penalty: bool | UnsetType = UNSET
     bonus_kana: bool | UnsetType = UNSET
+    duration: Literal[0, 120, 180, 300] | UnsetType = UNSET
     levels: (
         Annotated[list[Annotated[int, Meta(ge=1, le=5)]], Meta(min_length=1, max_length=5)] | UnsetType
     ) = UNSET
@@ -172,6 +173,7 @@ class SettingsView(Struct, frozen=True, omit_defaults=False):
     max_players: int
     bonus_kana: bool
     n_penalty: bool
+    duration: int  # seconds of a timed game (best score wins, explosions cost points); 0 = no clock
     levels: list[int]  # kanji mode: the JLPT levels (5 to 1) a kanji may come from
 
 
@@ -196,6 +198,7 @@ class TurnView(Struct, frozen=True, omit_defaults=False):
     fragment: str
     deadline: float
     fuse_ms: float
+    ends_at: float | None = None  # timed game: when the clock ends (server time, ms)
 
 
 class WordView(Struct, frozen=True, omit_defaults=False):
@@ -339,6 +342,7 @@ class Turn(_Event, tag_field="t", tag="turn"):
     deadline: float
     fuse_ms: float
     seq: int
+    ends_at: float | None = None  # timed game: when the clock ends
     v: int = PROTOCOL_VERSION
 
 
@@ -378,6 +382,7 @@ class Explosion(_Event, tag_field="t", tag="explosion"):
     lives: int
     cause: Literal["timeout", "n_ending"]
     seq: int
+    score: int = 0  # the player's score after the explosion
     v: int = PROTOCOL_VERSION
 
 

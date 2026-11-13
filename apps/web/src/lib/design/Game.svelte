@@ -159,6 +159,27 @@
 		return () => clearInterval(id);
 	});
 
+	// A timed game: the time left, from the end time the server sends with every turn.
+	let gameLeft = $state<number | null>(null);
+	$effect(() => {
+		const ends = store.turn?.ends_at ?? null;
+		if (ends === null) {
+			gameLeft = null;
+			return;
+		}
+		const tick = (): void => {
+			gameLeft = Math.max(0, Math.ceil(session.client.clock.remaining(ends) / 1000));
+		};
+		tick();
+		const id = setInterval(tick, 250);
+		return () => clearInterval(id);
+	});
+	const gameClock = $derived(
+		gameLeft === null
+			? ''
+			: `${Math.floor(gameLeft / 60)}:${String(gameLeft % 60).padStart(2, '0')}`
+	);
+
 	// While a game is on, phones hide the site bar: every pixel goes to the game.
 	onMount(() => {
 		document.documentElement.dataset.playing = '';
@@ -211,6 +232,7 @@
 					you={player.id === store.you}
 					active={player.id === store.turn?.player_id && store.phase === 'playing'}
 					maxLives={store.settings.lives}
+					timed={store.settings.duration > 0}
 					typing={store.typing}
 					compact={compact || crowded}
 				/>
@@ -235,6 +257,17 @@
 					onspark={(x, y, k) => particles?.spark(x, y, k)}
 				/>
 			</div>
+
+			{#if gameClock}
+				<p
+					class="gameclock"
+					class:low={(gameLeft ?? 99) <= 10}
+					role="timer"
+					aria-label={t('game.timeLeft')}
+				>
+					{gameClock}
+				</p>
+			{/if}
 
 			{#if notice}<p class="notice" role="status">{notice}</p>{/if}
 
@@ -325,7 +358,28 @@
 		gap: 0.5rem;
 		min-height: 0;
 	}
+	.gameclock {
+		position: absolute;
+		top: 0;
+		right: 0;
+		margin: 0;
+		padding: 0.1rem 0.6rem 0.15rem;
+		background: var(--washi);
+		color: var(--sumi);
+		border: var(--line) solid var(--sumi);
+		border-radius: 10px;
+		box-shadow: 0 3px 0 var(--sumi);
+		font-family: var(--font-mono);
+		font-weight: 700;
+		font-size: 1.2rem;
+		line-height: 1.3;
+	}
+	.gameclock.low {
+		background: var(--shu-btn);
+		color: #fff8ef;
+	}
 	.stage {
+		position: relative;
 		flex: 1 0 auto;
 		display: grid;
 		align-content: center;

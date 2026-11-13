@@ -685,3 +685,27 @@ async def test_a_player_who_leaves_mid_game_is_still_named_in_the_recap(server: 
     assert {r["name"] for r in rows.values()} == {"Aya", "Ben", "Chi"}
     await a.close()
     await b.close()
+
+
+async def test_a_timed_game_tells_every_turn_when_the_clock_ends(server: RunningServer) -> None:
+    _, (a, b) = await lobby(server)
+    await a.send(t="settings", duration=61)  # only the offered durations
+    assert (await a.wait("error"))["code"] == "bad_message"
+    await start_game([a, b], duration=120)
+    turn = await a.wait("turn")
+    assert turn["ends_at"] is not None
+    snapshot_turn = (await b.wait("turn"))["ends_at"]
+    assert snapshot_turn == turn["ends_at"]
+    # an explosion takes points, not a life, and nobody is eliminated
+    explosion = await a.wait("explosion", timeout=20)
+    assert explosion["lives"] == 3 and explosion["score"] == 0
+    await a.close()
+    await b.close()
+
+
+async def test_a_game_without_a_clock_has_no_end_time(server: RunningServer) -> None:
+    _, (a, b) = await lobby(server)
+    await start_game([a, b])
+    assert (await a.wait("turn"))["ends_at"] is None
+    await a.close()
+    await b.close()

@@ -10,7 +10,7 @@ The route is the same for every game. What a game's statistics contain comes fro
 from __future__ import annotations
 
 import uuid
-from datetime import date
+from datetime import UTC, datetime
 
 import msgspec
 from fastapi import APIRouter, Header, HTTPException, Request, Response
@@ -59,7 +59,9 @@ async def my_stats(
         metrics.RATE_LIMITED.labels("stats").inc()
         raise HTTPException(status_code=429, detail="rate_limited")
     dictionary: Dictionary = request.app.state.dictionary
-    view = await provider.view(engine, guests, mode, dictionary, date.today())
+    view = await provider.view(
+        engine, guests, mode, dictionary, datetime.now(UTC).date()
+    )  # games are stored in UTC
     # Private to the browser that asked: never cached by a proxy or the browser.
     return Response(
         msgspec.json.encode(view), media_type="application/json", headers={"cache-control": "no-store"}

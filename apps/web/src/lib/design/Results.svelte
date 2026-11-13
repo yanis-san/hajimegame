@@ -72,7 +72,9 @@
 	<div class="hero card">
 		<div class="mascot"><Mascot mood="relief" size={120} /></div>
 		<div>
-			<p class="eyebrow">{t('results.title')}</p>
+			<p class="eyebrow">
+				{store.settings.duration > 0 ? t('results.timeUp') : t('results.title')}
+			</p>
 			<h1 aria-live="polite">
 				{#if iWon}{t('results.you')}{:else if winner}{t('results.winner', {
 						name: winner.name

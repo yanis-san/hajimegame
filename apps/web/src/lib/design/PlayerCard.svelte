@@ -15,7 +15,8 @@
 		active = false,
 		maxLives = 3,
 		typing = '',
-		compact = false
+		compact = false,
+		timed = false
 	}: {
 		player: PlayerView;
 		you?: boolean;
@@ -24,6 +25,8 @@
 		typing?: string;
 		/** short screens (the keyboard is open): a smaller tile */
 		compact?: boolean;
+		/** a timed game has no lives: the tile shows the score only */
+		timed?: boolean;
 	} = $props();
 
 	const out = $derived(!player.alive);
@@ -43,7 +46,7 @@
 		{#if player.bot}<span class="cpu">{t('cpu.tag')}</span>{/if}
 		{#if out}
 			<span class="gone">{t('game.eliminated')}</span>
-		{:else}
+		{:else if !timed}
 			<Lives lives={player.lives} max={maxLives} size={15} />
 		{/if}
 		{#if active && typing}

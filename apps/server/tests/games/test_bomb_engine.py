@@ -476,3 +476,122 @@ def test_the_speed_is_what_the_server_measured_with_the_round_trip_credited() ->
     # the credit is capped: a connection cannot claim a huge latency to look faster
     assert play_for_points(2.9, credit=5.0) == 12  # only 0.25 s credited: 2.65 s is above the quick band
     assert play_for_points(2.9, credit=-1.0) == 12  # a negative credit is nothing
+
+
+# --------------------------------------------------------------------------- timed games
+
+
+def timed(duration: int = 120, n: int = 3) -> tuple[BombEngine, ManualClock]:
+    return make_engine(n, settings=BombSettings(duration=duration))
+
+
+def test_durations_are_checked() -> None:
+    assert BombSettings(duration=300).duration == 300
+    with pytest.raises(ValueError):
+        BombSettings(duration=61)
+
+
+def test_a_game_without_a_clock_has_no_end_time() -> None:
+    engine, _ = make_engine()
+    engine.start()
+    assert engine.ends_at is None
+    assert engine.time_up(at=10_000) == []
+
+
+def test_the_clock_starts_with_the_game_and_cannot_end_it_early() -> None:
+    engine, clock = timed(120)
+    engine.start()
+    assert engine.ends_at == clock.now() + 120
+    assert engine.time_up(at=clock.now() + 119.9) == []
+    assert engine.phase is Phase.PLAYING
+
+
+def play_word(engine: BombEngine, clock: ManualClock, word: str, wait: float = 1.0) -> None:
+    clock.advance(wait)
+    player = engine.current_player
+    assert player is not None
+    assert any(isinstance(e, ev.WordAccepted) for e in engine.submit(player, word))
+
+
+def test_when_the_clock_ends_the_best_score_wins() -> None:
+    engine, clock = timed(120)
+    engine.start()
+    first = engine.current_player
+    play_word(engine, clock, "くるま")  # first scores
+    clock.set(engine.ends_at or 0)
+    events = engine.time_up()
+    over = events[-1]
+    assert isinstance(over, ev.GameOver) and over.winner_id == first
+    assert over.ranking[0] == first and set(over.ranking) == {"p0", "p1", "p2"}
+    assert engine.phase is Phase.FINISHED
+
+
+def test_an_explosion_costs_points_not_a_life_and_nobody_is_eliminated() -> None:
+    engine, clock = timed(120, n=2)
+    engine.start()
+    first = engine.current_player
+    play_word(engine, clock, "くるま")  # the first player scores
+    score = next(p.score for p in engine.players if p.info.id == first)
+    assert score > 0
+    # the second one lets the bomb explode, then the first one too: points go down, lives stay
+    for _ in range(3):
+        clock.advance(11)
+        events = engine.timeout()
+        explosion = next(e for e in events if isinstance(e, ev.Explosion))
+        assert explosion.lives == 3
+        assert not any(isinstance(e, ev.PlayerEliminated) for e in events)
+    assert engine.phase is Phase.PLAYING
+    scores = {p.info.id: p.score for p in engine.players}
+    assert min(scores.values()) == 0  # never negative
+    assert all(p.lives == 3 and p.alive for p in engine.players)
+
+
+def test_the_explosion_penalty_is_one_normal_word() -> None:
+    from app.games.bomb.engine import EXPLOSION_PENALTY
+
+    engine, clock = timed(300, n=2)
+    engine.start()
+    first = engine.current_player
+    play_word(engine, clock, "くるま", wait=5)  # 12 points
+    for _ in range(2):
+        clock.advance(11)
+        events = engine.timeout()
+    explosion = next(e for e in events if isinstance(e, ev.Explosion))
+    assert explosion.player_id == first and explosion.score == 12 - EXPLOSION_PENALTY
+
+
+def test_a_word_that_arrives_after_the_clock_ends_the_game_instead() -> None:
+    engine, clock = timed(120, n=2)
+    engine.start()
+    player = engine.current_player
+    assert player is not None
+    clock.set((engine.ends_at or 0) + 0.01)
+    events = engine.submit(player, "くるま")
+    assert [type(e).__name__ for e in events] == ["GameOver"]
+    assert all(p.score == 0 for p in engine.players)  # the late word did not count
+
+
+def test_a_bomb_that_goes_off_after_the_clock_ends_the_game_instead() -> None:
+    engine, clock = timed(120, n=2)
+    engine.start()
+    clock.set((engine.ends_at or 0) + 0.01)
+    assert [type(e).__name__ for e in engine.timeout()] == ["GameOver"]
+
+
+def test_ties_are_broken_by_words_then_by_fewer_explosions() -> None:
+    engine, _ = timed(300, n=2)
+    engine.start()
+    states = {p.info.id: p for p in engine.players}
+    states["p0"].score = states["p1"].score = 20
+    states["p0"].words, states["p1"].words = 2, 3
+    assert engine.ranking()[0] == "p1"  # more words
+    states["p0"].words = 3
+    states["p0"].explosions, states["p1"].explosions = 2, 1
+    assert engine.ranking()[0] == "p1"  # fewer explosions
+
+
+def test_a_timed_game_ends_when_everybody_else_has_left() -> None:
+    engine, _ = timed(120, n=2)
+    engine.start()
+    events = engine.leave("p1")
+    assert isinstance(events[-1], ev.GameOver) and events[-1].winner_id == "p0"

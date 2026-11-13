@@ -11,7 +11,7 @@ import pytest
 from app.games.base import GameEvent, ManualClock, Phase, PlayerInfo
 from app.games.bomb import events as ev
 from app.games.bomb.engine import BombEngine
-from app.games.bomb.settings import LIFE_CAP, MODES, BombSettings
+from app.games.bomb.settings import DURATIONS, LIFE_CAP, MODES, BombSettings
 from app.japanese.dictionary import Dictionary
 from app.japanese.fragments import FragmentTable
 from app.japanese.kana import fragment_ngrams, shiritori_end
@@ -39,8 +39,12 @@ def check_invariants(engine: BombEngine, all_ids: set[str]) -> None:
     if engine.settings.mode == "shiritori":
         assert all(shiritori_end(word.reading) != "ん" for word in engine.history)
     if engine.phase is Phase.FINISHED:
-        assert len(alive) <= 1
-        assert engine.winner == (alive[0] if alive else None)
+        if engine.settings.duration:  # a timed game ends on the clock: the best score of those still in wins
+            assert engine.winner == engine.ranking()[0]
+            assert all(state.lives == engine.settings.lives for state in engine.players if state.alive)
+        else:
+            assert len(alive) <= 1
+            assert engine.winner == (alive[0] if alive else None)
         assert set(engine.ranking()) == all_ids
         assert engine.next_deadline is None
     else:
@@ -82,6 +86,7 @@ def play_one(seed: int, dictionary: Dictionary, table: FragmentTable, book: Kanj
         fuse_seconds=rng.choice([5.0, 10.0, 20.0]),
         mode=rng.choice(MODES),
         bonus_kana=rng.random() < 0.3,
+        duration=rng.choice(DURATIONS),
     )
     if settings.mode == "kanji":
         settings = dataclasses.replace(settings, levels=tuple(rng.sample([5, 4, 3, 2, 1], rng.randint(1, 5))))

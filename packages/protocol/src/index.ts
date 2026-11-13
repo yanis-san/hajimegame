@@ -16,6 +16,7 @@ export interface SettingsView {
   max_players: number;
   bonus_kana: boolean;
   n_penalty: boolean;
+  duration: number;
   levels: number[];
 }
 
@@ -40,6 +41,7 @@ export interface TurnView {
   fragment: string;
   deadline: number;
   fuse_ms: number;
+  ends_at: number | null;
 }
 
 export interface WordView {
@@ -150,6 +152,7 @@ export interface SetSettings {
   max_players?: number;
   n_penalty?: boolean;
   bonus_kana?: boolean;
+  duration?: 0 | 120 | 180 | 300;
   levels?: number[];
   v?: number;
 }
@@ -267,6 +270,7 @@ export interface Turn {
   deadline: number;
   fuse_ms: number;
   seq: number;
+  ends_at: number | null;
   v: number;
 }
 
@@ -310,6 +314,7 @@ export interface Explosion {
   lives: number;
   cause: "n_ending" | "timeout";
   seq: number;
+  score: number;
   v: number;
 }
 

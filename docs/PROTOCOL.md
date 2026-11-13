@@ -98,6 +98,16 @@ again** (rounded), after **70%** a **fifth less**, in between it is worth the wh
 (never taken from the client); the round trip the client reports in its `ping` (`rtt`, ms; the best one it measured)
 is credited to it, at most 250 ms, so a bad connection does not cost points. The deadline itself is never moved.
 
+## Timed games
+
+`settings.duration` is `0` (no clock: the last player alive wins, as before) or `120`, `180`, `300` seconds. With a clock
+the game is played for the **best score**: there are no lives and nobody is eliminated by the bomb; an **explosion costs
+10 points** (the score never goes below 0; `explosion.score` carries the new score) and the bomb passes to the next
+player. The clock starts with the first turn; every `turn` (and the `snapshot`'s `turn`) carries `ends_at`, the end time
+in server milliseconds (`null` without a clock). When it is reached the game ends at once, whatever the bomb was doing,
+and a word that arrives after it does not count. Ranking: score, then more words, then fewer explosions. A player who
+leaves is out (and if only one player is left the game ends). The kana bonus life is not offered in a timed game.
+
 ## Reconnection
 
 Safari kills WebSockets in the background. The client reconnects with exponential backoff and jitter and sends
