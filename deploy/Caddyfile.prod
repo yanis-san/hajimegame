@@ -39,8 +39,10 @@
 			max_size 64KB
 		}
 		reverse_proxy {$SERVER_UPSTREAM:server:8000} {
-			health_uri /healthz
-			health_interval 10s
+			# 503 for the ten seconds the game server needs to start: nobody is sent to it before it can add a CPU
+			health_uri /startupz
+			health_interval 2s
+			health_timeout 2s
 		}
 	}
 	handle {

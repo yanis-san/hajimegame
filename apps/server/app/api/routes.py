@@ -50,6 +50,17 @@ async def healthz() -> dict[str, str]:
     return {"status": "ok"}
 
 
+@router.get("/startupz")
+async def startupz(request: Request) -> JSONResponse:
+    """200 once the dictionary and the CPU index are loaded, 503 while the server is still starting (about
+    ten seconds). The reverse proxy asks this one, so it sends nobody to a server that cannot yet add a CPU
+    player. Unlike ``/readyz`` it never looks at the database or Redis: their trouble must not stop games."""
+    manager: RoomManager = request.app.state.manager
+    settings: AppSettings = request.app.state.settings
+    ready = manager.candidates is not None or not settings.preload_bots
+    return JSONResponse({"status": "ready" if ready else "starting"}, status_code=200 if ready else 503)
+
+
 @router.get("/readyz")
 async def readyz(request: Request) -> JSONResponse:
     checks: dict[str, bool] = {"dictionary": request.app.state.dictionary is not None}

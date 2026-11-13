@@ -192,7 +192,7 @@
 				{/each}
 			</ul>
 			{#if isHost}
-				<div class="cpu">
+				<div class="cpu-panel">
 					<h3><Icon name="bolt" size={20} /> {t('cpu.title')}</h3>
 					<Segmented
 						label={t('cpu.title')}
@@ -457,14 +457,14 @@
 		background: var(--ai-raised);
 		color: var(--text);
 	}
-	.cpu {
+	.cpu-panel {
 		display: grid;
 		gap: 0.5rem;
 		margin-top: 0.9rem;
 		padding-top: 0.8rem;
 		border-top: var(--line) dashed var(--text-mute);
 	}
-	.cpu h3 {
+	.cpu-panel h3 {
 		display: flex;
 		align-items: center;
 		gap: 0.4rem;

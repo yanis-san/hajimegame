@@ -202,6 +202,8 @@ test('a human can play against a CPU: add it in the lobby, start alone, the CPU 
 	await host.page.getByRole('radio', { name: 'Difficile' }).click();
 	await host.page.getByRole('button', { name: 'Ajouter un CPU' }).click();
 	await expect(host.page.locator('.tag.cpu')).toContainText('Difficile');
+	// a plain pill: the dashed line above the CPU section must not leak onto it
+	await expect(host.page.locator('.tag.cpu')).toHaveCSS('border-top-style', 'solid');
 	// a CPU is always ready: the host can start without waiting for anybody
 	await expect(host.page.getByRole('button', { name: 'Lancer la partie' })).toBeEnabled();
 	await host.page.getByRole('button', { name: 'Lancer la partie' }).click();

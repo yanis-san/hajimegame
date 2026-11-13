@@ -567,3 +567,21 @@ async def test_mode_is_fixed_when_the_room_is_created(server: RunningServer) -> 
         patch = await host.wait("patch", lambda m: "settings" in m)
         assert patch["settings"]["mode"] == "shiritori"
         assert patch["settings"]["lives"] == 2
+
+
+async def test_the_proxy_probe_says_starting_until_the_cpu_index_is_built(server: RunningServer) -> None:
+    """`/startupz` is what the reverse proxy asks: 503 while the CPU index is not built (no CPU player can
+    be added yet), 200 afterwards, and it never depends on the database."""
+    assert (await server.http.get("/startupz")).status_code == 200  # tests do not preload the CPU index
+    settings = server.app.state.settings
+    index = server.manager.candidates
+    settings.preload_bots = True  # as in production: the index is expected
+    try:
+        server.manager.candidates = None
+        starting = await server.http.get("/startupz")
+        assert (starting.status_code, starting.json()) == (503, {"status": "starting"})
+        server.manager.candidates = index or object()
+        assert (await server.http.get("/startupz")).json() == {"status": "ready"}
+    finally:
+        settings.preload_bots = False
+        server.manager.candidates = index

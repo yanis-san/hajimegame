@@ -40,11 +40,14 @@
 	const desktop = $derived(width >= 900);
 	// Phones: what is left once the players, the turn line, the last word and the field have their room goes to the
 	// bomb, with its fuse above and its tag below (about 1.75 times its size).
-	// With the keyboard open (a short screen) the tiles, the last word and the preview all shrink to a line.
-	const compact = $derived(!desktop && visible < 620);
-	const chrome = $derived(compact ? 262 : 330);
+	// A short window (a phone with its keyboard open, a laptop at 125% zoom): the last word and the preview shrink
+	// to a line, and the bomb takes only what is left. The page never scrolls during a game.
+	const compact = $derived(visible < 620);
+	const chrome = $derived(desktop ? (compact ? 314 : 365) : compact ? 262 : 330);
 	const bombSize = $derived(
-		desktop ? 230 : Math.max(76, Math.min(200, Math.floor((visible - chrome) / 1.75)))
+		desktop
+			? Math.max(110, Math.min(260, Math.floor((visible - chrome) / 1.74)))
+			: Math.max(76, Math.min(200, Math.floor((visible - chrome) / 1.75)))
 	);
 	const lastWord = $derived(store.words.at(-1) ?? null);
 
@@ -519,8 +522,9 @@
 			display: none;
 		}
 		.last {
-			flex: none;
+			flex: 0 1 auto; /* gives way when the window is short: the list on the right has every word in full */
 			min-height: 5.4rem;
+			max-height: 10rem;
 		}
 	}
 </style>

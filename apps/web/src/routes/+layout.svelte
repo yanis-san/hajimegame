@@ -178,11 +178,14 @@
 		min-width: 0;
 	}
 	/* narrow phones: tighter bar so the logo, the language picker and the two buttons never widen the page */
+	/* during a game the page itself never scrolls: only the list of words does */
+	:global(html[data-playing]) {
+		overflow: hidden;
+	}
 	/* a game on a phone: no bar, the whole screen is the game */
 	@media (max-width: 899px) {
 		:global(html[data-playing]) {
 			--bar: 0px;
-			overflow: hidden;
 		}
 		:global(html[data-playing]) .bar {
 			display: none;

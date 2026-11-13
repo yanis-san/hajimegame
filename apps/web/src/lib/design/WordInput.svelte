@@ -198,11 +198,11 @@
 		.preview.empty {
 			display: none;
 		}
-		.preview.compact {
-			min-height: 1.9rem;
-			padding-block: 0;
-			font-size: 1.45rem;
-		}
+	}
+	.preview.compact {
+		min-height: 1.9rem;
+		padding-block: 0;
+		font-size: 1.45rem;
 	}
 	.preview.empty {
 		font-size: 1rem;
