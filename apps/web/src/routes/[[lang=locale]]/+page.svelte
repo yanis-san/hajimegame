@@ -81,7 +81,7 @@
 </script>
 
 <svelte:head>
-	<title>Hajime · {t('app.tagline')}</title>
+	<title>{t('app.name')} · {t('app.tagline')}</title>
 	<meta name="description" content={t('app.tagline')} />
 </svelte:head>
 
@@ -89,10 +89,16 @@
 	<section class="hero">
 		<button class="bomb-btn" type="button" onclick={poke} aria-label={t('mascot.label')}>
 			<!-- two sizes switched by CSS only, so nothing resizes after the page loads -->
-			<span class="bomb-small"><Bomb fragment="はじ" {mood} size={120} showTimer={false} /></span>
-			<span class="bomb-large"><Bomb fragment="はじ" {mood} size={230} showTimer={false} /></span>
-			<span class="bomb-medium"><Bomb fragment="はじ" {mood} size={190} showTimer={false} /></span>
-			<span class="bomb-xs"><Bomb fragment="はじ" {mood} size={140} showTimer={false} /></span>
+			<span class="bomb-small"
+				><Bomb fragment="バカハツ" {mood} size={120} showTimer={false} /></span
+			>
+			<span class="bomb-large"
+				><Bomb fragment="バカハツ" {mood} size={230} showTimer={false} /></span
+			>
+			<span class="bomb-medium"
+				><Bomb fragment="バカハツ" {mood} size={190} showTimer={false} /></span
+			>
+			<span class="bomb-xs"><Bomb fragment="バカハツ" {mood} size={140} showTimer={false} /></span>
 		</button>
 		<h1>{t('app.tagline')}</h1>
 	</section>

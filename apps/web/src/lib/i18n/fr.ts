@@ -1,6 +1,6 @@
 /** French strings: the reference locale. Other dictionaries must define every key of this one. */
 export const fr = {
-	'app.name': 'Hajime',
+	'app.name': 'Bakahatsu',
 	'app.tagline': 'Trouve un mot japonais avant que la bombe explose.',
 	'mode.label': 'Mode de jeu',
 	'mode.classic.title': 'Classique',
@@ -115,7 +115,7 @@ export const fr = {
 
 	'status.reconnecting': 'Connexion perdue. Reconnexion…',
 	'status.reconnectingIn': 'Reconnexion dans {n} s',
-	'status.offline': 'Pas de connexion. Hajime a besoin d’Internet pour jouer.',
+	'status.offline': 'Pas de connexion. Bakahatsu a besoin d’Internet pour jouer.',
 	'status.retry': 'Réessayer',
 
 	'error.room_not_found.title': 'Partie introuvable',
@@ -165,7 +165,7 @@ export const fr = {
 	'history.open': 'Historique des parties',
 	'history.back': 'Retour',
 	'history.lead':
-		'Tes parties sont enregistrées sur cet appareil, dans ce navigateur. Personne d’autre ne peut les voir.',
+		'Tes 5 dernières parties sont gardées dans ce navigateur. Personne d’autre ne peut les voir. Avec un compte, tu retrouves tes statistiques sur tous tes appareils.',
 	'history.empty':
 		'Aucune partie pour l’instant. Termine une partie et elle apparaîtra ici avec tous ses mots.',
 	'history.play': 'Jouer',
@@ -204,6 +204,10 @@ export const fr = {
 	'stats.top.hint': 'Un bon moyen de voir ce que tu retiens, et ce qu’il te reste à apprendre.',
 	'stats.recent': 'Tes 10 derniers mots',
 	'stats.noWords': 'Aucun mot pour l’instant.',
+	'stats.guest.title': 'Les statistiques sont réservées aux comptes',
+	'stats.guest.body':
+		'En invité, tes 5 dernières parties restent dans ce navigateur. Avec un compte gratuit, tes mots, tes totaux et ton activité sont gardés sur le serveur et te suivent sur tous tes appareils.',
+	'stats.guest.cta': 'Créer un compte',
 	'stats.empty': 'Pas encore de statistiques. Termine une partie et elles apparaîtront ici.',
 	'stats.unavailable': 'Les statistiques ne sont pas disponibles pour le moment.',
 	'stats.error': 'Impossible de charger les statistiques.',
@@ -212,10 +216,10 @@ export const fr = {
 	'stats.times.other': '{n} fois',
 	'common.close': 'Fermer',
 	'game.region': 'Partie',
-	'mascot.label': 'Bakuro, la bombe',
+	'mascot.label': 'Exupulojon, la bombe',
 	'credits.code.title': 'Le jeu',
 	'credits.code.body':
-		'Hajime Game est gratuit et son code est libre, sous licence MIT, © 2026 yanis-san. Tu peux l’utiliser, le modifier et le partager en gardant cette mention.',
+		'Bakahatsu est gratuit et son code est libre, sous licence MIT, © 2026 yanis-san. Tu peux l’utiliser, le modifier et le partager en gardant cette mention.',
 	'credits.code.source': 'Code source',
 	'credits.code.licence': 'Licence MIT',
 	'credits.data.title': 'Tes données',
@@ -274,7 +278,7 @@ export const fr = {
 		'Svelte et SvelteKit (MIT), WanaKana (MIT) pour la conversion romaji vers kana, FastAPI, msgspec et jaconv.',
 	'credits.art.title': 'Illustrations et sons',
 	'credits.art.body':
-		'La mascotte Bakuro, les avatars et les icônes sont dessinés pour Hajime. Les sons sont synthétisés dans le navigateur : aucun fichier audio tiers.',
+		'La mascotte Exupulojon, les avatars et les icônes sont dessinés pour Bakahatsu. Les sons sont synthétisés dans le navigateur : aucun fichier audio tiers.',
 
 	'a11y.turn': 'Tour de {name}. Fragment : {fragment}.',
 	'a11y.accepted': '{name} a joué {word}.',

@@ -1,4 +1,4 @@
-# Hajime Game
+# Bakahatsu
 
 A free multiplayer browser game for learners of Japanese: find a Japanese word before the bomb explodes.
 
@@ -78,7 +78,7 @@ the GitHub repository (`deploy/provision.sh`). See [docs/DEPLOY.md](docs/DEPLOY.
 
 ## Licence and credits
 
-Hajime Game is free and its **code is open source under the [MIT licence](LICENSE)**: you may use, modify and
+Bakahatsu is free and its **code is open source under the [MIT licence](LICENSE)**: you may use, modify and
 redistribute it, keeping the copyright notice. © 2026 yanis-san.
 
 The game relies on data and fonts that are **not** under the MIT licence and keep their own. They are also shown to

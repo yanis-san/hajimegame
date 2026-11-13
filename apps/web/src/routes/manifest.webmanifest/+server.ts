@@ -12,8 +12,8 @@ export const GET: RequestHandler = ({ url }) => {
 	const lang = isLocale(asked) ? asked : 'fr';
 	return json(
 		{
-			name: 'Hajime',
-			short_name: 'Hajime',
+			name: 'Bakahatsu',
+			short_name: 'Bakahatsu',
 			description: TAGLINES[lang],
 			lang,
 			start_url: localizePath('/', lang),

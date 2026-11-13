@@ -6,7 +6,7 @@
 	import { href, t } from '#lib/i18n/index.ts';
 </script>
 
-<svelte:head><title>{t('stats.title')} · Hajime</title></svelte:head>
+<svelte:head><title>{t('stats.title')} · {t('app.name')}</title></svelte:head>
 
 <article class="stats">
 	<header class="top">

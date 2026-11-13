@@ -4,7 +4,7 @@
 	import { t } from '#lib/i18n/index.ts';
 </script>
 
-<svelte:head><title>{t('error.404.title')} · Hajime</title></svelte:head>
+<svelte:head><title>{t('error.404.title')} · {t('app.name')}</title></svelte:head>
 
 {#if page.status === 404}
 	<ErrorScreen title={t('error.404.title')} body={t('error.404.body')} />

@@ -22,7 +22,7 @@ def mount_admin(app: FastAPI, engine: AsyncEngine, settings: AppSettings) -> Adm
         app,
         engine,
         base_url=settings.admin_path,
-        title="Hajime admin",
+        title="Bakahatsu admin",
         authentication_backend=AdminAuth(app, settings),
         audit_backend=LogAuditBackend(),
     )

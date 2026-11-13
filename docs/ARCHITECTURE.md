@@ -1,4 +1,4 @@
-# Hajime Game - Architecture
+# Bakahatsu - Architecture
 
 Status: milestone A (phases 0 to 4) in progress.
 

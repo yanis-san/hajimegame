@@ -14,7 +14,7 @@
 	const View = $derived(STATS_VIEWS[game]);
 </script>
 
-<svelte:head><title>{t('stats.title')} · Hajime</title></svelte:head>
+<svelte:head><title>{t('stats.title')} · {t('app.name')}</title></svelte:head>
 
 <article class="stats">
 	<header class="top">
@@ -31,14 +31,37 @@
 			{/each}
 		</nav>
 	{/if}
-	<p class="lead">{account.user ? t('stats.leadAccount') : t('stats.lead')}</p>
-	<!-- keyed by game, so switching game starts from a clean view -->
-	{#key game}
-		<View />
-	{/key}
+	{#if account.user}<p class="lead">{t('stats.leadAccount')}</p>{/if}
+	{#if account.user === undefined}
+		<div class="placeholder" aria-hidden="true"></div>
+	{:else if account.user === null}
+		<div class="card guest">
+			<h2>{t('stats.guest.title')}</h2>
+			<p>{t('stats.guest.body')}</p>
+			<Button href={href('/account')} icon="user">{t('stats.guest.cta')}</Button>
+		</div>
+	{:else}
+		<!-- keyed by game, so switching game starts from a clean view -->
+		{#key game}
+			<View />
+		{/key}
+	{/if}
 </article>
 
 <style>
+	.placeholder {
+		min-height: 8rem;
+	}
+	.guest {
+		display: grid;
+		gap: 0.7rem;
+		justify-items: start;
+		padding: 1rem;
+	}
+	.guest h2,
+	.guest p {
+		margin: 0;
+	}
 	.stats {
 		display: grid;
 		gap: 0.9rem;

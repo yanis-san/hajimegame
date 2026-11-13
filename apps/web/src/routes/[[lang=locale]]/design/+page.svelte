@@ -16,6 +16,7 @@
 	import WordInput from '#lib/design/WordInput.svelte';
 	import { ClockSync } from '#lib/game/clock.ts';
 	import { sfx, type SfxName } from '#lib/game/sfx.ts';
+	import { t } from '#lib/i18n/index.ts';
 	import type { PlayerView } from '@hajime/protocol';
 
 	const clock = new ClockSync();
@@ -86,7 +87,7 @@
 	const iconNames = Object.keys(ICONS) as IconName[];
 </script>
 
-<svelte:head><title>Composants · Hajime</title></svelte:head>
+<svelte:head><title>Composants · {t('app.name')}</title></svelte:head>
 <Particles bind:this={particles} />
 
 <div class="page">
@@ -169,7 +170,7 @@
 	</section>
 
 	<section class="card">
-		<h2>Bakuro, la bombe</h2>
+		<h2>Exupulojon, la bombe</h2>
 		<div class="row moods">
 			<div><Mascot mood="calm" size={120} /><small>calme</small></div>
 			<div><Mascot mood="worried" size={120} /><small>inquiet</small></div>

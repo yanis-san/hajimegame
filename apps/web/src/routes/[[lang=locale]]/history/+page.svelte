@@ -38,7 +38,7 @@
 		new Date(at).toLocaleString(getLocale(), { dateStyle: 'medium', timeStyle: 'short' });
 </script>
 
-<svelte:head><title>{t('history.title')} · Hajime</title></svelte:head>
+<svelte:head><title>{t('history.title')} · {t('app.name')}</title></svelte:head>
 
 <article class="history">
 	<header class="top">

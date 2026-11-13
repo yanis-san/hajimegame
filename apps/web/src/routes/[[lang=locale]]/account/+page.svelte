@@ -84,7 +84,7 @@
 	}
 </script>
 
-<svelte:head><title>{t('account.title')} · Hajime</title></svelte:head>
+<svelte:head><title>{t('account.title')} · {t('app.name')}</title></svelte:head>
 
 <article class="account">
 	<header class="top">

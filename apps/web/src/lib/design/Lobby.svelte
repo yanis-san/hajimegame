@@ -101,7 +101,7 @@
 
 	async function share(): Promise<void> {
 		try {
-			await navigator.share({ title: 'Hajime', text: t('app.tagline'), url: link });
+			await navigator.share({ title: t('app.name'), text: t('app.tagline'), url: link });
 		} catch {
 			/* cancelled */
 		}
@@ -326,7 +326,7 @@
 		<div class="mascot"><Mascot mood="worried" size={150} /></div>
 		<p class="lead">{t('lobby.countdown')}</p>
 		{#key seconds}
-			<p class="num">{seconds > 0 ? seconds : 'Hajime'}</p>
+			<p class="num">{seconds > 0 ? seconds : 'バカハツ'}</p>
 		{/key}
 	</div>
 {/if}

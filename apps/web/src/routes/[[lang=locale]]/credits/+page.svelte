@@ -3,7 +3,7 @@
 	import { href, t } from '#lib/i18n/index.ts';
 </script>
 
-<svelte:head><title>{t('credits.title')} · Hajime</title></svelte:head>
+<svelte:head><title>{t('credits.title')} · {t('app.name')}</title></svelte:head>
 
 <article class="credits card">
 	<h1>{t('credits.title')}</h1>

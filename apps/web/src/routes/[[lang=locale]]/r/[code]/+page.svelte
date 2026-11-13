@@ -57,7 +57,9 @@
 	}
 
 	const title = $derived(
-		store?.phase === 'playing' ? `${store.turn?.fragment ?? ''} · Hajime` : `${code} · Hajime`
+		store?.phase === 'playing'
+			? `${store.turn?.fragment ?? ''} · ${t('app.name')}`
+			: `${code} · ${t('app.name')}`
 	);
 </script>
 

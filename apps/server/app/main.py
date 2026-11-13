@@ -127,7 +127,7 @@ def create_app(
                 await client.aclose()
 
     app = FastAPI(
-        title="Hajime Game", version="0.1.0", lifespan=lifespan, docs_url=None if cfg.is_prod else "/docs"
+        title="Bakahatsu", version="0.1.0", lifespan=lifespan, docs_url=None if cfg.is_prod else "/docs"
     )
     app.state.settings = cfg
     app.add_middleware(

@@ -264,7 +264,7 @@ test.describe('interface language lives in the URL', () => {
 		await page.goto('/ja/credits'); // the footer link is hidden on short windows
 		await page.waitForLoadState('networkidle');
 		await expect(page.getByRole('heading', { name: 'クレジットとライセンス' })).toBeVisible();
-		await expect(page.getByRole('link', { name: 'Hajime' })).toHaveAttribute('href', '/ja');
+		await expect(page.getByRole('link', { name: 'Bakahatsu' })).toHaveAttribute('href', '/ja');
 		await page.locator('select').selectOption('fr');
 		await expect(page).toHaveURL(/\/credits$/);
 		await expect(page.getByRole('heading', { name: 'Crédits et licences' })).toBeVisible();

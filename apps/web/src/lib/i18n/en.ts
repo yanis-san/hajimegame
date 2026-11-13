@@ -2,7 +2,7 @@ import type { MessageKey } from './fr.ts';
 
 /** English strings. Every key of the French reference is required. */
 export const en: Record<MessageKey, string> = {
-	'app.name': 'Hajime',
+	'app.name': 'Bakahatsu',
 	'app.tagline': 'Find a Japanese word before the bomb goes off.',
 	'mode.label': 'Game mode',
 	'mode.classic.title': 'Classic',
@@ -117,7 +117,7 @@ export const en: Record<MessageKey, string> = {
 
 	'status.reconnecting': 'Connection lost. Reconnecting…',
 	'status.reconnectingIn': 'Reconnecting in {n} s',
-	'status.offline': 'No connection. Hajime needs the Internet to play.',
+	'status.offline': 'No connection. Bakahatsu needs the Internet to play.',
 	'status.retry': 'Retry',
 
 	'error.room_not_found.title': 'Game not found',
@@ -166,7 +166,8 @@ export const en: Record<MessageKey, string> = {
 	'history.title': 'History',
 	'history.open': 'Game history',
 	'history.back': 'Back',
-	'history.lead': 'Your games are saved on this device, in this browser. Nobody else can see them.',
+	'history.lead':
+		'Your last 5 games are kept in this browser. Nobody else can see them. With an account, your statistics follow you on every device.',
 	'history.empty': 'No games yet. Finish a game and it will show up here with all its words.',
 	'history.play': 'Play',
 	'history.winner': 'Winner: {name}',
@@ -203,6 +204,10 @@ export const en: Record<MessageKey, string> = {
 	'stats.top.hint': 'A good way to see what sticks, and what is left to learn.',
 	'stats.recent': 'Your last 10 words',
 	'stats.noWords': 'No words yet.',
+	'stats.guest.title': 'Statistics are for accounts',
+	'stats.guest.body':
+		'As a guest, your last 5 games stay in this browser. With a free account, your words, totals and activity are kept on the server and follow you on every device.',
+	'stats.guest.cta': 'Create an account',
 	'stats.empty': 'No statistics yet. Finish a game and they will show up here.',
 	'stats.unavailable': 'Statistics are not available right now.',
 	'stats.error': 'Could not load the statistics.',
@@ -211,10 +216,10 @@ export const en: Record<MessageKey, string> = {
 	'stats.times.other': '{n} times',
 	'common.close': 'Close',
 	'game.region': 'Game',
-	'mascot.label': 'Bakuro, the bomb',
+	'mascot.label': 'Exupulojon, the bomb',
 	'credits.code.title': 'The game',
 	'credits.code.body':
-		'Hajime Game is free and its code is open, under the MIT licence, © 2026 yanis-san. You may use, modify and share it as long as you keep this notice.',
+		'Bakahatsu is free and its code is open, under the MIT licence, © 2026 yanis-san. You may use, modify and share it as long as you keep this notice.',
 	'credits.code.source': 'Source code',
 	'credits.code.licence': 'MIT licence',
 	'credits.data.title': 'Your data',
@@ -273,7 +278,7 @@ export const en: Record<MessageKey, string> = {
 		'Svelte and SvelteKit (MIT), WanaKana (MIT) for romaji to kana conversion, FastAPI, msgspec and jaconv.',
 	'credits.art.title': 'Artwork and sounds',
 	'credits.art.body':
-		'The mascot Bakuro, the avatars and the icons are drawn for Hajime. Sounds are synthesised in the browser: no third-party audio files.',
+		'The mascot Exupulojon, the avatars and the icons are drawn for Bakahatsu. Sounds are synthesised in the browser: no third-party audio files.',
 
 	'a11y.turn': '{name}’s turn. Fragment: {fragment}.',
 	'a11y.accepted': '{name} played {word}.',

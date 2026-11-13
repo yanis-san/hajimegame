@@ -60,6 +60,10 @@ const view = (mode: BombStatsView['mode'] = 'all'): BombStatsView => ({
 });
 
 async function mockStats(page: Page, status = 200, requests: string[] = []): Promise<void> {
+	// statistics are for accounts: these tests are played by a signed-in player
+	await page.route('**/api/auth/me', (route) =>
+		route.fulfill({ json: { user: { username: 'Aya', email: null, email_verified: false } } })
+	);
 	await page.route('**/api/me/stats/bomb*', async (route) => {
 		const url = new URL(route.request().url());
 		requests.push(`${url.search}|${route.request().headers()['x-hajime-guest'] ?? ''}`);
@@ -103,6 +107,9 @@ test('the statistics page shows the totals, the most used words and the last one
 });
 
 test('an empty history and an unavailable database each say so', async ({ page }) => {
+	await page.route('**/api/auth/me', (route) =>
+		route.fulfill({ json: { user: { username: 'Aya', email: null, email_verified: false } } })
+	);
 	await page.route('**/api/me/stats/bomb*', (route) =>
 		route.fulfill({
 			json: { ...view(), summary: { ...view().summary, games: 0, words: 0 }, top_words: [] }
@@ -113,6 +120,7 @@ test('an empty history and an unavailable database each say so', async ({ page }
 	await expect(page.getByRole('link', { name: 'Jouer' })).toBeVisible();
 
 	await page.unroute('**/api/me/stats/bomb*');
+	await page.unroute('**/api/auth/me');
 	await mockStats(page, 503);
 	await page.reload();
 	await expect(page.getByText('Les statistiques ne sont pas disponibles')).toBeVisible();
@@ -141,4 +149,24 @@ test('only games the site offers have a statistics page', async ({ request }) =>
 	expect((await request.get('/stats/chess', { headers: { accept: 'text/html' } })).status()).toBe(
 		404
 	);
+});
+
+test('a guest is invited to create an account instead of seeing statistics', async ({ page }) => {
+	const requests: string[] = [];
+	await page.route('**/api/auth/me', (route) => route.fulfill({ json: { user: null } }));
+	await page.route('**/api/me/stats/bomb*', (route) => {
+		requests.push(route.request().url());
+		return route.fulfill({ status: 401, json: { detail: 'guest_required' } });
+	});
+	await page.goto('/stats/bomb');
+	await expect(
+		page.getByRole('heading', { name: 'Les statistiques sont réservées aux comptes' })
+	).toBeVisible();
+	await page.getByRole('link', { name: 'Créer un compte' }).click();
+	await expect(page).toHaveURL(/\/account$/);
+	expect(requests).toEqual([]); // a guest's page never asks the server for statistics
+
+	await page.goto('/ja/stats/bomb');
+	await expect(page.getByRole('heading', { name: '統計はアカウント専用です' })).toBeVisible();
+	await expect(page.locator('main')).not.toContainText(/compte|statistiques|invité/i);
 });

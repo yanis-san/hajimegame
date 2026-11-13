@@ -2,6 +2,7 @@
 	import './layout.css';
 	import { onMount } from 'svelte';
 	import Button from '#lib/design/Button.svelte';
+	import Icon from '#lib/design/Icon.svelte';
 	import LanguagePicker from '#lib/design/LanguagePicker.svelte';
 	import Sky from '#lib/design/Sky.svelte';
 	import { loadAccount } from '#lib/game/account.svelte.ts';
@@ -92,7 +93,7 @@
 
 <header class="bar">
 	<a class="logo" href={href('/')} aria-label={t('app.name')}>
-		<span class="mark" aria-hidden="true">始</span>
+		<span class="mark" aria-hidden="true"><Icon name="bomb" size={22} /></span>
 		<span class="word">{t('app.name')}</span>
 	</a>
 	<div class="tools">
@@ -168,8 +169,6 @@
 		border: var(--line) solid var(--sumi);
 		border-radius: 8px;
 		box-shadow: 2px 3px 0 var(--sumi);
-		font-size: 1.2rem;
-		font-family: var(--font-kana);
 		transform: rotate(-4deg);
 	}
 	.tools {

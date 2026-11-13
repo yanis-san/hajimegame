@@ -2,7 +2,7 @@ import type { MessageKey } from './fr.ts';
 
 /** Japanese strings. Every key of the French reference is required. */
 export const ja: Record<MessageKey, string> = {
-	'app.name': 'Hajime',
+	'app.name': 'Bakahatsu',
 	'app.tagline': '爆弾が爆発する前に、日本語の言葉を見つけよう。',
 	'mode.label': 'ゲームモード',
 	'mode.classic.title': 'クラシック',
@@ -116,7 +116,7 @@ export const ja: Record<MessageKey, string> = {
 
 	'status.reconnecting': '接続が切れました。再接続中…',
 	'status.reconnectingIn': '{n}秒後に再接続します',
-	'status.offline': '接続がありません。Hajimeの利用にはインターネットが必要です。',
+	'status.offline': '接続がありません。Bakahatsuの利用にはインターネットが必要です。',
 	'status.retry': '再試行',
 
 	'error.room_not_found.title': 'ゲームが見つかりません',
@@ -165,7 +165,8 @@ export const ja: Record<MessageKey, string> = {
 	'history.title': '履歴',
 	'history.open': '試合の履歴',
 	'history.back': '戻る',
-	'history.lead': '試合はこの端末のこのブラウザにだけ保存されます。他の人は見られません。',
+	'history.lead':
+		'直近5試合はこのブラウザにだけ保存され、他の人は見られません。アカウントを作ると、統計をすべての端末で見られます。',
 	'history.empty': 'まだ試合がありません。試合を終えると、すべての単語と一緒にここに表示されます。',
 	'history.play': '遊ぶ',
 	'history.winner': '勝者：{name}',
@@ -202,6 +203,10 @@ export const ja: Record<MessageKey, string> = {
 	'stats.top.hint': '身についた単語と、これから覚える単語が見えてきます。',
 	'stats.recent': '最近の10語',
 	'stats.noWords': 'まだ単語がありません。',
+	'stats.guest.title': '統計はアカウント専用です',
+	'stats.guest.body':
+		'ゲストの場合、直近5試合はこのブラウザにだけ残ります。無料のアカウントを作ると、単語・合計・活動がサーバーに保存され、すべての端末で見られます。',
+	'stats.guest.cta': 'アカウントを作る',
 	'stats.empty': 'まだ統計がありません。試合を終えるとここに表示されます。',
 	'stats.unavailable': '現在、統計は利用できません。',
 	'stats.error': '統計を読み込めませんでした。',
@@ -210,10 +215,10 @@ export const ja: Record<MessageKey, string> = {
 	'stats.times.other': '{n}回',
 	'common.close': '閉じる',
 	'game.region': 'ゲーム',
-	'mascot.label': '爆弾のバクロ',
+	'mascot.label': '爆弾のExupulojon',
 	'credits.code.title': 'このゲーム',
 	'credits.code.body':
-		'Hajime Game は無料で、コードはMITライセンスの下で公開されています（© 2026 yanis-san）。この表示を残せば、自由に使用・改変・共有できます。',
+		'Bakahatsu は無料で、コードはMITライセンスの下で公開されています（© 2026 yanis-san）。この表示を残せば、自由に使用・改変・共有できます。',
 	'credits.code.source': 'ソースコード',
 	'credits.code.licence': 'MITライセンス',
 	'credits.data.title': 'あなたのデータ',
@@ -272,7 +277,7 @@ export const ja: Record<MessageKey, string> = {
 		'Svelte と SvelteKit（MIT）、ローマ字からかなへの変換に WanaKana（MIT）、そして FastAPI、msgspec、jaconv。',
 	'credits.art.title': 'イラストと効果音',
 	'credits.art.body':
-		'マスコットのバクロ、アバター、アイコンはHajime用に描き下ろしました。効果音はブラウザ内で合成しており、外部の音声ファイルは使っていません。',
+		'マスコットのExupulojon、アバター、アイコンはBakahatsu用に描き下ろしました。効果音はブラウザ内で合成しており、外部の音声ファイルは使っていません。',
 
 	'a11y.turn': '{name}の番。文字：{fragment}。',
 	'a11y.accepted': '{name}が「{word}」を答えました。',
