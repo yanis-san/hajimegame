@@ -4,10 +4,14 @@ from __future__ import annotations
 
 import asyncio
 import uuid
+from datetime import date, timedelta
 from typing import Any
 
 import httpx
+import sqlalchemy as sa
+from sqlalchemy.ext.asyncio import create_async_engine
 
+from app.core.age import age_on
 from app.japanese.dictionary import Dictionary
 from tests.realtime.helpers import CSRF, RunningServer, running_server
 from tests.realtime.test_websocket import start_game, valid_word
@@ -23,7 +27,13 @@ def browser(server: RunningServer) -> httpx.AsyncClient:
 async def sign_up(
     client: httpx.AsyncClient, name: str = "Aya", guest: uuid.UUID | None = None, **extra: object
 ) -> httpx.Response:
-    body: dict[str, object] = {"username": name, "password": PASSWORD, **extra}
+    body: dict[str, object] = {
+        "username": name,
+        "password": PASSWORD,
+        "email": "aya@example.com",
+        "birth_date": "1995-06-15",
+        **extra,
+    }
     if guest is not None:
         body["guest_id"] = str(guest)
     return await client.post("/api/auth/register", json=body, headers=CSRF)
@@ -92,7 +102,11 @@ async def test_sign_in_gives_the_same_answer_for_an_unknown_name_and_a_wrong_pas
                 "/api/auth/login", json={"username": "aya", "password": PASSWORD}, headers=CSRF
             )
             assert ok.status_code == 200 and ok.json() == {"username": "Aya"}  # the name as it was written
-            assert await who(other) == {"username": "Aya", "email": None, "email_verified": False}
+            assert await who(other) == {
+                "username": "Aya",
+                "email": "aya@example.com",
+                "email_verified": False,
+            }
         finally:
             await other.aclose()
 
@@ -143,7 +157,9 @@ async def test_production_closes_sign_up_when_there_is_no_captcha(
     async with running_server(dictionary, database_url=database_url, **prod) as server:
         headers = {**CSRF, "Origin": "https://hajime.test.fr"}
         response = await server.http.post(
-            "/api/auth/register", json={"username": "Aya", "password": PASSWORD}, headers=headers
+            "/api/auth/register",
+            json={"username": "Aya", "password": PASSWORD, "email": "a@b.fr", "birth_date": "1995-06-15"},
+            headers=headers,
         )
         assert (response.status_code, response.json()["detail"]) == (503, "accounts_unavailable")
 
@@ -256,3 +272,50 @@ async def test_deleting_the_account_signs_out_and_detaches_the_games(
         assert again.status_code == 401
         assert (await sign_up(server.http, "Aya")).status_code == 201  # the name is free again
         assert (await server.http.get("/api/me/stats/bomb")).json()["summary"]["games"] == 0
+
+
+async def test_the_email_is_required_and_checked(database_url: str, dictionary: Dictionary) -> None:
+    async with running_server(dictionary, database_url=database_url) as server:
+        for email in ("", "   ", "nope", "a@b"):
+            response = await sign_up(server.http, "Aya", email=email)
+            assert (response.status_code, response.json()["detail"]) == (400, "bad_email"), repr(email)
+        assert (await sign_up(server.http, "Aya", email="  AYA@Example.COM ")).status_code == 201
+
+
+async def test_the_date_of_birth_is_required_and_must_be_plausible(
+    database_url: str, dictionary: Dictionary
+) -> None:
+    today = date.today()
+    async with running_server(dictionary, database_url=database_url) as server:
+        for bad in ("", "tomorrow", "15/06/1995", "1995-13-40", "2999-01-01", "1800-01-01"):
+            response = await sign_up(server.http, "Aya", birth_date=bad)
+            assert (response.status_code, response.json()["detail"]) == (400, "bad_birth_date"), bad
+        future = (today + timedelta(days=1)).isoformat()
+        assert (await sign_up(server.http, "Aya", birth_date=future)).json()["detail"] == "bad_birth_date"
+        # no minimum age: it is a vocabulary game, a child may have an account too
+        baby = today.replace(year=today.year - 6).isoformat()
+        assert (await sign_up(server.http, "Aya", birth_date=baby)).status_code == 201
+
+
+async def test_the_date_of_birth_is_stored_and_never_sent_back(
+    database_url: str, dictionary: Dictionary
+) -> None:
+    async with running_server(dictionary, database_url=database_url) as server:
+        created = await sign_up(server.http, "Aya", birth_date="1995-06-15")
+        assert created.status_code == 201
+        assert "1995" not in created.text and "birth" not in created.text  # answers never repeat it
+        assert "1995" not in (await server.http.get("/api/auth/me")).text
+        engine = create_async_engine(database_url)
+        async with engine.connect() as connection:
+            stored = (await connection.execute(sa.text("select birth_date from accounts"))).scalar()
+        await engine.dispose()
+        assert str(stored)[:10] == "1995-06-15"
+
+
+def test_age_is_whole_years_and_the_birthday_counts_on_the_day() -> None:
+    born = date(2000, 2, 29)
+    assert age_on(born, date(2024, 2, 28)) == 23  # the day before the birthday
+    assert age_on(born, date(2024, 2, 29)) == 24  # the day itself
+    assert age_on(born, date(2025, 2, 28)) == 24  # a leap-day birthday is reached on March 1st at the latest
+    assert age_on(born, date(2025, 3, 1)) == 25
+    assert age_on(date(2020, 12, 31), date(2021, 1, 1)) == 0

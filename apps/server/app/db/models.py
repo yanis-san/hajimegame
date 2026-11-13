@@ -12,12 +12,14 @@ game's own module under ``app.db.games``, never here.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+
+from app.core.age import age_on
 
 JSONType = sa.JSON().with_variant(JSONB(), "postgresql")
 
@@ -71,9 +73,15 @@ class Account(Base):
     email_verified_at: Mapped[datetime | None] = mapped_column(
         sa.DateTime
     )  # null until the address is confirmed
+    birth_date: Mapped[date | None] = mapped_column(sa.Date)  # asked at sign-up; null for older accounts
     created_at: Mapped[datetime] = mapped_column(sa.DateTime, default=_now)
 
     player: Mapped[Player] = relationship(back_populates="account")
+
+    @property
+    def age(self) -> int | None:
+        """Whole years today, or None when no date of birth was given."""
+        return age_on(self.birth_date, date.today()) if self.birth_date else None
 
 
 class PlayerGuest(Base):

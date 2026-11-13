@@ -85,3 +85,24 @@ order by explosion_pct desc, turns desc limit 15;
 \echo '=== Most played words'
 select word, count(*) as times from bomb_turns where outcome = 'word' and word <> ''
 group by word order by times desc, word limit 15;
+
+\echo
+\echo '=== Accounts and their ages (from the date of birth asked at sign-up)'
+select count(*)                                                       as accounts,
+       count(birth_date)                                              as with_birth_date,
+       round(avg(date_part('year', age(birth_date)))::numeric, 1)     as avg_age,
+       min(date_part('year', age(birth_date)))                        as youngest,
+       max(date_part('year', age(birth_date)))                        as oldest
+from accounts;
+
+select case
+         when a < 13 then '1. under 13'
+         when a < 18 then '2. 13 to 17'
+         when a < 25 then '3. 18 to 24'
+         when a < 35 then '4. 25 to 34'
+         when a < 45 then '5. 35 to 44'
+         else '6. 45 and over'
+       end                                                            as age_group,
+       count(*)                                                       as accounts
+from (select date_part('year', age(birth_date)) as a from accounts where birth_date is not null) ages
+group by 1 order by 1;

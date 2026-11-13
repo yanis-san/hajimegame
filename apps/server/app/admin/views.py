@@ -8,7 +8,17 @@ from __future__ import annotations
 
 from sqladmin import ModelView
 
-from app.db.models import Account, Game, GamePlayer, LoginSession, Player
+from app.db.models import (
+    Account,
+    Challenge,
+    Game,
+    GamePlayer,
+    Group,
+    GroupMember,
+    LoginSession,
+    Player,
+    Season,
+)
 
 
 class PlayerAdmin(ModelView, model=Player):
@@ -28,13 +38,16 @@ class AccountAdmin(ModelView, model=Account):
         Account.player,
         Account.provider,
         Account.email,
+        Account.birth_date,
+        "age",  # computed from the date of birth
         Account.email_verified_at,
         Account.created_at,
     ]
     column_searchable_list = [Account.subject, Account.email]
     column_default_sort = ("created_at", True)
     can_create = False  # an account needs a password, which only sign-up can set
-    form_columns = [Account.email, Account.email_verified_at]  # the password hash is never shown nor edited
+    # the password hash is never shown nor edited
+    form_columns = [Account.email, Account.birth_date, Account.email_verified_at]
     column_details_exclude_list = [Account.password_hash]
     page_size = 50
 
@@ -86,4 +99,39 @@ class GamePlayerAdmin(ModelView, model=GamePlayer):
     column_details_exclude_list = [GamePlayer.guest_id]  # it names a browser: stored, never put on a screen
 
 
-VIEWS: list[type[ModelView]] = [PlayerAdmin, AccountAdmin, LoginSessionAdmin, GameAdmin, GamePlayerAdmin]
+class SeasonAdmin(ModelView, model=Season):
+    name, name_plural, icon = "Season", "Seasons", "fa-solid fa-calendar"
+    column_list = [Season.name, Season.starts_at, Season.ends_at, Season.id]
+    column_default_sort = ("starts_at", True)
+
+
+class GroupAdmin(ModelView, model=Group):
+    name, name_plural, icon = "Group", "Groups", "fa-solid fa-people-group"
+    column_list = [Group.name, Group.owner_id, Group.created_at, Group.id]
+    column_searchable_list = [Group.name]
+    column_default_sort = ("created_at", True)
+
+
+class GroupMemberAdmin(ModelView, model=GroupMember):
+    name, name_plural, icon = "Group member", "Group members", "fa-solid fa-user-group"
+    column_list = [GroupMember.group_id, GroupMember.player_id, GroupMember.joined_at]
+    column_default_sort = ("joined_at", True)
+
+
+class ChallengeAdmin(ModelView, model=Challenge):
+    name, name_plural, icon = "Challenge", "Challenges", "fa-solid fa-flag-checkered"
+    column_list = [Challenge.kind, Challenge.starts_at, Challenge.ends_at, Challenge.created_by, Challenge.id]
+    column_default_sort = ("starts_at", True)
+
+
+VIEWS: list[type[ModelView]] = [
+    PlayerAdmin,
+    AccountAdmin,
+    LoginSessionAdmin,
+    GameAdmin,
+    GamePlayerAdmin,
+    SeasonAdmin,
+    GroupAdmin,
+    GroupMemberAdmin,
+    ChallengeAdmin,
+]

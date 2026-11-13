@@ -82,8 +82,8 @@ of `provision.sh` to turn off SSH password logins (only if you log in with a key
 - **The admin interface** (browse, search and correct the database from `https://<domain>/admin`; ADR 0008). Off until
   you set it up: on your own computer run `cd apps/server && uv run python -m app.admin.passwd`, enter a password
   of 12+ characters, and paste the three lines it prints into `/opt/hajime/.env` on the server (keep the single quotes
-  around the hash). Deploy again (push any commit, or *Actions → Deploy*). Open `/admin`, sign in with `admin` and
-  your password. To let only your own address see it, add `ADMIN_ALLOWED_IPS=<your public IP>` to the same `.env`.
+  around the hash). Deploy again (push any commit, or *Actions → Deploy*). Open `/admin` (or the address you chose with `HAJIME_ADMIN_PATH`, e.g. `/admin-<random id>`, which is better
+  kept secret), sign in with `admin` and your password. To let only your own address see it, add `ADMIN_ALLOWED_IPS=<your public IP>` to the same `.env`.
   Every change made there is in the server logs as `admin_action`. To turn it off, delete the hash line and deploy.
 - **Updates:** Dependabot pull requests go through the same pipeline; merge them when green.
 

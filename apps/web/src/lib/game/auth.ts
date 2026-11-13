@@ -36,12 +36,28 @@ export async function fetchAccount(fetcher: typeof fetch = fetch): Promise<Accou
 
 /** The browser's guest identifier travels with sign-up and sign-in: that is what attaches past games. */
 export async function signUp(
-	input: { username: string; password: string; email: string; captcha: string },
+	input: {
+		username: string;
+		password: string;
+		email: string;
+		/** YYYY-MM-DD, as a date field gives it */
+		birthDate: string;
+		captcha: string;
+	},
 	fetcher: typeof fetch = fetch
 ): Promise<Account> {
 	return call<Account>(
 		'/api/auth/register',
-		{ body: { ...input, email: input.email.trim() || null, guest_id: getGuestId() } },
+		{
+			body: {
+				username: input.username,
+				password: input.password,
+				email: input.email.trim(),
+				birth_date: input.birthDate,
+				captcha: input.captcha,
+				guest_id: getGuestId()
+			}
+		},
 		fetcher
 	);
 }

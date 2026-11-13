@@ -237,7 +237,9 @@ export const ja: Record<MessageKey, string> = {
 	'account.username.hint': '3〜20文字：文字、数字、ドット、ハイフン、アンダースコア。',
 	'account.password': 'パスワード',
 	'account.password.hint': '8文字以上。',
-	'account.email': 'メールアドレス（任意）',
+	'account.email': 'メールアドレス',
+	'account.birth': '生年月日',
+	'account.birth.hint': 'プレイヤーの年齢を知るためです。他の人には表示されません。',
 	'account.email.hint': '今後、アカウントの確認と復旧に使います。',
 	'account.signUp': '登録する',
 	'account.signIn': 'ログインする',
@@ -255,6 +257,7 @@ export const ja: Record<MessageKey, string> = {
 	'err.bad_username': 'ユーザー名が正しくありません：3〜20文字、空白なし。',
 	'err.bad_password': 'パスワードが短すぎるか（8文字以上）、ユーザー名と同じです。',
 	'err.bad_email': 'メールアドレスが正しくありません。',
+	'err.bad_birth_date': '生年月日が正しくありません。',
 	'err.bad_credentials': 'ユーザー名またはパスワードが違います。',
 	'err.captcha_failed': 'ロボット確認に失敗しました。もう一度お試しください。',
 	'err.accounts_unavailable': '現在アカウントは利用できません。',
@@ -262,7 +265,7 @@ export const ja: Record<MessageKey, string> = {
 	'stats.leadAccount': 'ログインしたすべての端末での試合から計算しています。',
 	'credits.account.title': 'アカウント',
 	'credits.account.body':
-		'アカウントを作ると、サーバーはユーザー名、パスワード（平文ではなくArgon2のハッシュのみ）、入力した場合はメールアドレス、そしてアカウントに結び付いたブラウザの一覧を保存します。ログイン状態を保つためのクッキーを使いますが、それ以外には使わず、誰かを追跡することもありません。アカウントはアカウントページからいつでも削除できます。',
+		'アカウントを作ると、サーバーはユーザー名、パスワード（平文ではなくArgon2のハッシュのみ）、メールアドレス、生年月日（プレイヤーの年齢を知るためで、他の人には表示されません）、そしてアカウントに結び付いたブラウザの一覧を保存します。ログイン状態を保つためのクッキーを使いますが、それ以外には使わず、誰かを追跡することもありません。アカウントはアカウントページからいつでも削除できます。',
 	'credits.dictionary.title': '辞書',
 	'credits.dictionary.body':
 		'言葉とその意味（英語、JMdictにあればフランス語）は、JMdictファイル（© Electronic Dictionary Research and Development Group / EDRDG）に由来します。ゲーム用の辞書は、このファイルをフィルタリング・再構成したものです。フィルタリングの規則はリポジトリに記載されています。',

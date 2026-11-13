@@ -238,8 +238,10 @@ export const en: Record<MessageKey, string> = {
 	'account.username.hint': '3 to 20 characters: letters, digits, dot, dash, underscore.',
 	'account.password': 'Password',
 	'account.password.hint': 'At least 8 characters.',
-	'account.email': 'Email (optional)',
+	'account.email': 'Email',
 	'account.email.hint': 'Will be used later to confirm and recover your account.',
+	'account.birth': 'Date of birth',
+	'account.birth.hint': 'To know the age of our players. It is shown to nobody.',
 	'account.signUp': 'Create my account',
 	'account.signIn': 'Sign in',
 	'account.signOut': 'Sign out',
@@ -256,6 +258,7 @@ export const en: Record<MessageKey, string> = {
 	'err.bad_username': 'Invalid username: 3 to 20 characters, no spaces.',
 	'err.bad_password': 'Password too short (8 characters minimum) or the same as the username.',
 	'err.bad_email': 'That email address is not valid.',
+	'err.bad_birth_date': 'That date of birth is not valid.',
 	'err.bad_credentials': 'Wrong username or password.',
 	'err.captcha_failed': 'The robot check failed, try again.',
 	'err.accounts_unavailable': 'Accounts are not available right now.',
@@ -263,7 +266,7 @@ export const en: Record<MessageKey, string> = {
 	'stats.leadAccount': 'Based on the games from every device where you signed in.',
 	'credits.account.title': 'Account',
 	'credits.account.body':
-		'If you create an account, the server keeps your username, your password (never in clear text: only an Argon2 hash), your email if you give one, and the list of browsers linked to the account. A sign-in cookie, needed to keep you signed in, is set in your browser; it is used for nothing else and tracks nobody. You can delete your account at any time from the Account page.',
+		'If you create an account, the server keeps your username, your password (never in clear text: only an Argon2 hash), your email, your date of birth (to know the age of our players; it is shown to nobody), and the list of browsers linked to the account. A sign-in cookie, needed to keep you signed in, is set in your browser; it is used for nothing else and tracks nobody. You can delete your account at any time from the Account page.',
 	'credits.dictionary.title': 'Dictionary',
 	'credits.dictionary.body':
 		'Words and their meanings (English, and French when JMdict provides it) come from the JMdict file, © Electronic Dictionary Research and Development Group (EDRDG). The game dictionary is a filtered, reformatted version of that file; the filtering rules are documented in the repository.',

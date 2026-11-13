@@ -23,7 +23,8 @@ test('create an account, see it, sign out', async ({ page }) => {
 	await page.goto('/account');
 	await page.getByLabel('Pseudo', { exact: true }).fill('Aya');
 	await page.getByLabel('Mot de passe').fill('correct horse battery');
-	await page.getByLabel('Email (facultatif)').fill('aya@example.com');
+	await page.getByLabel('Email', { exact: true }).fill('aya@example.com');
+	await page.getByLabel('Date de naissance').fill('1995-06-15');
 	await page.getByRole('button', { name: 'Créer mon compte' }).click();
 
 	await expect(page.getByText('Connecté en tant que')).toBeVisible();
@@ -40,6 +41,8 @@ test('a taken username is explained in words, in the page language', async ({ pa
 	await page.goto('/en/account');
 	await page.getByLabel('Username', { exact: true }).fill('Aya');
 	await page.getByLabel('Password').fill('correct horse battery');
+	await page.getByLabel('Email', { exact: true }).fill('aya@example.com');
+	await page.getByLabel('Date of birth').fill('1995-06-15');
 	await page.getByRole('button', { name: 'Create my account' }).click();
 	await expect(page.getByRole('alert')).toHaveText('That username is already taken.');
 });
@@ -60,5 +63,8 @@ test('the account page fits a phone without scrolling sideways', async ({ page }
 		() => document.documentElement.scrollWidth - document.documentElement.clientWidth
 	);
 	expect(overflow).toBeLessThanOrEqual(0);
-	await expect(page.getByRole('button', { name: 'Créer mon compte' })).toBeInViewport();
+	// the form is longer than the screen: it scrolls, and the button is reachable at the bottom
+	const button = page.getByRole('button', { name: 'Créer mon compte' });
+	await button.scrollIntoViewIfNeeded();
+	await expect(button).toBeInViewport();
 });

@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import re
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 
 import httpx
@@ -26,7 +27,18 @@ ADMIN: dict[str, Any] = {
     "admin_secret": SECRET,
     "admin_username": "boss",
 }
-LISTS = ("player", "account", "login-session", "game", "game-player", "bomb-turn")
+LISTS = (
+    "player",
+    "account",
+    "login-session",
+    "game",
+    "game-player",
+    "bomb-turn",
+    "season",
+    "group",
+    "group-member",
+    "challenge",
+)
 
 
 async def log_in(
@@ -97,13 +109,22 @@ async def test_no_password_hash_or_token_ever_reaches_the_screen(
     database_url: str, dictionary: Dictionary
 ) -> None:
     async with running_server(dictionary, database_url=database_url, **ADMIN) as server:
-        body = {"username": "Aya", "password": "correct horse battery", "guest_id": str(uuid.uuid4())}
+        born = date.today().replace(year=date.today().year - 31)
+        body = {
+            "username": "Aya",
+            "password": "correct horse battery",
+            "email": "aya@example.com",
+            "birth_date": born.isoformat(),
+            "guest_id": str(uuid.uuid4()),
+        }
         created = await server.http.post("/api/auth/register", json=body, headers=CSRF)
         assert created.status_code == 201
         await log_in(server.http)
 
         listing = (await server.http.get("/admin/account/list")).text
         assert "aya" in listing
+        assert re.search(r">\s*31\s*<", listing), "the age, computed from the date of birth, is listed"
+        assert born.isoformat() in listing
         pages = [listing, (await server.http.get("/admin/login-session/list")).text]
         details = [link for page in pages[:1] for link in _links(page, "/admin/account/details/")]
         assert details, "the account list links to its detail page"
@@ -191,3 +212,16 @@ async def test_deleting_a_game_takes_its_seats_and_turns_with_it(
             left = (await connection.execute(sa.select(sa.func.count()).select_from(table))).scalar()
             assert left == 1, table.__tablename__  # only the game that was not deleted remains
     await engine.dispose()
+
+
+async def test_the_admin_can_live_at_a_secret_address(database_url: str, dictionary: Dictionary) -> None:
+    secret = f"/admin-{uuid.uuid4()}"
+    async with running_server(dictionary, database_url=database_url, admin_path=secret, **ADMIN) as server:
+        assert (await server.http.get(f"{secret}/login")).status_code == 200
+        assert (await server.http.get("/admin/login")).status_code == 404  # the usual address is nothing
+        login = await server.http.post(f"{secret}/login", data={"username": "boss", "password": PASSWORD})
+        assert login.status_code in (302, 303)
+        assert (await server.http.get(f"{secret}/")).status_code == 200
+        assert (await server.http.get(f"{secret}/game/list")).status_code == 200
+        csp = (await server.http.get(f"{secret}/")).headers["content-security-policy"]
+        assert "script-src 'self'" in csp  # the admin's own page policy follows the address

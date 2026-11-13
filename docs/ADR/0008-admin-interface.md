@@ -16,6 +16,9 @@ Status: accepted. The person who runs the site can browse and correct what is st
   created, because an account needs a password that only sign-up sets. Sign-ins can be ended. Password hashes, session
   tokens and guest identifiers are never displayed and are not exported.
 - **Audit.** Every create, change and delete is logged (`admin_action`: who, table, row, what changed).
+- **A secret address.** `HAJIME_ADMIN_PATH` (for example `/admin-<a random UUID>`) moves the admin away from the
+  guessable `/admin`; Caddy and the server both follow it, and `/admin` itself becomes a page that does not exist.
+  This only hides the door: the login, the rate limit and the audit log are what protect it.
 - **Optional network limit.** `ADMIN_ALLOWED_IPS` in the server's `.env` makes Caddy answer 404 to every other address.
 - **Its own page policy.** The admin's pages need their own scripts and styles, so `/admin` gets a Content-Security-Policy
   that allows them (same origin only, no framing); every other response keeps `default-src 'none'`.

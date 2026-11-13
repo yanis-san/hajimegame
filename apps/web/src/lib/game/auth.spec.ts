@@ -14,8 +14,17 @@ describe('account client', () => {
 	afterEach(() => vi.unstubAllGlobals());
 
 	it('sends the browser identifier with sign-up so past games follow the account', async () => {
-		const fetcher = reply(201, { username: 'Aya', email: null, email_verified: false });
-		await signUp({ username: 'Aya', password: 'longenough', email: '  ', captcha: 'tok' }, fetcher);
+		const fetcher = reply(201, { username: 'Aya', email: 'a@b.fr', email_verified: false });
+		await signUp(
+			{
+				username: 'Aya',
+				password: 'longenough',
+				email: ' a@b.fr ',
+				birthDate: '1995-06-15',
+				captcha: 'tok'
+			},
+			fetcher
+		);
 		const [url, init] = (fetcher as unknown as ReturnType<typeof vi.fn>).mock.calls[0] as [
 			string,
 			RequestInit
@@ -24,7 +33,8 @@ describe('account client', () => {
 		expect(JSON.parse(init.body as string)).toEqual({
 			username: 'Aya',
 			password: 'longenough',
-			email: null, // a blank email is no email
+			email: 'a@b.fr', // trimmed
+			birth_date: '1995-06-15',
 			captcha: 'tok',
 			guest_id: GUEST
 		});

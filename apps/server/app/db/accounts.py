@@ -10,7 +10,7 @@ import hashlib
 import secrets
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 import sqlalchemy as sa
 from sqlalchemy.exc import IntegrityError
@@ -54,7 +54,7 @@ def _now() -> datetime:
 
 
 async def create_account(
-    engine: AsyncEngine, username: str, password_hash: str, email: str | None
+    engine: AsyncEngine, username: str, password_hash: str, email: str, birth_date: date
 ) -> uuid.UUID:
     """A new player with a password login. Raises ``UsernameTaken`` when the name is already used."""
     player_id = uuid.uuid4()
@@ -70,6 +70,7 @@ async def create_account(
                     provider=PROVIDER,
                     subject=username_key(username),
                     email=email,
+                    birth_date=birth_date,
                     password_hash=password_hash,
                 )
             )

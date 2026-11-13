@@ -105,6 +105,7 @@ services:
       HAJIME_SENTRY_DSN: ${HAJIME_SENTRY_DSN:-}
       # the operator's admin interface: off unless the hash is set (see docs/DEPLOY.md, "The admin interface")
       HAJIME_ADMIN_USERNAME: ${HAJIME_ADMIN_USERNAME:-admin}
+      HAJIME_ADMIN_PATH: ${HAJIME_ADMIN_PATH:-/admin}
       HAJIME_ADMIN_PASSWORD_HASH: ${HAJIME_ADMIN_PASSWORD_HASH:-}
       HAJIME_ADMIN_SECRET: ${HAJIME_ADMIN_SECRET:-}
     mem_limit: 1g
@@ -154,6 +155,7 @@ services:
       DOMAIN: ${DOMAIN}
       ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL in .env}
       ADMIN_ALLOWED_IPS: ${ADMIN_ALLOWED_IPS:-0.0.0.0/0 ::/0}
+      ADMIN_PATH: ${HAJIME_ADMIN_PATH:-/admin}   # Caddy sends this address to the game server
     volumes:
       - ./Caddyfile.prod:/etc/caddy/Caddyfile:ro
       - caddy_data:/data      # certificates and the ACME account: keep it across deployments

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import re
 import uuid
+from datetime import date
 
 import msgspec
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
@@ -18,6 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 from app.api.routes import client_ip
 from app.core import metrics
+from app.core.age import MAX_AGE, age_on
 from app.core.captcha import verify_turnstile
 from app.core.config import AppSettings
 from app.core.passwords import PASSWORD_MAX, PASSWORD_MIN, hash_password, needs_rehash, verify_password
@@ -39,7 +41,8 @@ LOGIN_PER_NAME = 10  # per 15 minutes
 class Registration(BaseModel):
     username: str = Field(max_length=64)
     password: str = Field(max_length=PASSWORD_MAX)
-    email: str | None = Field(default=None, max_length=254)
+    email: str = Field(max_length=254)
+    birth_date: str = Field(max_length=10)  # YYYY-MM-DD
     guest_id: uuid.UUID | None = None
     captcha: str = Field(default="", max_length=4096)
 
@@ -123,13 +126,23 @@ def clean_password(raw: str, username: str) -> str:
     return raw
 
 
-def clean_email(raw: str | None) -> str | None:
-    if raw is None or not raw.strip():
-        return None
+def clean_email(raw: str) -> str:
     email = raw.strip().lower()
     if not EMAIL_RE.match(email):
         raise HTTPException(status_code=400, detail="bad_email")
     return email
+
+
+def clean_birth_date(raw: str) -> date:
+    """A real date, not in the future, not more than ``MAX_AGE`` years ago: anything else is a mistake."""
+    try:
+        born = date.fromisoformat(raw.strip())
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="bad_birth_date") from exc
+    today = date.today()
+    if born > today or age_on(born, today) > MAX_AGE:
+        raise HTTPException(status_code=400, detail="bad_birth_date")
+    return born
 
 
 async def _sign_in(
@@ -149,6 +162,7 @@ async def register(body: Registration, request: Request) -> Response:
     username = clean_username(body.username)
     password = clean_password(body.password, username)
     email = clean_email(body.email)
+    birth_date = clean_birth_date(body.birth_date)
     ip = client_ip(request)
     await _limit(request, f"register:{ip}", REGISTER_PER_HOUR, 3600, "register")
     if settings.turnstile_secret:
@@ -159,7 +173,9 @@ async def register(body: Registration, request: Request) -> Response:
             status_code=503, detail="accounts_unavailable"
         )  # production never skips the captcha
     try:
-        player_id = await accounts.create_account(engine, username, await hash_password(password), email)
+        player_id = await accounts.create_account(
+            engine, username, await hash_password(password), email, birth_date
+        )
     except accounts.UsernameTaken as exc:
         raise HTTPException(status_code=409, detail="username_taken") from exc
     response = _reply({"username": username, "email": email, "email_verified": False}, 201)

@@ -14,6 +14,10 @@
 	let username = $state('');
 	let password = $state('');
 	let email = $state('');
+	let birthDate = $state('');
+	// a date field refuses what cannot exist: no future date, nobody older than 120 (the server checks again)
+	const today = new Date().toISOString().slice(0, 10);
+	const oldest = `${new Date().getFullYear() - 120}-01-01`;
 	let captcha = $state('');
 	let busy = $state(false);
 	let problem = $state('');
@@ -25,6 +29,7 @@
 		'bad_username',
 		'bad_password',
 		'bad_email',
+		'bad_birth_date',
 		'bad_credentials',
 		'captcha_failed',
 		'accounts_unavailable',
@@ -45,7 +50,7 @@
 		busy = true;
 		problem = '';
 		try {
-			if (tab === 'up') await signUp({ username, password, email, captcha });
+			if (tab === 'up') await signUp({ username, password, email, birthDate, captcha });
 			else await signIn({ username, password });
 			password = '';
 			await refreshAccount();
@@ -157,6 +162,17 @@
 					type="email"
 					hint={t('account.email.hint')}
 					autocomplete="email"
+					required
+				/>
+				<TextField
+					label={t('account.birth')}
+					bind:value={birthDate}
+					type="date"
+					min={oldest}
+					max={today}
+					hint={t('account.birth.hint')}
+					autocomplete="bday"
+					required
 				/>
 				<Captcha bind:token={captcha} />
 			{/if}
