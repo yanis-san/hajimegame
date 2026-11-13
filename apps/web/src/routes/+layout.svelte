@@ -5,7 +5,7 @@
 	import Icon from '#lib/design/Icon.svelte';
 	import LanguagePicker from '#lib/design/LanguagePicker.svelte';
 	import Sky from '#lib/design/Sky.svelte';
-	import { loadAccount } from '#lib/game/account.svelte.ts';
+	import { account, loadAccount, rememberedName } from '#lib/game/account.svelte.ts';
 	import { loadPref, savePref } from '#lib/game/session.ts';
 	import { sfx } from '#lib/game/sfx.ts';
 	import { goto } from '$app/navigation';
@@ -22,6 +22,12 @@
 	import { LANG_COOKIE } from '#lib/i18n/path.ts';
 
 	let { children } = $props();
+
+	// who to show in the bar: the answer of the server, or (until it comes) whoever was signed in last time
+	let remembered = $state<string | null>(null);
+	const shownName = $derived(
+		account.user ? account.user.username : account.user === undefined ? remembered : null
+	);
 
 	// The language comes from the URL. It is set while this component initialises, before any child renders, so the
 	// server-rendered HTML and the first client render are already in the right language (no flash, no French).
@@ -55,6 +61,7 @@
 	}
 
 	onMount(() => {
+		remembered = rememberedName();
 		void loadAccount();
 		applyTheme(loadPref<'dark' | 'light'>('theme', 'dark'));
 		muted = sfx.muted;
@@ -97,14 +104,38 @@
 	</a>
 	<div class="tools">
 		<LanguagePicker onchange={chooseLocale} />
-		<Button
-			size="sm"
-			variant="ghost"
-			iconOnly
-			icon="user"
-			label={t('account.open')}
-			href={href('/account')}
-		/>
+		{#if shownName}
+			<span class="who wide">
+				<Button size="sm" variant="secondary" icon="user" href={href('/account')}>
+					<span class="name">{shownName}</span>
+				</Button>
+			</span>
+			<span class="who narrow">
+				<Button
+					size="sm"
+					variant="ghost"
+					iconOnly
+					icon="user"
+					label={shownName}
+					href={href('/account')}
+				/>
+			</span>
+		{:else}
+			<span class="who wide">
+				<Button size="sm" variant="ghost" href={href('/login')}>{t('account.tab.in')}</Button>
+				<Button size="sm" variant="gold" href={href('/signup')}>{t('account.tab.up')}</Button>
+			</span>
+			<span class="who narrow">
+				<Button
+					size="sm"
+					variant="ghost"
+					iconOnly
+					icon="user"
+					label={t('account.tab.in')}
+					href={href('/login')}
+				/>
+			</span>
+		{/if}
 		<Button
 			size="sm"
 			variant="ghost"
@@ -175,6 +206,29 @@
 		align-items: center;
 		gap: 0.75rem;
 		min-width: 0;
+	}
+	/* two text buttons where there is room, one icon on a phone (the login page links to the other) */
+	.who {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+	.who.narrow {
+		display: none;
+	}
+	.name {
+		max-width: 9rem;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	@media (max-width: 719px) {
+		.who.wide {
+			display: none;
+		}
+		.who.narrow {
+			display: inline-flex;
+		}
 	}
 	/* narrow phones: tighter bar so the logo, the language picker and the two buttons never widen the page */
 	/* during a game the page itself never scrolls: only the list of words does */

@@ -1,41 +1,18 @@
 <script lang="ts">
 	import Button from '#lib/design/Button.svelte';
-	import Captcha from '#lib/design/Captcha.svelte';
 	import Modal from '#lib/design/Modal.svelte';
-	import Segmented from '#lib/design/Segmented.svelte';
 	import TextField from '#lib/design/TextField.svelte';
 	import { account, refreshAccount } from '#lib/game/account.svelte.ts';
 	import { ApiError } from '#lib/game/api.ts';
-	import { deleteAccount, resendVerification, signIn, signOut, signUp } from '#lib/game/auth.ts';
+	import { deleteAccount, resendVerification, signOut } from '#lib/game/auth.ts';
 	import { href, t, type MessageKey } from '#lib/i18n/index.ts';
 
-	type Tab = 'up' | 'in';
-	let tab = $state<Tab>('up');
-	let username = $state('');
-	let password = $state('');
-	let email = $state('');
-	let birthDate = $state('');
-	// a date field refuses what cannot exist: no future date, nobody older than 120 (the server checks again)
-	const today = new Date().toISOString().slice(0, 10);
-	const oldest = `${new Date().getFullYear() - 120}-01-01`;
-	let captcha = $state('');
 	let busy = $state(false);
 	let problem = $state('');
 	let confirmOpen = $state(false);
 	let confirmPassword = $state('');
 
-	const KNOWN = [
-		'username_taken',
-		'bad_username',
-		'bad_password',
-		'bad_email',
-		'bad_birth_date',
-		'email_unavailable',
-		'bad_credentials',
-		'captcha_failed',
-		'accounts_unavailable',
-		'rate_limited'
-	] as const;
+	const KNOWN = ['bad_credentials', 'email_unavailable', 'rate_limited'] as const;
 
 	/** The server answers with a short code; the words come from the interface language. */
 	function explain(error: unknown): string {
@@ -43,23 +20,6 @@
 			return t(`err.${error.detail}` as MessageKey);
 		}
 		return t('err.account_generic');
-	}
-
-	async function submit(event: SubmitEvent): Promise<void> {
-		event.preventDefault();
-		if (busy) return;
-		busy = true;
-		problem = '';
-		try {
-			if (tab === 'up') await signUp({ username, password, email, birthDate, captcha });
-			else await signIn({ username, password });
-			password = '';
-			await refreshAccount();
-		} catch (e) {
-			problem = explain(e);
-		} finally {
-			busy = false;
-		}
 	}
 
 	let resending = $state(false);
@@ -163,62 +123,10 @@
 		>
 	{:else}
 		<p class="lead">{t('account.lead')}</p>
-		<Segmented
-			label={t('account.mode')}
-			value={tab}
-			options={[
-				{ value: 'up', label: t('account.tab.up') },
-				{ value: 'in', label: t('account.tab.in') }
-			]}
-			onchange={(value) => {
-				tab = value;
-				problem = '';
-			}}
-		/>
-		<form class="card form" onsubmit={submit}>
-			<TextField
-				label={t('account.username')}
-				bind:value={username}
-				hint={tab === 'up' ? t('account.username.hint') : undefined}
-				maxlength={20}
-				autocomplete="username"
-				required
-			/>
-			<TextField
-				label={t('account.password')}
-				bind:value={password}
-				type="password"
-				hint={tab === 'up' ? t('account.password.hint') : undefined}
-				minlength={tab === 'up' ? 8 : undefined}
-				autocomplete={tab === 'up' ? 'new-password' : 'current-password'}
-				required
-			/>
-			{#if tab === 'up'}
-				<TextField
-					label={t('account.email')}
-					bind:value={email}
-					type="email"
-					hint={t('account.email.hint')}
-					autocomplete="email"
-					required
-				/>
-				<TextField
-					label={t('account.birth')}
-					bind:value={birthDate}
-					type="date"
-					min={oldest}
-					max={today}
-					hint={t('account.birth.hint')}
-					autocomplete="bday"
-					required
-				/>
-				<Captcha bind:token={captcha} />
-			{/if}
-			{#if problem}<p class="problem" role="alert">{problem}</p>{/if}
-			<Button type="submit" loading={busy} disabled={busy}>
-				{tab === 'up' ? t('account.signUp') : t('account.signIn')}
-			</Button>
-		</form>
+		<div class="choices">
+			<Button href={href('/signup')} icon="user">{t('account.tab.up')}</Button>
+			<Button href={href('/login')} variant="secondary">{t('account.tab.in')}</Button>
+		</div>
 	{/if}
 </article>
 
@@ -284,9 +192,6 @@
 		gap: 0.7rem;
 		padding: 1rem;
 	}
-	.form {
-		gap: 0.9rem;
-	}
 	.who,
 	.mail {
 		margin: 0;
@@ -306,6 +211,11 @@
 	.confirm-mail p {
 		margin: 0;
 		font-size: 0.92rem;
+	}
+	.choices {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.7rem;
 	}
 	.actions {
 		display: flex;

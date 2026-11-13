@@ -231,18 +231,12 @@ export const en: Record<MessageKey, string> = {
 	'account.back': 'Back',
 	'account.lead':
 		'An account keeps your history and statistics on all your devices. You can always play without one.',
-	'account.mode': 'Account',
 	'account.tab.up': 'Create an account',
 	'account.tab.in': 'Sign in',
 	'account.username': 'Username',
-	'account.username.hint': '3 to 20 characters: letters, digits, dot, dash, underscore.',
 	'account.password': 'Password',
-	'account.password.hint': 'At least 8 characters.',
 	'account.email': 'Email',
-	'account.email.hint':
-		'A confirmation link will be sent there. It will also be used to recover your account.',
 	'account.birth': 'Date of birth',
-	'account.birth.hint': 'To know the age of our players. It is shown to nobody.',
 	'account.signUp': 'Create my account',
 	'account.signIn': 'Sign in',
 	'account.signOut': 'Sign out',
@@ -282,6 +276,12 @@ export const en: Record<MessageKey, string> = {
 	'verify.error':
 		'The server is not answering right now. Try again in a moment: your link may be fine.',
 	'verify.toAccount': 'Go to my account',
+	'signup.note':
+		'Your email is used to confirm your account. Your date of birth is shown to nobody.',
+	'signup.haveAccount': 'Already have an account?',
+	'login.noAccount': 'No account yet?',
+	'account.username.placeholder': '3 to 20 characters',
+	'account.password.placeholder': 'At least 8 characters',
 	'credits.dictionary.title': 'Dictionary',
 	'credits.dictionary.body':
 		'Words and their meanings (English, and French when JMdict provides it) come from the JMdict file, © Electronic Dictionary Research and Development Group (EDRDG). The game dictionary is a filtered, reformatted version of that file; the filtering rules are documented in the repository.',

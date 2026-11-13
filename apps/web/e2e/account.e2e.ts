@@ -18,27 +18,42 @@ async function fakeAccounts(page: Page, options: { taken?: boolean } = {}): Prom
 	});
 }
 
-test('create an account, see it, sign out', async ({ page }) => {
+test('create an account from the header, see it, sign out', async ({ page }) => {
 	await fakeAccounts(page);
-	await page.goto('/account');
+	await page.setViewportSize({ width: 1280, height: 720 });
+	await page.goto('/');
+	await expect(page.getByRole('link', { name: 'Se connecter' })).toBeVisible();
+	await page.getByRole('link', { name: 'Créer un compte' }).click();
+	await expect(page).toHaveURL(/\/signup$/);
 	await page.getByLabel('Pseudo', { exact: true }).fill('Aya');
 	await page.getByLabel('Mot de passe').fill('correct horse battery');
 	await page.getByLabel('Email', { exact: true }).fill('aya@example.com');
 	await page.getByLabel('Date de naissance').fill('1995-06-15');
 	await page.getByRole('button', { name: 'Créer mon compte' }).click();
 
+	await expect(page).toHaveURL(/\/account$/);
 	await expect(page.getByText('Connecté en tant que')).toBeVisible();
-	await expect(page.getByText('Aya', { exact: true })).toBeVisible();
 	await expect(page.getByText('aya@example.com')).toBeVisible();
-	await expect(page.getByLabel('Mot de passe')).toHaveCount(0);
 
 	await page.getByRole('button', { name: 'Me déconnecter' }).click();
-	await expect(page.getByRole('button', { name: 'Créer mon compte' })).toBeVisible();
+	await expect(page.getByRole('link', { name: 'Créer un compte' }).first()).toBeVisible();
+});
+
+test('the sign-up form needs no scrolling on a desktop screen', async ({ page }) => {
+	await fakeAccounts(page);
+	await page.setViewportSize({ width: 1280, height: 720 });
+	await page.goto('/signup');
+	const button = page.getByRole('button', { name: 'Créer mon compte' });
+	await expect(button).toBeInViewport({ ratio: 1 });
+	const extra = await page.evaluate(
+		() => document.documentElement.scrollHeight - document.documentElement.clientHeight
+	);
+	expect(extra).toBeLessThanOrEqual(0);
 });
 
 test('a taken username is explained in words, in the page language', async ({ page }) => {
 	await fakeAccounts(page, { taken: true });
-	await page.goto('/en/account');
+	await page.goto('/en/signup');
 	await page.getByLabel('Username', { exact: true }).fill('Aya');
 	await page.getByLabel('Password').fill('correct horse battery');
 	await page.getByLabel('Email', { exact: true }).fill('aya@example.com');
@@ -47,23 +62,27 @@ test('a taken username is explained in words, in the page language', async ({ pa
 	await expect(page.getByRole('alert')).toHaveText('That username is already taken.');
 });
 
-test('the Japanese page shows no French', async ({ page }) => {
+test('the Japanese pages show no French', async ({ page }) => {
 	await fakeAccounts(page);
-	await page.goto('/ja/account');
-	await expect(page.getByRole('heading', { name: 'アカウント' })).toBeVisible();
-	const text = await page.locator('body').innerText();
-	expect(text).not.toMatch(/compte|connecter|Pseudo|Mot de passe|Retour/i);
+	for (const path of ['/ja/signup', '/ja/login', '/ja/account']) {
+		await page.goto(path);
+		await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+		const text = await page.locator('body').innerText();
+		expect(text).not.toMatch(/compte|connecter|Pseudo|Mot de passe|Retour|Déjà/i);
+	}
 });
 
-test('the account page fits a phone without scrolling sideways', async ({ page }) => {
+test('the sign-in and sign-up pages fit a phone without scrolling sideways', async ({ page }) => {
 	await fakeAccounts(page);
 	await page.setViewportSize({ width: 360, height: 740 });
-	await page.goto('/account');
-	const overflow = await page.evaluate(
-		() => document.documentElement.scrollWidth - document.documentElement.clientWidth
-	);
-	expect(overflow).toBeLessThanOrEqual(0);
-	// the form is longer than the screen: it scrolls, and the button is reachable at the bottom
+	for (const path of ['/login', '/signup', '/account']) {
+		await page.goto(path);
+		const overflow = await page.evaluate(
+			() => document.documentElement.scrollWidth - document.documentElement.clientWidth
+		);
+		expect(overflow).toBeLessThanOrEqual(0);
+	}
+	await page.goto('/signup');
 	const button = page.getByRole('button', { name: 'Créer mon compte' });
 	await button.scrollIntoViewIfNeeded();
 	await expect(button).toBeInViewport();

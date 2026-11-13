@@ -19,6 +19,12 @@
 	let host: HTMLElement | undefined = $state();
 	let widget: string | undefined;
 
+	/** A failed attempt used up the answer: show the check again. */
+	export function reset(): void {
+		token = '';
+		if (widget) (window as unknown as { turnstile?: Turnstile }).turnstile?.reset(widget);
+	}
+
 	function load(): Promise<Turnstile> {
 		const w = window as unknown as { turnstile?: Turnstile };
 		if (w.turnstile) return Promise.resolve(w.turnstile);

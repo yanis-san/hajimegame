@@ -29,7 +29,17 @@ for (const width of WIDTHS) {
 			hasTouch: true
 		});
 		const { page } = player;
-		for (const path of ['/', '/ja', '/en', '/history', '/stats/bomb', '/account', '/credits']) {
+		for (const path of [
+			'/',
+			'/ja',
+			'/en',
+			'/history',
+			'/stats/bomb',
+			'/signup',
+			'/login',
+			'/account',
+			'/credits'
+		]) {
 			await page.goto(path);
 			await page.waitForLoadState('networkidle');
 			expect(

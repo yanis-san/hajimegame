@@ -231,18 +231,12 @@ export const fr = {
 	'account.back': 'Retour',
 	'account.lead':
 		'Un compte garde ton historique et tes statistiques sur tous tes appareils. Tu peux toujours jouer sans compte.',
-	'account.mode': 'Compte',
 	'account.tab.up': 'Créer un compte',
 	'account.tab.in': 'Se connecter',
 	'account.username': 'Pseudo',
-	'account.username.hint': '3 à 20 caractères : lettres, chiffres, point, tiret, tiret bas.',
 	'account.password': 'Mot de passe',
-	'account.password.hint': '8 caractères minimum.',
 	'account.email': 'Email',
-	'account.email.hint':
-		'Un lien de confirmation t’y sera envoyé. Il servira aussi à récupérer ton compte.',
 	'account.birth': 'Date de naissance',
-	'account.birth.hint': 'Pour connaître l’âge des joueurs. Elle n’est montrée à personne.',
 	'account.signUp': 'Créer mon compte',
 	'account.signIn': 'Me connecter',
 	'account.signOut': 'Me déconnecter',
@@ -283,6 +277,12 @@ export const fr = {
 	'verify.error':
 		'Le serveur ne répond pas pour le moment. Réessaie dans un instant : ton lien est peut-être bon.',
 	'verify.toAccount': 'Aller à mon compte',
+	'signup.note':
+		'Ton email sert à confirmer ton compte. Ta date de naissance n’est montrée à personne.',
+	'signup.haveAccount': 'Déjà un compte ?',
+	'login.noAccount': 'Pas encore de compte ?',
+	'account.username.placeholder': '3 à 20 caractères',
+	'account.password.placeholder': '8 caractères minimum',
 	'credits.dictionary.title': 'Dictionnaire',
 	'credits.dictionary.body':
 		'Les mots et leurs sens (anglais, et français quand JMdict le fournit) viennent du fichier JMdict, © Electronic Dictionary Research and Development Group (EDRDG). Le dictionnaire de jeu est une version filtrée et reformatée de ce fichier ; ses règles de filtrage sont documentées dans le dépôt.',

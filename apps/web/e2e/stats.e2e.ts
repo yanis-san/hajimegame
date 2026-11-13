@@ -162,8 +162,8 @@ test('a guest is invited to create an account instead of seeing statistics', asy
 	await expect(
 		page.getByRole('heading', { name: 'Les statistiques sont réservées aux comptes' })
 	).toBeVisible();
-	await page.getByRole('link', { name: 'Créer un compte' }).click();
-	await expect(page).toHaveURL(/\/account$/);
+	await page.getByRole('article').getByRole('link', { name: 'Créer un compte' }).click();
+	await expect(page).toHaveURL(/\/signup$/);
 	expect(requests).toEqual([]); // a guest's page never asks the server for statistics
 
 	await page.goto('/ja/stats/bomb');

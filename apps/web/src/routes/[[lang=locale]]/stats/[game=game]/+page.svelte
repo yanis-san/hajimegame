@@ -38,7 +38,7 @@
 		<div class="card guest">
 			<h2>{t('stats.guest.title')}</h2>
 			<p>{t('stats.guest.body')}</p>
-			<Button href={href('/account')} icon="user">{t('stats.guest.cta')}</Button>
+			<Button href={href('/signup')} icon="user">{t('stats.guest.cta')}</Button>
 		</div>
 	{:else}
 		<!-- keyed by game, so switching game starts from a clean view -->
