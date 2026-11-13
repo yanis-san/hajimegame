@@ -184,7 +184,7 @@ async def test_full_game_flow(server: RunningServer, dictionary: Dictionary) -> 
     word = valid_word(dictionary, turn["fragment"], used)
     await active.send(t="submit", text=word)
     accepted = await a.wait("accepted")
-    assert accepted["word"] == word
+    assert accepted["word"] == dictionary.display_form(word)
     assert accepted["player_id"] == active.player_id
     assert accepted["score_gain"] >= 1
     next_turn = await a.wait("turn", lambda m: m["turn"] > turn["turn"])
@@ -195,7 +195,9 @@ async def test_full_game_flow(server: RunningServer, dictionary: Dictionary) -> 
     over = await a.wait("game_over", timeout=10)
     assert over["winner_id"] in clients
     assert [r["place"] for r in over["results"]] == [1, 2]
-    assert [w["word"] for w in over["words"]] == [word]  # the whole game, for the review
+    assert [w["word"] for w in over["words"]] == [
+        dictionary.display_form(word)
+    ]  # the whole game, for the review
     assert over["words"][0]["player_id"] == active.player_id
     assert over["words"][0]["meaning_en"]
     assert (await b.wait("game_over"))["winner_id"] == over["winner_id"]
@@ -216,8 +218,9 @@ async def play_turn(
     turn = await watcher.wait("turn", lambda m: m["turn"] > after_turn)
     word = valid_word(dictionary, turn["fragment"], used)
     await clients[turn["player_id"]].send(t="submit", text=word)
-    await watcher.wait("accepted", lambda m: m["word"] == word)
-    return word
+    shown = dictionary.display_form(word)  # a katakana word is shown in katakana
+    await watcher.wait("accepted", lambda m: m["word"] == shown)
+    return shown
 
 
 async def test_game_over_carries_every_word_not_just_the_last_ones(
@@ -442,7 +445,7 @@ async def test_reconnect_keeps_place_and_state(server: RunningServer, dictionary
     snap = await back.wait("snapshot")
     assert snap["phase"] == "playing"
     assert snap["you"] == pid
-    assert any(w["word"] == word for w in snap["words"])
+    assert any(w["word"] == dictionary.display_form(word) for w in snap["words"])
     me = next(p for p in snap["players"] if p["id"] == pid)
     assert me["connected"] is True
     scorer = next(p for p in snap["players"] if p["id"] == active.player_id)

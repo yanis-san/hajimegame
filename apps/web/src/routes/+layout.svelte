@@ -6,6 +6,7 @@
 	import LanguagePicker from '#lib/design/LanguagePicker.svelte';
 	import Sky from '#lib/design/Sky.svelte';
 	import { account, loadAccount, rememberedName } from '#lib/game/account.svelte.ts';
+	import { ACCOUNTS } from '#lib/game/config.ts';
 	import { loadPref, savePref } from '#lib/game/session.ts';
 	import { sfx } from '#lib/game/sfx.ts';
 	import { goto } from '$app/navigation';
@@ -61,8 +62,10 @@
 	}
 
 	onMount(() => {
-		remembered = rememberedName();
-		void loadAccount();
+		if (ACCOUNTS) {
+			remembered = rememberedName();
+			void loadAccount();
+		}
 		applyTheme(loadPref<'dark' | 'light'>('theme', 'dark'));
 		muted = sfx.muted;
 		// Audio can only start from a user gesture: try on each tap, click and key press until it is awake. (A touch
@@ -104,37 +107,39 @@
 	</a>
 	<div class="tools">
 		<LanguagePicker onchange={chooseLocale} />
-		{#if shownName}
-			<span class="who wide">
-				<Button size="sm" variant="secondary" icon="user" href={href('/account')}>
-					<span class="name">{shownName}</span>
-				</Button>
-			</span>
-			<span class="who narrow">
-				<Button
-					size="sm"
-					variant="ghost"
-					iconOnly
-					icon="user"
-					label={shownName}
-					href={href('/account')}
-				/>
-			</span>
-		{:else}
-			<span class="who wide">
-				<Button size="sm" variant="ghost" href={href('/login')}>{t('account.tab.in')}</Button>
-				<Button size="sm" variant="gold" href={href('/signup')}>{t('account.tab.up')}</Button>
-			</span>
-			<span class="who narrow">
-				<Button
-					size="sm"
-					variant="ghost"
-					iconOnly
-					icon="user"
-					label={t('account.tab.in')}
-					href={href('/login')}
-				/>
-			</span>
+		{#if ACCOUNTS}
+			{#if shownName}
+				<span class="who wide">
+					<Button size="sm" variant="secondary" icon="user" href={href('/account')}>
+						<span class="name">{shownName}</span>
+					</Button>
+				</span>
+				<span class="who narrow">
+					<Button
+						size="sm"
+						variant="ghost"
+						iconOnly
+						icon="user"
+						label={shownName}
+						href={href('/account')}
+					/>
+				</span>
+			{:else}
+				<span class="who wide">
+					<Button size="sm" variant="ghost" href={href('/login')}>{t('account.tab.in')}</Button>
+					<Button size="sm" variant="gold" href={href('/signup')}>{t('account.tab.up')}</Button>
+				</span>
+				<span class="who narrow">
+					<Button
+						size="sm"
+						variant="ghost"
+						iconOnly
+						icon="user"
+						label={t('account.tab.in')}
+						href={href('/login')}
+					/>
+				</span>
+			{/if}
 		{/if}
 		<Button
 			size="sm"

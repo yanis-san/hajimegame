@@ -1,18 +1,21 @@
 <script lang="ts">
+	import { ACCOUNTS } from '#lib/game/config.ts';
 	import { href, t } from '#lib/i18n/index.ts';
 
 	/** Switches between the two pages about past games: the games themselves, and the statistics. */
 	let { current }: { current: 'games' | 'stats' } = $props();
 </script>
 
-<nav class="tabs" aria-label={t('stats.tabs')}>
-	<a href={href('/history')} aria-current={current === 'games' ? 'page' : undefined}>
-		{t('stats.tab.games')}
-	</a>
-	<a href={href('/stats')} aria-current={current === 'stats' ? 'page' : undefined}>
-		{t('stats.tab.stats')}
-	</a>
-</nav>
+{#if ACCOUNTS}
+	<nav class="tabs" aria-label={t('stats.tabs')}>
+		<a href={href('/history')} aria-current={current === 'games' ? 'page' : undefined}>
+			{t('stats.tab.games')}
+		</a>
+		<a href={href('/stats')} aria-current={current === 'stats' ? 'page' : undefined}>
+			{t('stats.tab.stats')}
+		</a>
+	</nav>
+{/if}
 
 <style>
 	.tabs {

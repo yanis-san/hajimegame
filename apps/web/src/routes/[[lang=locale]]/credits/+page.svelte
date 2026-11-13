@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Button from '#lib/design/Button.svelte';
+	import { ACCOUNTS } from '#lib/game/config.ts';
 	import { href, t } from '#lib/i18n/index.ts';
 </script>
 
@@ -27,10 +28,12 @@
 		<p>{t('credits.data.body')}</p>
 	</section>
 
-	<section>
-		<h2>{t('credits.account.title')}</h2>
-		<p>{t('credits.account.body')}</p>
-	</section>
+	{#if ACCOUNTS}
+		<section>
+			<h2>{t('credits.account.title')}</h2>
+			<p>{t('credits.account.body')}</p>
+		</section>
+	{/if}
 
 	<section>
 		<h2>{t('credits.dictionary.title')}</h2>

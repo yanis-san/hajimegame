@@ -1,13 +1,12 @@
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
 	import { t } from '#lib/i18n/index.ts';
+	import { toHiragana } from '#lib/game/kana.ts';
 	import { haptic } from '#lib/game/haptics.ts';
 	import { sfx } from '#lib/game/sfx.ts';
 	import type { GameSession } from '#lib/game/session.svelte.ts';
 	import Bomb from './Bomb.svelte';
 	import type { Mood } from './Mascot.svelte';
-	import Example from './Example.svelte';
-	import Meanings from './Meanings.svelte';
 	import Particles from './Particles.svelte';
 	import PlayerCard from './PlayerCard.svelte';
 	import WordInput from './WordInput.svelte';
@@ -45,7 +44,7 @@
 	const compact = $derived(visible < 620);
 	// Many players on a phone: smaller tiles (avatar and name), so that eight still fit in a row.
 	const crowded = $derived(!desktop && store.players.length > 5);
-	const chrome = $derived(desktop ? (compact ? 314 : 365) : compact ? 278 : 330);
+	const chrome = $derived(desktop ? (compact ? 310 : 355) : compact ? 250 : 285);
 	const bombSize = $derived(
 		desktop
 			? Math.max(110, Math.min(260, Math.floor((visible - chrome) / 1.74)))
@@ -251,24 +250,15 @@
 			</p>
 		</div>
 
-		<!-- last accepted word with its meaning (French first, English otherwise) -->
+		<!-- the word just played, shown cleanly: meanings and examples are in the list -->
 		<div class="last" bind:this={lastBox}>
 			{#if lastWord}
 				{#key lastWord.turn + lastWord.word}
-					<div class="lastcard" class:compact>
-						<div class="lead">
-							<span class="w">{lastWord.word}</span>
-							{#if lastWord.reading !== lastWord.word}<span class="r">{lastWord.reading}</span>{/if}
-						</div>
-						<Meanings fr={lastWord.meaning_fr} en={lastWord.meaning_en} />
-						{#if !compact}
-							<Example
-								compact
-								ja={lastWord.example_ja}
-								fr={lastWord.example_fr}
-								en={lastWord.example_en}
-							/>
-						{/if}
+					<div class="lastcard" lang="ja">
+						<span class="w">{lastWord.word}</span>
+						{#if toHiragana(lastWord.reading) !== toHiragana(lastWord.word)}<span class="r"
+								>{lastWord.reading}</span
+							>{/if}
 					</div>
 				{/key}
 			{:else}
@@ -392,19 +382,22 @@
 		font-size: 1.4rem;
 	}
 	.last {
-		flex: 0 1 auto;
-		min-height: 0;
-		overflow: hidden;
+		flex: none;
 		display: grid;
+		justify-items: center;
 		align-items: center;
+		min-height: 2.6rem;
 	}
 	.foot {
 		flex: none;
 	}
 	.lastcard {
-		display: grid;
-		gap: 0.1rem;
-		padding: 0.45rem 0.9rem 0.55rem;
+		display: flex;
+		align-items: baseline;
+		justify-content: center;
+		gap: 0.2rem 0.7rem;
+		flex-wrap: wrap;
+		padding: 0.3rem 1rem 0.4rem;
 		background: var(--matcha);
 		color: var(--sumi);
 		border: var(--line) solid var(--sumi);
@@ -412,44 +405,11 @@
 		box-shadow: var(--shadow-sm);
 		animation: card-pop var(--t-mid) var(--ease-pop) both;
 	}
-	/* short screens: the word and the first meaning on one line each */
-	.lastcard.compact {
-		display: flex;
-		align-items: baseline;
-		gap: 0.6rem;
-		padding: 0.25rem 0.8rem 0.3rem;
-	}
-	.lastcard.compact .lead {
-		flex: none;
-	}
-	.lastcard.compact .w {
-		font-size: 1.2rem;
-	}
-	.lastcard.compact .r {
-		display: none;
-	}
-	.lastcard.compact :global(.meanings) {
-		flex: 1;
-		min-width: 0;
-	}
-	.lastcard.compact :global(.meanings p) {
-		overflow: hidden;
-		white-space: nowrap;
-		text-overflow: ellipsis;
-	}
-	.lastcard.compact :global(.meanings p:nth-child(n + 2)) {
-		display: none;
-	}
-	.lead {
-		display: flex;
-		align-items: baseline;
-		gap: 0.6rem;
-	}
 	.lastcard .w {
 		font-family: var(--font-kana);
 		font-weight: 700;
 		font-size: 1.7rem;
-		line-height: 1.2;
+		line-height: 1.25;
 	}
 	.lastcard .r {
 		font-family: var(--font-kana);
@@ -523,10 +483,13 @@
 		.hint {
 			display: none;
 		}
-		.last {
-			flex: 0 1 auto; /* gives way when the window is short: the list on the right has every word in full */
-			min-height: 5.4rem;
-			max-height: 10rem;
+		/* the bomb, the word and the field sit together in the middle, not the field at the foot of the screen */
+		.main {
+			justify-content: center;
+			gap: 0.9rem;
+		}
+		.stage {
+			flex: none;
 		}
 	}
 </style>

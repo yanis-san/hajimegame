@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { PlayerView, WordView } from '@hajime/protocol';
+	import { toHiragana } from '#lib/game/kana.ts';
 	import { t } from '#lib/i18n/index.ts';
 	import Example from './Example.svelte';
 	import Meanings from './Meanings.svelte';
@@ -20,7 +21,9 @@
 				<li class:latest={i === 0}>
 					<div class="head">
 						<span class="w">{word.word}</span>
-						{#if word.reading !== word.word}<span class="r">{word.reading}</span>{/if}
+						{#if toHiragana(word.reading) !== toHiragana(word.word)}<span class="r"
+								>{word.reading}</span
+							>{/if}
 					</div>
 					<Meanings fr={word.meaning_fr} en={word.meaning_en} />
 					<Example ja={word.example_ja} fr={word.example_fr} en={word.example_en} />

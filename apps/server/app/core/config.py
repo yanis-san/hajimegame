@@ -41,6 +41,10 @@ class AppSettings(BaseSettings):
     turnstile_secret: str | None = Field(default=None, repr=False)
     session_days: int = 30
 
+    # Accounts (sign-up, sign-in, e-mail confirmation, statistics): on by default, off in production for now.
+    # Off, none of their routes exist; the data stays in the database and turning it on brings it all back.
+    accounts_enabled: bool = True
+
     # Admin interface (SQLAdmin) for the operator, off unless a password hash is set. Make the three
     # values with
     # `uv run python -m app.admin.passwd`. It needs the database; the secret signs the admin's session cookie.

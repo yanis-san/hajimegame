@@ -106,6 +106,8 @@ services:
       # the operator's admin interface: off unless the hash is set (see docs/DEPLOY.md, "The admin interface")
       HAJIME_ADMIN_USERNAME: ${HAJIME_ADMIN_USERNAME:-admin}
       HAJIME_ADMIN_PATH: ${HAJIME_ADMIN_PATH:-/admin}
+      # accounts are off for now; ACCOUNTS_ENABLED=true in .env (and a web image built with VITE_ACCOUNTS=on) brings them back
+      HAJIME_ACCOUNTS_ENABLED: ${ACCOUNTS_ENABLED:-false}
       # e-mail (confirming an address): off unless the SMTP host is set; the links in the messages use the site's address
       HAJIME_PUBLIC_URL: https://${DOMAIN}
       HAJIME_SMTP_HOST: ${HAJIME_SMTP_HOST:-}

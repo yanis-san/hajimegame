@@ -20,6 +20,9 @@ ENV VITE_API_URL=$VITE_API_URL
 # Public key of the sign-up captcha (Cloudflare Turnstile); empty builds a site without the captcha widget.
 ARG VITE_TURNSTILE_SITE_KEY=
 ENV VITE_TURNSTILE_SITE_KEY=$VITE_TURNSTILE_SITE_KEY
+# Accounts are off in production for now (VITE_ACCOUNTS=on brings sign-up, sign-in and statistics back).
+ARG VITE_ACCOUNTS=off
+ENV VITE_ACCOUNTS=$VITE_ACCOUNTS
 RUN pnpm --filter web build
 
 FROM node:24-slim@sha256:dc26ae92c9fb15cf6b1d63e20f0944b2efe0f115b20e00be48fb23fceb061c54 AS runtime

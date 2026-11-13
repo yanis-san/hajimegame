@@ -13,3 +13,9 @@ export function wsUrl(code: string): string {
 	const base = API_URL || (typeof location === 'undefined' ? '' : location.origin);
 	return `${base.replace(/^http/, 'ws')}/ws/${encodeURIComponent(code)}`;
 }
+
+/**
+ * Accounts (sign-up, sign-in, statistics) are built in but can be switched off: the production image is built with
+ * VITE_ACCOUNTS=off, and everything about them disappears (links, pages, calls). Anything else keeps them on.
+ */
+export const ACCOUNTS: boolean = (import.meta.env.VITE_ACCOUNTS as string | undefined) !== 'off';

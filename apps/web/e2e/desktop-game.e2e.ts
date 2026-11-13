@@ -33,6 +33,8 @@ test('the game fits the window without scrolling, only the words on the right sc
 		.pressSequentially(answerFor(fragment, new Set()), { delay: 10 });
 	await page.keyboard.press('Enter');
 	await page.locator('.lastcard').waitFor();
+	if (process.env.E2E_SHOT) await page.waitForTimeout(900);
+	if (process.env.E2E_SHOT) await page.screenshot({ path: process.env.E2E_SHOT });
 
 	// the names of the players are readable, not just present
 	for (const name of await page.locator('.slot .name').all()) {
@@ -44,9 +46,13 @@ test('the game fits the window without scrolling, only the words on the right sc
 		await page.waitForTimeout(300);
 		const layout = await page.evaluate(() => {
 			const field = document.querySelector('input.field')!.getBoundingClientRect();
+			const card = document.querySelector('.lastcard')!.getBoundingClientRect();
 			return {
 				overflow: document.documentElement.scrollHeight - innerHeight,
 				fieldBottom: field.bottom,
+				cardTop: card.top,
+				cardBottom: card.bottom,
+				fieldTop: field.top,
 				height: innerHeight
 			};
 		});
@@ -55,6 +61,17 @@ test('the game fits the window without scrolling, only the words on the right sc
 		expect(layout.fieldBottom, `the field is cut off at ${where}`).toBeLessThanOrEqual(
 			layout.height
 		);
+		// the word just played is whole (only the word, no meaning), and sits above the field
+		expect(layout.cardTop, `the word is cut off at ${where}`).toBeGreaterThanOrEqual(0);
+		expect(layout.cardBottom, `the word touches the field at ${where}`).toBeLessThanOrEqual(
+			layout.fieldTop
+		);
+		if (height >= 1000) {
+			// room to spare: the field comes up with the bomb, it is not stuck to the bottom of the screen
+			expect(layout.fieldBottom, `the field is at the very bottom at ${where}`).toBeLessThan(
+				layout.height * 0.85
+			);
+		}
 	}
 
 	// many words: the list on the right scrolls by itself and the page still does not

@@ -879,10 +879,11 @@ class Room:
                 )
                 self._schedule_bot(event)
             elif isinstance(event, ev.WordAccepted):
+                shown = self._deps.dictionary.display_form(event.word)  # コーヒー, not こーひー
                 self._words.append(
                     pr.WordView(
                         event.player_id,
-                        event.word,
+                        shown,
                         event.reading,
                         event.turn,
                         event.meaning_fr,
@@ -897,7 +898,7 @@ class Room:
                     pr.Accepted,
                     turn=event.turn,
                     player_id=event.player_id,
-                    word=event.word,
+                    word=shown,
                     reading=event.reading,
                     score_gain=event.score_gain,
                     score=event.score,

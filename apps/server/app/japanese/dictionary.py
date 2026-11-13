@@ -8,6 +8,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Final, Literal
 
+import jaconv
+
 from app.japanese.kana import (
     MAX_WORD_LENGTH,
     contains_fragment,
@@ -31,6 +33,7 @@ class Entry:
     meaning_fr: str = ""  # JMdict has French for a minority of entries
     meaning_en: str = ""
     example: tuple[str, str, str] = ("", "", "")  # Japanese sentence, English, French (Tatoeba)
+    katakana: tuple[str, ...] = ()  # readings that the dictionary writes in katakana, as written (コーヒー)
 
 
 @dataclass(frozen=True, slots=True)
@@ -115,6 +118,17 @@ class Dictionary:
             normalized = romaji_to_hiragana(normalized)
         return normalized
 
+    def display_form(self, word: str) -> str:
+        """How a played word is shown: typed kana is folded to hiragana to compare, but a word that the
+        dictionary writes in katakana is shown in katakana in the lists."""
+        if not is_hiragana(word):
+            return word
+        for entry_id in self._index.get(word, ()):
+            for written in self._entries[entry_id].katakana:
+                if jaconv.kata2hira(written) == word:
+                    return written
+        return word
+
     def lookup(self, text: str) -> WordMatch | None:
         """The first entry written as ``text`` (kanji or kana), whatever the fragment: for showing a word that
         was played earlier with its reading, meanings and example."""
@@ -184,6 +198,7 @@ class Dictionary:
                 e.get("f", ""),
                 e.get("g", ""),
                 tuple(e["s"]) if "s" in e else ("", "", ""),
+                tuple(e.get("t", ())),
             )
             for e in raw["entries"]
         )

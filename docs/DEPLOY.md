@@ -85,6 +85,10 @@ of `provision.sh` to turn off SSH password logins (only if you log in with a key
   around the hash). Deploy again (push any commit, or *Actions → Deploy*). Open `/admin` (or the address you chose with `HAJIME_ADMIN_PATH`, e.g. `/admin-<random id>`, which is better
   kept secret), sign in with `admin` and your password. To let only your own address see it, add `ADMIN_ALLOWED_IPS=<your public IP>` to the same `.env`.
   Every change made there is in the server logs as `admin_action`. To turn it off, delete the hash line and deploy.
+- **Accounts are off for now.** The production web image is built with `VITE_ACCOUNTS=off` (the default of the Dockerfile) and
+  the server runs with `HAJIME_ACCOUNTS_ENABLED=false` (`ACCOUNTS_ENABLED` in `/opt/hajime/.env`, default false): no sign-up,
+  sign-in, account or statistics pages, no `/api/auth` or `/api/me` routes. Nothing is deleted. To bring them back, build the
+  web image with `--build-arg VITE_ACCOUNTS=on` (add it to the build step of the workflow) and set `ACCOUNTS_ENABLED=true`.
 - **E-mail (confirming an address).** After sign-up the site sends a message with a one-time link (valid 24 hours, only its
   hash is stored). It is off until you describe a mail server in `/opt/hajime/.env`: `HAJIME_SMTP_HOST`, `_USER`,
   `_PASSWORD` (single quotes), `_FROM`, `_PORT` (465 with `_SECURITY=ssl`, or 587 with `starttls`). Use the mailbox

@@ -63,6 +63,7 @@ RANK_COMMON_2 = 40
 RANK_OTHER = 99
 
 KANA_RE = re.compile(r"^[ぁ-ゖァ-ヺー]+$")
+KATAKANA_RE = re.compile(r"^[ァ-ヺー]+$")
 ENTITY_RE = re.compile(r"&([A-Za-z0-9\-]+);")
 STD_ENTITIES = {"amp", "lt", "gt", "quot", "apos"}
 
@@ -200,6 +201,8 @@ def convert(
                 forms.append(keb)
                 priorities += [p.text or "" for p in k.findall("ke_pri")]
         readings: list[str] = []
+        hira_written: set[str] = set()
+        katakana: list[str] = []  # readings that JMdict writes in katakana (コーヒー), to show them that way
         for r in entry.findall("r_ele"):
             info = {clean_tag(i.text) for i in r.findall("re_inf")}
             if info & EXCLUDED_READING_INFO:
@@ -208,10 +211,14 @@ def convert(
             if not KANA_RE.match(reb):
                 continue
             hira = jaconv.kata2hira(reb)
+            if reb == hira:
+                hira_written.add(hira)
             if len(hira) < 2:
                 continue
             if hira not in readings:
                 readings.append(hira)
+            if reb != hira and KATAKANA_RE.match(reb) and reb not in katakana:
+                katakana.append(reb)
             priorities += [p.text or "" for p in r.findall("re_pri")]
         if not readings:
             stats["drop_reading"] += 1
@@ -221,6 +228,8 @@ def convert(
             if not readings:
                 stats["drop_long"] += 1
                 continue
+        # a word JMdict also writes in hiragana (ねこ / ネコ) stays as typed; only katakana-only readings are kept
+        katakana = [k for k in katakana if jaconv.kata2hira(k) in readings and jaconv.kata2hira(k) not in hira_written]
         forms = [f for f in dict.fromkeys(forms) if len(f) <= 20]
         meaning = build_meaning(senses)
         example = (examples or {}).get((entry.findtext("ent_seq") or "").strip())
@@ -232,6 +241,7 @@ def convert(
                 "r": readings,
                 "k": rank_from_priorities(priorities),
                 "p": sorted(all_pos - EXCLUDED_POS - {""})[:3],
+                **({"t": katakana} if katakana else {}),
                 "f": meaning[0],
                 "g": meaning[1],
                 **({"s": list(example)} if example else {}),

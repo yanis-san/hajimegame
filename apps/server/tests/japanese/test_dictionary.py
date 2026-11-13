@@ -149,3 +149,13 @@ def test_a_word_typed_in_kana_keeps_the_reading_that_was_typed(dictionary: Dicti
     assert (
         isinstance(typed_in_kanji, WordMatch) and typed_in_kanji.reading == "まいとし"
     )  # the first that fits
+
+
+def test_a_katakana_word_is_shown_in_katakana(dictionary: Dictionary) -> None:
+    # kana is compared as hiragana, but the lists show the word as the dictionary writes it
+    assert dictionary.display_form("こーひー") == "コーヒー"
+    assert dictionary.display_form("てれび") == "テレビ"
+    # a word that is also written in hiragana, kanji, or is not in the dictionary stays as it is
+    assert dictionary.display_form("ねこ") == "ねこ"
+    assert dictionary.display_form("学校") == "学校"
+    assert dictionary.display_form("ぬぬぬぬぬ") == "ぬぬぬぬぬ"

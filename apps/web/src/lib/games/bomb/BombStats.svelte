@@ -6,6 +6,7 @@
 	import Meanings from '#lib/design/Meanings.svelte';
 	import Segmented from '#lib/design/Segmented.svelte';
 	import { ApiError, getMyStats } from '#lib/game/api.ts';
+	import { toHiragana } from '#lib/game/kana.ts';
 	import { getLocale, href, t, tn } from '#lib/i18n/index.ts';
 
 	/** The bomb game's dashboard: totals, activity, the words played most, and the latest ones. */
@@ -152,7 +153,9 @@
 						<li>
 							<div class="head">
 								<span class="w" lang="ja">{word.word}</span>
-								{#if word.reading !== word.word}<span class="r" lang="ja">{word.reading}</span>{/if}
+								{#if toHiragana(word.reading) !== toHiragana(word.word)}<span class="r" lang="ja"
+										>{word.reading}</span
+									>{/if}
 								<span class="count">{tn('stats.times', word.count)}</span>
 							</div>
 							<Meanings fr={word.meaning_fr} en={word.meaning_en} />
@@ -173,7 +176,9 @@
 						<li>
 							<div class="head">
 								<span class="w" lang="ja">{word.word}</span>
-								{#if word.reading !== word.word}<span class="r" lang="ja">{word.reading}</span>{/if}
+								{#if toHiragana(word.reading) !== toHiragana(word.word)}<span class="r" lang="ja"
+										>{word.reading}</span
+									>{/if}
 								<span class="when"
 									>{day(word.played_at)} · {t(`mode.${word.mode}.title` as const)}</span
 								>

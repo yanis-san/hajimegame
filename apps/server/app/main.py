@@ -144,8 +144,9 @@ def create_app(
         SecurityHeadersMiddleware, hsts=cfg.is_prod, admin_path=cfg.admin_path if cfg.admin_enabled else None
     )
     app.include_router(api_router)
-    app.include_router(auth_router)
-    app.include_router(me_router)
+    if cfg.accounts_enabled:
+        app.include_router(auth_router)
+        app.include_router(me_router)
     app.include_router(ws_router)
     if engine is not None and cfg.admin_enabled:
         mount_admin(app, engine, cfg)
