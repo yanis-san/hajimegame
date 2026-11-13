@@ -26,6 +26,12 @@
 		grid-template-columns: repeat(6, minmax(0, 1fr));
 		gap: 0.4rem;
 	}
+	/* six touch-sized buttons need about 296 px: on the narrowest phones (320 px) there are four to a row */
+	@media (max-width: 359px) {
+		.picker {
+			grid-template-columns: repeat(4, minmax(0, 1fr));
+		}
+	}
 	button {
 		display: grid;
 		place-items: center;

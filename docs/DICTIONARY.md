@@ -8,7 +8,7 @@ The compiled file is committed so the game works right after cloning.
 
 - Dropped entries: every sense tagged `vulg`, `X`, `derog`, `obs`, `obsc`, `rare`, `arch`, `sl`, `joc`, `male`, `fam`, `id` or `proverb`.
 - Dropped entries whose parts of speech are only prefix, suffix, counter, auxiliary, particle, copula or unclassified.
-- Dropped forms: irregular, outdated or rarely used kanji/reading (`oK`, `iK`, `rK`, `sK`, `ateji`, `ik`, `ok`, `gikun`, `sk`).
+- Dropped forms: irregular, outdated or rarely used kanji/reading (`oK`, `iK`, `rK`, `sK`, `ateji`, `ik`, `ok`, `sk`). `gikun` readings are kept: they are the usual kana of words such as 果物 (くだもの).
 - Dropped readings: single kana, anything that is not hiragana/katakana/long mark, longer than 20 characters.
 - JMdict has no proper-noun entries (that is JMnedict), so none are present.
 - Result: about 207 000 entries, 2.4 MB gzipped.

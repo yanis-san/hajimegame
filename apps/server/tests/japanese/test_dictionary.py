@@ -118,3 +118,19 @@ def test_a_word_without_example_has_empty_sentence_fields(dictionary: Dictionary
     result = dictionary.check(bare.words[0], bare.readings[0][:1])
     assert isinstance(result, WordMatch)
     assert (result.example_ja, result.example_en, result.example_fr) == ("", "", "")
+
+
+def test_words_whose_kanji_has_a_special_reading_are_playable_in_kana(dictionary: Dictionary) -> None:
+    """JMdict tags the usual kana of 果物 (くだもの), 今日 (きょう), 大人 (おとな)... as `gikun`. Players type
+    them in kana, and a shiritori word starting with く must be accepted (it was once refused as unknown)."""
+    for kana, first in [
+        ("くだもの", "く"),
+        ("きょう", "き"),
+        ("おとな", "お"),
+        ("あした", "あ"),
+        ("へた", "へ"),
+    ]:
+        found = dictionary.check(kana, first, starts_with=True)
+        assert isinstance(found, WordMatch), f"{kana} was refused: {found}"
+    assert isinstance(dictionary.check("くだもの", "だも"), WordMatch)  # classic mode too
+    assert isinstance(dictionary.check("果物", "く", starts_with=True), WordMatch)  # and typed in kanji

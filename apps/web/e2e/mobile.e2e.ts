@@ -88,9 +88,8 @@ test('with the keyboard open, the fragment stays visible and the keyboard stays 
 	// the keyboard of a phone leaves little more than half of the screen
 	await page.setViewportSize({ width: 360, height: 371 });
 	const field = page.locator('input.field');
-	await page.waitForFunction(() => !document.querySelector('input.field.idle'), null, {
-		timeout: 30_000
-	});
+	// my turn: the field is greyed out (idle) while a CPU plays, and typing in it would be wiped
+	await page.locator('input.field:not(.idle)').waitFor({ timeout: 30_000 });
 	const fragment = (await page.locator('.kana').first().innerText()).trim();
 	await field.tap();
 	await page.keyboard.type(answerFor(fragment, new Set()));

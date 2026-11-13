@@ -52,7 +52,9 @@ DEFAULT_OUT = ROOT / "apps" / "server" / "app" / "japanese" / "data" / "dictiona
 EXCLUDED_MISC = {"vulg", "X", "derog", "obs", "obsc", "rare", "arch", "sl", "joc", "male", "fam", "id", "proverb"}
 EXCLUDED_POS = {"pref", "suf", "unc", "ctr", "aux", "aux-v", "aux-adj", "prt", "cop", "n-suf", "n-pref"}
 EXCLUDED_KANJI_INFO = {"oK", "iK", "rK", "sK", "ateji"}
-EXCLUDED_READING_INFO = {"ik", "ok", "gikun", "sk"}
+# `gikun` is not here on purpose: it marks a kanji with a special reading (果物 くだもの, 今日 きょう, 大人 おとな), and
+# that kana reading is a perfectly good, often the most common, way to say the word.
+EXCLUDED_READING_INFO = {"ik", "ok", "sk"}
 
 # Rank: smaller is more common. nfNN covers bands of 500 words.
 RANK_ICHI1 = 12  # ichi1: the Ichimango "very common" list, includes basic verbs without nf bands
