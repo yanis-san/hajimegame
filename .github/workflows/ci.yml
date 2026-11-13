@@ -205,6 +205,13 @@ jobs:
             sleep 2
           done
           curl -fsS http://127.0.0.1:8002/admin-ci-check/login | tee /dev/stderr | grep -qi 'login'
+          # behind the proxy (which says the visitor used https) the admin must write https links, never http ones
+          page="$(curl -fsS -H 'X-Forwarded-Proto: https' -H 'Host: ci.hajime.dev' http://127.0.0.1:8002/admin-ci-check/login)"
+          echo "$page" | grep -q 'href="https://ci.hajime.dev/admin-ci-check/statics/'
+          if echo "$page" | grep -q 'href="http://'; then
+            echo 'the admin wrote an http:// link behind the https proxy' >&2
+            exit 1
+          fi
           [ "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8002/admin/login)" = 404 ]
       - name: Container logs
         if: always()

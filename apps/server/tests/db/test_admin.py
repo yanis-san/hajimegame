@@ -225,3 +225,22 @@ async def test_the_admin_can_live_at_a_secret_address(database_url: str, diction
         assert (await server.http.get(f"{secret}/game/list")).status_code == 200
         csp = (await server.http.get(f"{secret}/")).headers["content-security-policy"]
         assert "script-src 'self'" in csp  # the admin's own page policy follows the address
+
+
+async def test_behind_the_https_proxy_the_admin_writes_https_links(
+    database_url: str, dictionary: Dictionary
+) -> None:
+    """The proxy terminates TLS and tells the server so. Without that, the admin wrote http:// links (styles,
+    scripts, the login form) on an https site and the browser refused them."""
+    secret = f"/admin-{uuid.uuid4()}"
+    async with running_server(
+        dictionary, database_url=database_url, admin_path=secret, proxy_headers=True, **ADMIN
+    ) as server:
+        behind_proxy = {"x-forwarded-proto": "https", "x-forwarded-for": "203.0.113.9"}
+        page = (await server.http.get(f"{secret}/login", headers=behind_proxy)).text
+        links = re.findall(r'(?:href|src|action)="(https?://[^"]+)"', page)
+        assert links, "the page has absolute links"
+        assert all(link.startswith("https://") for link in links), links[:3]
+        # a visitor that did not come through the proxy keeps its own scheme
+        direct = (await server.http.get(f"{secret}/login")).text
+        assert 'href="http://' in direct

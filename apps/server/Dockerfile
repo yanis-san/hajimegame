@@ -37,7 +37,10 @@ EXPOSE 8000
 HEALTHCHECK --interval=15s --timeout=4s --start-period=40s --retries=3 \
   CMD ["python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8000/readyz', timeout=3)"]
 STOPSIGNAL SIGTERM
+# The proxy (Caddy) is the only thing that reaches this port: it says which scheme and address the visitor used
+# (X-Forwarded-Proto/For), and the server must believe it, or the admin writes http:// links on an https:// site.
 # Exec form: uvicorn is PID 1 and receives SIGTERM, then closes the rooms cleanly (graceful shutdown).
 CMD ["uvicorn", "app.main:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000", \
      "--ws-ping-interval", "20", "--ws-ping-timeout", "20", "--timeout-graceful-shutdown", "20", \
-     "--ws-max-size", "65536", "--no-server-header"]
+     "--ws-max-size", "65536", "--no-server-header", \
+     "--proxy-headers", "--forwarded-allow-ips", "*"]

@@ -56,6 +56,7 @@ async def running_server(
     dictionary: Dictionary,
     *,
     scale: float = 20.0,
+    proxy_headers: bool = False,  # believe X-Forwarded-Proto/For, as the server does behind its proxy
     registry: RoomRegistry | None = None,
     instance_id: str = "A",
     limiter: WindowLimiter | None = None,
@@ -81,7 +82,14 @@ async def running_server(
         candidates=candidates,
     )
     config = uvicorn.Config(
-        app, host="127.0.0.1", port=0, log_level="warning", lifespan="on", ws_ping_interval=None
+        app,
+        host="127.0.0.1",
+        port=0,
+        log_level="warning",
+        lifespan="on",
+        ws_ping_interval=None,
+        proxy_headers=proxy_headers,
+        forwarded_allow_ips="*" if proxy_headers else None,
     )
     server = uvicorn.Server(config)
     task = asyncio.get_running_loop().create_task(server.serve())
