@@ -26,18 +26,20 @@ from app.games.base import Clock, GameEvent, Phase, PlayerInfo
 from app.games.bomb import events as ev
 from app.games.bomb.ports import FragmentPicker, KanjiSource, WordValidator
 from app.games.bomb.settings import LIFE_CAP, BombSettings
-from app.japanese.kana import shiritori_end
+from app.japanese.kana import shiritori_end, units
 
 RECENT_FRAGMENTS = 8
 
-# Points. Every word is worth the same, whatever its length: 10, plus 2 per level of difficulty of
-# the prompt (classic: the fragment's tier, 0 to 2; kanji: N5 and N4 = 0, N3 = 1, N2 and N1 = 2).
+# Points. A word is worth 10, plus 2 per level of difficulty of the prompt (classic: the fragment's
+# tier, 0 to 2; kanji: N5 and N4 = 0, N3 = 1, N2 and N1 = 2), plus a little for a long word (+1 from
+# 5 kana, +2 from 7: it is harder to type a long word quickly, but length stays a small part).
 # Then the speed: a very quick answer (within the first quarter of the fuse) is worth half as much
 # again, a late one (after 70% of the fuse) a fifth less. The speed is the time the server measured,
 # minus the round trip of the player's connection (the ``credit``, capped), so a bad connection
 # does not cost points.
 POINTS_BASE = 10
 POINTS_PER_DIFFICULTY = 2
+LONG_WORD_KANA = (5, 7)  # a word of this many kana earns +1, then +2
 QUICK_RATIO = 0.25
 LATE_RATIO = 0.70
 QUICK_FACTOR = 1.5
@@ -45,9 +47,9 @@ LATE_FACTOR = 0.8
 MAX_CREDIT = 0.25  # seconds of latency a connection may be credited, whatever it reports
 
 
-def word_points(difficulty: int, ratio: float) -> int:
-    """Points of an accepted word, from the prompt's difficulty (0 to 2) and the share of the fuse used."""
-    base = POINTS_BASE + POINTS_PER_DIFFICULTY * difficulty
+def word_points(difficulty: int, ratio: float, kana: int = 0) -> int:
+    """Points of an accepted word: the prompt's difficulty (0 to 2), the share of the fuse used, its kana."""
+    base = POINTS_BASE + POINTS_PER_DIFFICULTY * difficulty + sum(kana >= n for n in LONG_WORD_KANA)
     if ratio <= QUICK_RATIO:
         return round(base * QUICK_FACTOR)
     if ratio > LATE_RATIO:
@@ -239,7 +241,7 @@ class BombEngine:
         used_ratio = max(0.0, now - min(max(credit, 0.0), MAX_CREDIT) - self._turn_started) / max(
             1e-9, self.settings.fuse_seconds
         )
-        gain = word_points(self._difficulty, used_ratio)
+        gain = word_points(self._difficulty, used_ratio, len(units(hit.reading)))
         state.score += gain
         state.words += 1
         self._history.append(PlayedWord(self._turn, player_id, hit.text, hit.reading, hit.entry_id))

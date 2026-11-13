@@ -436,12 +436,15 @@ def test_manual_clock_cannot_go_backwards() -> None:
 # --------------------------------------------------------------------------- points
 
 
-def test_points_do_not_depend_on_the_length_of_the_word() -> None:
+def test_difficulty_and_a_little_length_make_the_base() -> None:
     from app.games.bomb.engine import word_points
 
     assert word_points(0, 0.5) == 10  # normal speed, easy prompt
     assert word_points(1, 0.5) == 12
     assert word_points(2, 0.5) == 14
+    # length is a small part: nothing up to 4 kana, +1 from 5, +2 from 7 (never more)
+    assert [word_points(0, 0.5, k) for k in (1, 4, 5, 6, 7, 12)] == [10, 10, 11, 11, 12, 12]
+    assert word_points(0, 0.1, 7) == 18 and word_points(0, 0.9, 7) == 10  # the speed multiplies the whole
 
 
 def test_a_very_quick_answer_earns_half_as_much_again_and_a_late_one_a_fifth_less() -> None:

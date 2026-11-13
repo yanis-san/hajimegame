@@ -163,3 +163,17 @@ async def test_the_view_adds_meanings_and_fills_the_empty_days(
     sakura = view.top_words[0]
     assert sakura.word == "さくら" and sakura.meaning_en  # known to the dictionary
     assert view.recent_words[0].word == "らくだ"
+
+
+async def test_a_kanji_game_is_recorded_and_has_its_own_filter(database_url: str) -> None:
+    engine = create_async_engine(database_url)
+    try:
+        await DatabaseRecorder(engine).save(
+            game("kanji", datetime(2026, 11, 12, 10, 0), [("どようび", 1000), ("つき", 2500)])
+        )
+        kanji = await player_stats(engine, [AYA], "kanji", today=TODAY)
+        assert (kanji.summary.games, kanji.summary.words) == (1, 2)
+        assert {r.mode for r in kanji.recent_words} == {"kanji"}
+        assert (await player_stats(engine, [AYA], "classic", today=TODAY)).summary.games == 0
+    finally:
+        await engine.dispose()

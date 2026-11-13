@@ -91,10 +91,10 @@ The server stamps each `submit` with its own receive time on the room clock.
 
 ## Points
 
-Every accepted word is worth the same whatever its length: **10 points, plus 2 per level of difficulty** of the prompt
-(classic: the fragment's tier 0 to 2, which follows the player's own speed; shiritori: 0; kanji: N5 and N4 = 0, N3 = 1,
-N2 and N1 = 2). Then the speed, as a share of the fuse used: within the first **25%** the word is worth **half as much
-again** (rounded), after **70%** a **fifth less**, in between it is worth the base. The time is measured by the server
+A word is worth **10 points, plus 2 per level of difficulty** of the prompt (classic: the fragment's tier 0 to 2, which
+follows the player's own speed; shiritori: 0; kanji: N5 and N4 = 0, N3 = 1, N2 and N1 = 2), **plus a little for a long
+word**: +1 from 5 kana, +2 from 7 (it is harder to type a long word quickly, but length stays a small part). Then the speed, as a share of the fuse used: within the first **25%** the word is worth **half as much
+again** (rounded), after **70%** a **fifth less**, in between it is worth the whole base. The time is measured by the server
 (never taken from the client); the round trip the client reports in its `ping` (`rtt`, ms; the best one it measured)
 is credited to it, at most 250 ms, so a bad connection does not cost points. The deadline itself is never moved.
 
