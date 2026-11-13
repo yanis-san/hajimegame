@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { answerFor, createRoom, joinRoom, newPlayer } from './helpers';
+import { answerFor, asShown, createRoom, joinRoom, newPlayer } from './helpers';
 
 test('a finished game can be reviewed with all its words, then found again in the history', async ({
 	browser
@@ -48,7 +48,7 @@ test('a finished game can be reviewed with all its words, then found again in th
 	await host.page.getByRole('button', { name: 'Revoir la partie' }).click();
 	const dialog = host.page.getByRole('dialog');
 	await expect(dialog.getByRole('heading', { name: 'Les mots de la partie' })).toBeVisible();
-	await expect(dialog.getByText(word, { exact: true }).first()).toBeVisible();
+	await expect(dialog.getByText(asShown(word)).first()).toBeVisible();
 	await expect(dialog.getByText(active.name)).toBeVisible();
 	await host.page.keyboard.press('Escape');
 
@@ -64,9 +64,7 @@ test('a finished game can be reviewed with all its words, then found again in th
 	await expect(host.page.locator('li.game')).toHaveCount(1);
 	await expect(host.page.locator('li.game')).toContainText('1 mot');
 	await host.page.getByRole('button', { name: 'Revoir', exact: true }).click();
-	await expect(
-		host.page.getByRole('dialog').getByText(word, { exact: true }).first()
-	).toBeVisible();
+	await expect(host.page.getByRole('dialog').getByText(asShown(word)).first()).toBeVisible();
 	await host.page.keyboard.press('Escape');
 
 	// deleting the game empties the page

@@ -16,6 +16,17 @@ export function answerFor(fragment: string, used: Set<string>, shiritori = false
 	return word;
 }
 
+/**
+ * A word as it can appear on screen: the game compares kana as hiragana but shows a word that the dictionary writes
+ * in katakana (フィッシュ) in katakana, so a test that typed ふぃっしゅ looks for either spelling.
+ */
+export function asShown(word: string): RegExp {
+	const katakana = [...word]
+		.map((c) => (c >= 'ぁ' && c <= 'ゖ' ? String.fromCharCode(c.charCodeAt(0) + 0x60) : c))
+		.join('');
+	return new RegExp(`^(${word}|${katakana})$`);
+}
+
 export interface Player {
 	page: Page;
 	context: BrowserContext;
