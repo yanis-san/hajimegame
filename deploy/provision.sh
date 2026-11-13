@@ -68,10 +68,18 @@ TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 KNOWN="$TMP/known_hosts"
 if ((DRY)); then
-  echo "    [dry-run] ssh-keyscan -t ed25519 $HOST, then compare the fingerprint with your provider's console"
+  echo "    [dry-run] ssh-keyscan $HOST, then compare the fingerprint with your provider's console"
   printf '%s ssh-ed25519 AAAA-dry-run\n' "$HOST" >"$KNOWN"
 else
-  ssh-keyscan -t ed25519 "$HOST" 2>/dev/null >"$KNOWN" || true
+  # One host key, the most modern the server offers (some servers have no ed25519 key, only RSA).
+  SCAN="$(ssh-keyscan -t ed25519,ecdsa,rsa "$HOST" 2>/dev/null | grep -v '^#' || true)"
+  : >"$KNOWN"
+  for keytype in ssh-ed25519 ecdsa-sha2-nistp256 ssh-rsa; do
+    if grep -q " $keytype " <<<"$SCAN"; then
+      grep " $keytype " <<<"$SCAN" | head -n1 >"$KNOWN"
+      break
+    fi
+  done
   [[ -s "$KNOWN" ]] || { echo "cannot reach $HOST on port 22 (is the server up and the address right?)" >&2; exit 1; }
   ssh-keygen -lf "$KNOWN"
   if ((!YES)); then

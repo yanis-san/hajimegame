@@ -106,7 +106,8 @@ else
   echo "==> ssh hardening skipped (HARDEN_SSH=1 to enable it once your key works)"
 fi
 
-HOST_KEY="$(ssh-keyscan -t ed25519 localhost 2>/dev/null | sed 's/^localhost/<server-address>/')"
+# Informational only (provision.sh reads the real key from outside). Not every server has an ed25519 host key.
+HOST_KEY="$(ssh-keyscan -t ed25519,ecdsa,rsa localhost 2>/dev/null | grep -v '^#' | sed 's/^localhost/<server-address>/' | head -n1 || true)"
 cat <<EOF
 
 Done. Next steps:
