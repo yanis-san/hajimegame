@@ -43,7 +43,9 @@
 	// A short window (a phone with its keyboard open, a laptop at 125% zoom): the last word and the preview shrink
 	// to a line, and the bomb takes only what is left. The page never scrolls during a game.
 	const compact = $derived(visible < 620);
-	const chrome = $derived(desktop ? (compact ? 314 : 365) : compact ? 262 : 330);
+	// Many players on a phone: smaller tiles (avatar and name), so that eight still fit in a row.
+	const crowded = $derived(!desktop && store.players.length > 5);
+	const chrome = $derived(desktop ? (compact ? 314 : 365) : compact ? 278 : 330);
 	const bombSize = $derived(
 		desktop
 			? Math.max(110, Math.min(260, Math.floor((visible - chrome) / 1.74)))
@@ -209,7 +211,7 @@
 					active={player.id === store.turn?.player_id && store.phase === 'playing'}
 					maxLives={store.settings.lives}
 					typing={store.typing}
-					{compact}
+					compact={compact || crowded}
 				/>
 			</div>
 		{/each}

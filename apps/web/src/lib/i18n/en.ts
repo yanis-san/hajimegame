@@ -13,6 +13,7 @@ export const en: Record<MessageKey, string> = {
 		'Each word starts with the last kana of the previous word. No repeats, and never a word ending in ん.',
 	'home.mode': 'Pick your mode',
 	'home.nickname': 'Your nickname',
+	'home.nicknameRequired': 'Pick a nickname to play.',
 	'home.nicknamePlaceholder': 'Yanis',
 	'home.create': 'Create a game',
 	'home.join': 'Join',

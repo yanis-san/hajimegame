@@ -34,6 +34,11 @@ test('the game fits the window without scrolling, only the words on the right sc
 	await page.keyboard.press('Enter');
 	await page.locator('.lastcard').waitFor();
 
+	// the names of the players are readable, not just present
+	for (const name of await page.locator('.slot .name').all()) {
+		expect((await name.boundingBox())?.width ?? 0).toBeGreaterThan(30);
+	}
+
 	for (const [width, height] of WINDOWS) {
 		await page.setViewportSize({ width, height });
 		await page.waitForTimeout(300);

@@ -218,13 +218,10 @@
 		.card.compact .cpu {
 			display: none;
 		}
-		/* the name stays for screen readers; the avatar and the petals say who is who */
+		/* short screens or many players: a small tile, but the name stays under the avatar */
 		.card.compact .name {
-			position: absolute;
-			width: 1px;
-			height: 1px;
-			overflow: hidden;
-			clip-path: inset(50%);
+			font-size: 0.64rem;
+			line-height: 1.15;
 		}
 		.active .score {
 			color: var(--sumi);

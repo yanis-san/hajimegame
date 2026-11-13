@@ -6,6 +6,7 @@
 	import Banner from '#lib/design/Banner.svelte';
 	import Bomb from '#lib/design/Bomb.svelte';
 	import Button from '#lib/design/Button.svelte';
+	import { shake } from '#lib/design/fly.ts';
 	import ModePicker from '#lib/design/ModePicker.svelte';
 	import TextField from '#lib/design/TextField.svelte';
 	import { ApiError, createRoom, roomExists } from '#lib/game/api.ts';
@@ -28,10 +29,27 @@
 		avatar = profile.avatar;
 	});
 
+	/** The nickname is missing: say so in words, bring the field to the middle of the screen, and put the cursor in
+	 * it, so nobody has to scroll back up to find out what is wrong. */
+	function nameProblem(): void {
+		nameError = t('home.nicknameRequired');
+		const input = document.getElementById('nickname');
+		if (!input) return;
+		const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		input.scrollIntoView({ block: 'center', behavior: calm ? 'auto' : 'smooth' });
+		input.focus({ preventScroll: true });
+		shake(input.closest<HTMLElement>('.field') ?? undefined);
+	}
+
+	// writing something clears the complaint
+	$effect(() => {
+		if (name.trim()) nameError = '';
+	});
+
 	function remember(): boolean {
 		const clean = name.trim().slice(0, 20);
 		if (!clean) {
-			nameError = t('home.nickname');
+			nameProblem();
 			return false;
 		}
 		nameError = '';
@@ -107,6 +125,7 @@
 		<TextField
 			label={t('home.nickname')}
 			placeholder={t('home.nicknamePlaceholder')}
+			id="nickname"
 			bind:value={name}
 			maxlength={20}
 			error={nameError}

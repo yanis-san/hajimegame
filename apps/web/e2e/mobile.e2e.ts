@@ -43,6 +43,29 @@ for (const width of WIDTHS) {
 	});
 }
 
+test('a missing nickname is brought into view, in words, with the cursor in the field', async ({
+	browser
+}) => {
+	const player = await newPlayer(browser, 'Aya', {
+		viewport: { width: 390, height: 700 },
+		isMobile: true,
+		hasTouch: true
+	});
+	const { page } = player;
+	await page.goto('/');
+	await page.waitForLoadState('networkidle');
+	await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight)); // the player has scrolled down
+	await page.getByRole('button', { name: 'Créer une partie' }).click(); // without having written a nickname
+	const field = page.locator('#nickname');
+	await expect(page.getByRole('alert')).toHaveText('Choisis un pseudo pour jouer.');
+	await expect(field).toBeInViewport(); // the page went back up to it
+	await expect(page.getByRole('alert')).toBeInViewport();
+	expect(await page.evaluate(() => document.activeElement?.id)).toBe('nickname');
+	await field.fill('Aya'); // writing something clears the complaint
+	await expect(page.getByRole('alert')).toHaveCount(0);
+	await player.context.close();
+});
+
 test('the countdown shows its last word inside the screen', async ({ browser }) => {
 	const player = await newPlayer(browser, 'Aya', {
 		viewport: { width: 360, height: 640 },
@@ -93,6 +116,13 @@ test('with the keyboard open, the fragment stays visible and the keyboard stays 
 	const fragment = (await page.locator('.kana').first().innerText()).trim();
 	await field.tap();
 	await page.keyboard.type(answerFor(fragment, new Set()));
+
+	// every name can be read: even with the keyboard open, the tiles keep the name under the avatar
+	for (const name of await page.locator('.slot .name').all()) {
+		const box = await name.boundingBox();
+		expect(box?.width ?? 0).toBeGreaterThan(12);
+		expect(box?.height ?? 0).toBeGreaterThan(8);
+	}
 
 	// nothing covers the fragment: its tag is entirely above the field, inside the screen
 	const layout = await page.evaluate(() => {

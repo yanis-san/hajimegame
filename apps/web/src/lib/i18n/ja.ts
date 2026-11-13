@@ -12,6 +12,7 @@ export const ja: Record<MessageKey, string> = {
 		'前の言葉の最後の文字から始まる言葉を答えよう。同じ言葉は使えず、「ん」で終わる言葉は禁止。',
 	'home.mode': 'モードを選ぼう',
 	'home.nickname': 'ニックネーム',
+	'home.nicknameRequired': 'ニックネームを入力してください。',
 	'home.nicknamePlaceholder': 'Yanis',
 	'home.create': 'ゲームを作る',
 	'home.join': '参加する',

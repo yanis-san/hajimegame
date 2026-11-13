@@ -11,6 +11,7 @@ export const fr = {
 		'Chaque mot commence par le dernier kana du mot précédent. Pas de répétition, jamais de mot en ん.',
 	'home.mode': 'Choisis ton mode',
 	'home.nickname': 'Ton pseudo',
+	'home.nicknameRequired': 'Choisis un pseudo pour jouer.',
 	'home.nicknamePlaceholder': 'Yanis',
 	'home.create': 'Créer une partie',
 	'home.join': 'Rejoindre',
