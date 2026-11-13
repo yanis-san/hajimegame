@@ -60,6 +60,18 @@ def _matches(reading: str, fragment: str, starts_with: bool) -> bool:
     return reading[:1] == fragment if starts_with else contains_fragment(reading, fragment)
 
 
+def _reading_used(entry: Entry, text: str, fragment: str, starts_with: bool) -> str | None:
+    """The reading the player means. Typed in kana, a word with several readings (毎年: まいとし, まいねん)
+    is the one they typed: the next fragment and the ん penalty depend on how the word ends. Typed in kanji,
+    or in a kana spelling that is not a reading, the first reading that fits the fragment."""
+    if text in entry.readings and _matches(text, fragment, starts_with):
+        return text
+    for reading in entry.readings:
+        if _matches(reading, fragment, starts_with):
+            return reading
+    return None
+
+
 class Dictionary:
     """Word lookup. Built once at startup, never mutated afterwards."""
 
@@ -126,9 +138,9 @@ class Dictionary:
         for entry_id in self._index.get(text, ()):
             entry = self._entries[entry_id]
             found = True
-            for reading in entry.readings:
-                if _matches(reading, fragment, starts_with):
-                    return _match(entry_id, entry, reading, text)
+            reading = _reading_used(entry, text, fragment, starts_with)
+            if reading is not None:
+                return _match(entry_id, entry, reading, text)
         return WordRejected("missing_fragment" if found else "not_in_dictionary")
 
     def reject_reason(self, text: str, fragment: str, *, starts_with: bool = False) -> Reject:
@@ -142,10 +154,9 @@ class Dictionary:
         result = []
         for entry_id in self._index.get(text, ()):
             entry = self._entries[entry_id]
-            for reading in entry.readings:
-                if _matches(reading, fragment, starts_with):
-                    result.append(_match(entry_id, entry, reading, text))
-                    break
+            reading = _reading_used(entry, text, fragment, starts_with)
+            if reading is not None:
+                result.append(_match(entry_id, entry, reading, text))
         return tuple(result)
 
     def sample_words(self, fragment: str, limit: int = 5) -> list[str]:

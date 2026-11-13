@@ -134,3 +134,18 @@ def test_words_whose_kanji_has_a_special_reading_are_playable_in_kana(dictionary
         assert isinstance(found, WordMatch), f"{kana} was refused: {found}"
     assert isinstance(dictionary.check("くだもの", "だも"), WordMatch)  # classic mode too
     assert isinstance(dictionary.check("果物", "く", starts_with=True), WordMatch)  # and typed in kanji
+
+
+def test_a_word_typed_in_kana_keeps_the_reading_that_was_typed(dictionary: Dictionary) -> None:
+    """毎年 is read まいとし or まいねん. Typing まいねん must count as ending in ん (the shiritori penalty
+    and the next fragment depend on it), not as the first reading that happens to fit."""
+    both = dictionary.check("まいねん", "ま", starts_with=True)
+    assert isinstance(both, WordMatch) and both.reading == "まいねん"
+    other = dictionary.check("まいとし", "ま", starts_with=True)
+    assert isinstance(other, WordMatch) and other.reading == "まいとし"
+    classic = dictionary.check("まいねん", "い")  # both readings contain い: the typed one wins
+    assert isinstance(classic, WordMatch) and classic.reading == "まいねん"
+    typed_in_kanji = dictionary.check("毎年", "ま", starts_with=True)
+    assert (
+        isinstance(typed_in_kanji, WordMatch) and typed_in_kanji.reading == "まいとし"
+    )  # the first that fits
