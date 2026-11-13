@@ -196,7 +196,10 @@ jobs:
           curl -fsS http://127.0.0.1:8001/readyz | tee /dev/stderr | grep -q '"database":true'
           # The admin interface needs packages that only the production image shows to be missing (it once crashed the
           # real server): start it as production does, with the admin turned on at a secret address.
-          docker run -d --name server-admin --network hajime-ci -p 8002:8000 "${env_args[@]}" \n            -e HAJIME_ADMIN_PATH=/admin-ci-check \n            -e 'HAJIME_ADMIN_PASSWORD_HASH=$argon2id$v=19$m=65536,t=3,p=4$sqxapSUzTGlK4tzsVB+T4w$onhJXA9JkJBHAHUX0jRkJM+mes4TOks5rxd7zknIsNo' \n            -e HAJIME_ADMIN_SECRET=ci-only-secret-ci-only-secret-ci-only-secret hajime-server:ci
+          docker run -d --name server-admin --network hajime-ci -p 8002:8000 "${env_args[@]}" \
+                        -e HAJIME_ADMIN_PATH=/admin-ci-check \
+                        -e 'HAJIME_ADMIN_PASSWORD_HASH=$argon2id$v=19$m=65536,t=3,p=4$sqxapSUzTGlK4tzsVB+T4w$onhJXA9JkJBHAHUX0jRkJM+mes4TOks5rxd7zknIsNo' \
+                        -e HAJIME_ADMIN_SECRET=ci-only-secret-ci-only-secret-ci-only-secret hajime-server:ci
           for _ in $(seq 1 60); do
             [ "$(docker inspect -f '{{.State.Health.Status}}' server-admin)" = healthy ] && break
             sleep 2
