@@ -87,7 +87,7 @@ def check_pages(base: str) -> None:
         csp = headers.get("content-security-policy", "")
         expect("default-src 'none'" in csp and "'nonce-" in csp, f"{path}: missing or weak CSP")
         expect("unsafe-eval" not in csp, f"{path}: CSP allows eval")
-        expect(b"Hajime" in body, f"{path}: the page does not look like the game")
+        expect(b"Bakahatsu" in body, f"{path}: the page does not look like the game")
 
 
 def check_metrics_private(base: str) -> None:
