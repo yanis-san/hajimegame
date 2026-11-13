@@ -5,7 +5,7 @@
 # proposes the new digests. The server uses no database today (rooms live in memory, or in Redis when
 # HAJIME_REDIS_URL is set), so the container only starts the web server: there is no migration step.
 
-FROM python:3.13-slim-bookworm@sha256:a5a7017efc5969e00ae2b91c8eb0631049a569652aa4ffc4501769049ae45c72 AS build
+FROM python:3.15-slim-bookworm@sha256:96599df822d0e1c6bb700014a05c7f3c8cabc6e0f7ff3c4f9f69cee033b4b5d9 AS build
 COPY --from=ghcr.io/astral-sh/uv:0.13@sha256:96f40d3904aad8d0bd010539001d36c8e2188b981e1334471a90c4a1d93bb490 /uv /usr/local/bin/uv
 WORKDIR /app
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy UV_PYTHON_DOWNLOADS=never
@@ -16,7 +16,7 @@ COPY apps/server/app ./app
 # `alembic upgrade head` runs from this image at deployment time (see deploy/deploy.sh)
 COPY apps/server/alembic.ini ./
 
-FROM python:3.13-slim-bookworm@sha256:a5a7017efc5969e00ae2b91c8eb0631049a569652aa4ffc4501769049ae45c72 AS runtime
+FROM python:3.15-slim-bookworm@sha256:96599df822d0e1c6bb700014a05c7f3c8cabc6e0f7ff3c4f9f69cee033b4b5d9 AS runtime
 # The system pip, setuptools and wheel are build tools: the app runs from its own virtualenv and never needs them,
 # so they are removed (they and the libraries pip vendors are a regular source of vulnerability reports).
 RUN groupadd --gid 10001 hajime \
