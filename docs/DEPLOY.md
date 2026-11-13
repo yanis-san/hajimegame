@@ -85,6 +85,12 @@ of `provision.sh` to turn off SSH password logins (only if you log in with a key
   around the hash). Deploy again (push any commit, or *Actions → Deploy*). Open `/admin` (or the address you chose with `HAJIME_ADMIN_PATH`, e.g. `/admin-<random id>`, which is better
   kept secret), sign in with `admin` and your password. To let only your own address see it, add `ADMIN_ALLOWED_IPS=<your public IP>` to the same `.env`.
   Every change made there is in the server logs as `admin_action`. To turn it off, delete the hash line and deploy.
+- **E-mail (confirming an address).** After sign-up the site sends a message with a one-time link (valid 24 hours, only its
+  hash is stored). It is off until you describe a mail server in `/opt/hajime/.env`: `HAJIME_SMTP_HOST`, `_USER`,
+  `_PASSWORD` (single quotes), `_FROM`, `_PORT` (465 with `_SECURITY=ssl`, or 587 with `starttls`). Use the mailbox
+  of your domain, and the host name its TLS certificate is issued for (on a shared host this is usually the provider's
+  own name, e.g. `mail28.lwspanel.com`, not `mail.yourdomain`). A failing mail server never blocks a sign-up: the
+  message is retried by the "Send again" button, and `hajime_emails_total{result="failed"}` counts the failures.
 - **Updates:** Dependabot pull requests go through the same pipeline; merge them when green.
 
 ## Security model

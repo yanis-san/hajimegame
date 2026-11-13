@@ -26,6 +26,7 @@ from app.games.recording import NullRecorder, Recorder
 from app.japanese.candidates import CandidateIndex
 from app.japanese.dictionary import Dictionary
 from app.japanese.fragments import FragmentTable
+from app.mail import Mailer, build_mailer
 from app.realtime.clock import RoomClock, SystemClock
 from app.realtime.manager import RoomManager
 from app.realtime.registry import MemoryRegistry, RedisRegistry, RoomRegistry
@@ -69,6 +70,7 @@ def create_app(
     redis: Redis | None = None,
     candidates: CandidateIndex | None = None,
     recorder: Recorder | None = None,
+    mailer: Mailer | None = None,
 ) -> FastAPI:
     cfg = settings or get_settings()
     # Created here, not in the lifespan: the admin needs it when it is mounted. It connects on first use.
@@ -105,6 +107,7 @@ def create_app(
         app.state.limiter = the_limiter
         app.state.redis = client
         app.state.engine = engine
+        app.state.mailer = mailer if mailer is not None else build_mailer(cfg)
         log.info(
             "started",
             instance=manager.instance_id,

@@ -23,6 +23,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "aiosmtpd>=1.4.6",
     "aiosqlite>=0.22.1",
     "fakeredis>=2.40.0",
     "httpx>=0.28.1",

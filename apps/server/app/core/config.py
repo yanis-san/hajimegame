@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from functools import lru_cache
+from typing import Literal
 
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -49,6 +50,16 @@ class AppSettings(BaseSettings):
     admin_secret: str | None = Field(default=None, repr=False)
     admin_session_hours: int = 8
 
+    # E-mail (confirming an address). Off unless the SMTP server is described; the password is the mailbox's.
+    # `public_url` is the address of the site, used in the links inside the messages.
+    public_url: str | None = None
+    smtp_host: str | None = None
+    smtp_port: int = 465
+    smtp_user: str | None = None
+    smtp_password: str | None = Field(default=None, repr=False)
+    smtp_from: str | None = None  # defaults to the login
+    smtp_security: Literal["ssl", "starttls", "none"] = "ssl"
+
     # Rooms
     max_players_per_room: int = 8
     max_spectators_per_room: int = 20
@@ -77,11 +88,44 @@ class AppSettings(BaseSettings):
     def is_prod(self) -> bool:
         return self.env == "prod"
 
-    @field_validator("admin_password_hash", "admin_secret", "turnstile_secret", "database_url", mode="before")
+    @field_validator(
+        "admin_password_hash",
+        "admin_secret",
+        "turnstile_secret",
+        "database_url",
+        "smtp_host",
+        "smtp_user",
+        "smtp_password",
+        "smtp_from",
+        "public_url",
+        mode="before",
+    )
     @classmethod
     def _empty_means_unset(cls, value: object) -> object:
         """Docker compose passes an unset optional value as an empty string."""
         return None if isinstance(value, str) and not value.strip() else value
+
+    @property
+    def email_enabled(self) -> bool:
+        return self.smtp_host is not None
+
+    @model_validator(mode="after")
+    def _check_email(self) -> AppSettings:
+        """A mail server is all or nothing: half a description would silently send nothing."""
+        if self.smtp_host is None:
+            return self
+        problems: list[str] = []
+        if not self.smtp_user or not self.smtp_password:
+            problems.append("HAJIME_SMTP_USER and HAJIME_SMTP_PASSWORD are needed with HAJIME_SMTP_HOST")
+        if not self.public_url or not self.public_url.startswith(("https://", "http://")):
+            problems.append("HAJIME_PUBLIC_URL (the site's address, for the links in the messages) is needed")
+        elif self.is_prod and not self.public_url.startswith("https://"):
+            problems.append("HAJIME_PUBLIC_URL must be an https:// address in production")
+        if self.is_prod and self.smtp_security == "none":
+            problems.append("HAJIME_SMTP_SECURITY=none is not allowed in production")
+        if problems:
+            raise ValueError("invalid e-mail settings: " + "; ".join(problems))
+        return self
 
     @property
     def admin_enabled(self) -> bool:

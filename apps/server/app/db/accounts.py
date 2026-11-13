@@ -16,7 +16,7 @@ import sqlalchemy as sa
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from app.db.models import Account, GamePlayer, LoginSession, Player, PlayerGuest
+from app.db.models import Account, EmailToken, GamePlayer, LoginSession, Player, PlayerGuest
 
 PROVIDER = "password"
 
@@ -159,6 +159,57 @@ async def close_session(engine: AsyncEngine, token: str) -> None:
         await connection.execute(sa.delete(LoginSession).where(LoginSession.token_hash == _token_hash(token)))
 
 
+async def issue_email_token(engine: AsyncEngine, player_id: uuid.UUID, email: str, hours: int) -> str:
+    """A new confirmation secret for ``email`` (the one to put in the link). Earlier ones stop working."""
+    token = secrets.token_urlsafe(32)
+    now = _now()
+    async with engine.begin() as connection:
+        await connection.execute(
+            sa.delete(EmailToken).where(
+                sa.or_(EmailToken.player_id == player_id, EmailToken.expires_at < now)
+            )
+        )
+        await connection.execute(
+            sa.insert(EmailToken).values(
+                token_hash=_token_hash(token),
+                player_id=player_id,
+                email=email,
+                created_at=now,
+                expires_at=now + timedelta(hours=hours),
+            )
+        )
+    return token
+
+
+async def confirm_email(engine: AsyncEngine, token: str) -> bool:
+    """Use a confirmation secret: True when it was valid (known, unused, not expired, for the address the
+    account still has), which marks the address confirmed. Anything else changes nothing."""
+    now = _now()
+    async with engine.begin() as connection:
+        row = (
+            await connection.execute(
+                sa.select(EmailToken.player_id, EmailToken.email)
+                .where(
+                    EmailToken.token_hash == _token_hash(token),
+                    EmailToken.used_at.is_(None),
+                    EmailToken.expires_at > now,
+                )
+                .with_for_update()
+            )
+        ).first()
+        if row is None:
+            return False
+        confirmed = await connection.execute(
+            sa.update(Account)
+            .where(Account.player_id == row[0], Account.email == row[1])
+            .values(email_verified_at=now)
+        )
+        await connection.execute(
+            sa.update(EmailToken).where(EmailToken.token_hash == _token_hash(token)).values(used_at=now)
+        )
+        return bool(confirmed.rowcount)
+
+
 async def delete_account(engine: AsyncEngine, player_id: uuid.UUID) -> None:
     """Remove the account and everything that signs it in. Its past games stay, with nobody attached to them
     (the rows are explicit: SQLite does not enforce foreign keys unless told to)."""
@@ -167,6 +218,7 @@ async def delete_account(engine: AsyncEngine, player_id: uuid.UUID) -> None:
             sa.update(GamePlayer).where(GamePlayer.player_id == player_id).values(player_id=None)
         )
         await connection.execute(sa.delete(LoginSession).where(LoginSession.player_id == player_id))
+        await connection.execute(sa.delete(EmailToken).where(EmailToken.player_id == player_id))
         await connection.execute(sa.delete(PlayerGuest).where(PlayerGuest.player_id == player_id))
         await connection.execute(sa.delete(Account).where(Account.player_id == player_id))
         await connection.execute(sa.delete(Player).where(Player.id == player_id))

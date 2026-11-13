@@ -34,6 +34,9 @@ INVALID_MESSAGES = Counter(
 RATE_LIMITED = Counter(
     "hajime_rate_limited_total", "Requests refused by a rate limiter", ["kind"], registry=REGISTRY
 )
+EMAILS = Counter(
+    "hajime_emails_total", "E-mails handed to the mail server", ["kind", "result"], registry=REGISTRY
+)
 GAMES_FINISHED = Counter("hajime_games_finished_total", "Completed games", registry=REGISTRY)
 GAME_RECORDS = Counter(
     "hajime_game_records_total", "Finished games written to the database", ["result"], registry=REGISTRY

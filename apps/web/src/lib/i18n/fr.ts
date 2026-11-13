@@ -239,7 +239,8 @@ export const fr = {
 	'account.password': 'Mot de passe',
 	'account.password.hint': '8 caractères minimum.',
 	'account.email': 'Email',
-	'account.email.hint': 'Servira plus tard à confirmer ton compte et à le récupérer.',
+	'account.email.hint':
+		'Un lien de confirmation t’y sera envoyé. Il servira aussi à récupérer ton compte.',
 	'account.birth': 'Date de naissance',
 	'account.birth.hint': 'Pour connaître l’âge des joueurs. Elle n’est montrée à personne.',
 	'account.signUp': 'Créer mon compte',
@@ -267,6 +268,21 @@ export const fr = {
 	'credits.account.title': 'Compte',
 	'credits.account.body':
 		'Si tu crées un compte, le serveur garde ton pseudo, ton mot de passe (jamais en clair : seulement une empreinte Argon2), ton email, ta date de naissance (pour connaître l’âge de nos joueurs ; elle n’est montrée à personne), et la liste des navigateurs reliés au compte. Un cookie de connexion, nécessaire pour rester connecté, est déposé dans ton navigateur ; il ne sert à rien d’autre et ne suit personne. Tu peux supprimer ton compte à tout moment depuis la page Compte.',
+	'account.emailToConfirm':
+		'Ton email n’est pas encore confirmé : ouvre le lien du message que nous t’avons envoyé.',
+	'account.emailSent': 'Message envoyé à {email}. Pense à regarder tes spams.',
+	'account.resend': 'Renvoyer l’email',
+	'err.email_unavailable': 'L’envoi d’emails n’est pas disponible pour le moment.',
+	'verify.title': 'Confirmation de l’email',
+	'verify.checking': 'Vérification du lien…',
+	'verify.ok': 'C’est confirmé : ton adresse email est validée.',
+	'verify.bad':
+		'Ce lien ne marche plus : il a déjà servi ou il a expiré. Demande-en un nouveau depuis la page Compte.',
+	'verify.missing':
+		'Il manque le code dans ce lien. Ouvre-le depuis le message que nous t’avons envoyé.',
+	'verify.error':
+		'Le serveur ne répond pas pour le moment. Réessaie dans un instant : ton lien est peut-être bon.',
+	'verify.toAccount': 'Aller à mon compte',
 	'credits.dictionary.title': 'Dictionnaire',
 	'credits.dictionary.body':
 		'Les mots et leurs sens (anglais, et français quand JMdict le fournit) viennent du fichier JMdict, © Electronic Dictionary Research and Development Group (EDRDG). Le dictionnaire de jeu est une version filtrée et reformatée de ce fichier ; ses règles de filtrage sont documentées dans le dépôt.',

@@ -8,6 +8,7 @@ checks the origin and the client header like room creation does (``require_same_
 
 from __future__ import annotations
 
+import asyncio
 import re
 import uuid
 from datetime import date
@@ -26,6 +27,8 @@ from app.core.passwords import PASSWORD_MAX, PASSWORD_MIN, hash_password, needs_
 from app.core.ratelimit import WindowLimiter
 from app.core.security import clean_text, contains_profanity, require_same_site_request
 from app.db import accounts
+from app.mail import Mailer, deliver
+from app.mail.templates import LANGUAGES, verification
 
 router = APIRouter()
 
@@ -43,6 +46,7 @@ class Registration(BaseModel):
     password: str = Field(max_length=PASSWORD_MAX)
     email: str = Field(max_length=254)
     birth_date: str = Field(max_length=10)  # YYYY-MM-DD
+    lang: str = Field(default="fr", max_length=2)  # the language of the page: the e-mail is written in it
     guest_id: uuid.UUID | None = None
     captcha: str = Field(default="", max_length=4096)
 
@@ -55,6 +59,14 @@ class Login(BaseModel):
 
 class Confirmation(BaseModel):
     password: str = Field(max_length=PASSWORD_MAX)
+
+
+class EmailToken(BaseModel):
+    token: str = Field(max_length=200)
+
+
+class Resend(BaseModel):
+    lang: str = Field(default="fr", max_length=2)
 
 
 def _engine(request: Request) -> AsyncEngine:
@@ -154,6 +166,46 @@ async def _sign_in(
     _set_cookie(response, request, token)
 
 
+EMAIL_LINK_HOURS = 24
+RESEND_PER_HOUR = 3
+VERIFY_PER_HOUR = 30
+_background: set[asyncio.Task[bool]] = (
+    set()
+)  # strong references: a task nobody holds can be collected mid-way
+
+
+def _mailer(request: Request) -> Mailer | None:
+    mailer: Mailer | None = getattr(request.app.state, "mailer", None)
+    return mailer
+
+
+async def _send_verification(
+    request: Request, mailer: Mailer, player_id: uuid.UUID, username: str, email: str, lang: str
+) -> bool:
+    engine = _engine(request)
+    token = await accounts.issue_email_token(engine, player_id, email, EMAIL_LINK_HOURS)
+    base = (_settings(request).public_url or "").rstrip("/")
+    prefix = "" if lang == "fr" else f"/{lang}"  # the page of the link speaks the language of the message
+    subject, body = verification(
+        lang if lang in LANGUAGES else "fr",
+        username,
+        f"{base}{prefix}/verify?token={token}",
+        EMAIL_LINK_HOURS,
+    )
+    return await deliver(mailer, "verification", email, subject, body)
+
+
+def _send_in_background(request: Request, player_id: uuid.UUID, username: str, email: str, lang: str) -> None:
+    mailer = _mailer(request)
+    if mailer is None:
+        return  # no mail server: the address stays unconfirmed (development, or not set up yet)
+    task = asyncio.get_running_loop().create_task(
+        _send_verification(request, mailer, player_id, username, email, lang)
+    )
+    _background.add(task)
+    task.add_done_callback(_background.discard)
+
+
 @router.post("/api/auth/register", status_code=201, dependencies=[Depends(require_same_site_request)])
 async def register(body: Registration, request: Request) -> Response:
     engine = _engine(request)
@@ -180,6 +232,9 @@ async def register(body: Registration, request: Request) -> Response:
         raise HTTPException(status_code=409, detail="username_taken") from exc
     response = _reply({"username": username, "email": email, "email_verified": False}, 201)
     await _sign_in(request, response, engine, player_id, body.guest_id)
+    _send_in_background(
+        request, player_id, username, email, body.lang
+    )  # never makes the sign-up wait or fail
     return response
 
 
@@ -214,6 +269,35 @@ async def logout(request: Request) -> Response:
 async def me(request: Request) -> Response:
     who = await current_me(request)
     return _reply({"user": _view(who) if who else None})
+
+
+@router.post("/api/auth/verify", dependencies=[Depends(require_same_site_request)])
+async def verify_email(body: EmailToken, request: Request) -> Response:
+    """The page behind the link in the message calls this. It works from any browser (the link may be
+    opened on another device); only a valid, unused, unexpired secret confirms anything."""
+    engine = _engine(request)
+    await _limit(request, f"verify:{client_ip(request)}", VERIFY_PER_HOUR, 3600, "verify_email")
+    if not await accounts.confirm_email(engine, body.token.strip()):
+        raise HTTPException(status_code=400, detail="bad_token")
+    return _reply({"verified": True})
+
+
+@router.post("/api/auth/verify/resend", dependencies=[Depends(require_same_site_request)])
+async def resend_verification(body: Resend, request: Request) -> Response:
+    """Send the confirmation message again to the signed-in player's address."""
+    _engine(request)  # no database, no accounts
+    who = await current_me(request)
+    if who is None:
+        raise HTTPException(status_code=401, detail="not_signed_in")
+    if who.email_verified or not who.email:
+        raise HTTPException(status_code=409, detail="already_verified")
+    mailer = _mailer(request)
+    if mailer is None:
+        raise HTTPException(status_code=503, detail="email_unavailable")
+    await _limit(request, f"resend:{who.player_id}", RESEND_PER_HOUR, 3600, "resend_email")
+    await _limit(request, f"resend-ip:{client_ip(request)}", RESEND_PER_HOUR * 3, 3600, "resend_email")
+    _send_in_background(request, who.player_id, who.username, who.email, body.lang)
+    return _reply({"sent": True}, 202)
 
 
 @router.post("/api/auth/delete", dependencies=[Depends(require_same_site_request)])

@@ -68,3 +68,49 @@ test('the account page fits a phone without scrolling sideways', async ({ page }
 	await button.scrollIntoViewIfNeeded();
 	await expect(button).toBeInViewport();
 });
+
+test('the page behind the link of the message confirms the address, or says the link is no good', async ({
+	page
+}) => {
+	let answer = 200;
+	let sent: string | undefined;
+	await page.route('**/api/auth/me', (route) => route.fulfill({ json: { user: null } }));
+	await page.route('**/api/auth/verify', (route) => {
+		sent = (route.request().postDataJSON() as { token: string }).token;
+		return route.fulfill({
+			status: answer,
+			json: answer === 200 ? { verified: true } : { detail: 'bad_token' }
+		});
+	});
+	await page.goto('/verify?token=abc-123');
+	await expect(page.getByText('C’est confirmé')).toBeVisible();
+	expect(sent).toBe('abc-123');
+	await expect(page.getByRole('link', { name: 'Aller à mon compte' })).toBeVisible();
+
+	answer = 400; // used or expired
+	await page.goto('/en/verify?token=old');
+	await expect(page.getByText('This link no longer works')).toBeVisible();
+
+	await page.goto('/ja/verify'); // no code in the address
+	await expect(page.getByText('このリンクにはコードがありません')).toBeVisible();
+	const text = await page.locator('main').innerText();
+	expect(text).not.toMatch(/lien|confirmé|compte/i); // the Japanese page shows no French
+});
+
+test('an address that is not confirmed offers to send the message again', async ({ page }) => {
+	let asked = 0;
+	await page.route('**/api/auth/me', (route) =>
+		route.fulfill({
+			json: { user: { username: 'Aya', email: 'aya@example.com', email_verified: false } }
+		})
+	);
+	await page.route('**/api/auth/verify/resend', (route) => {
+		asked += 1;
+		return route.fulfill({ status: 202, json: { sent: true } });
+	});
+	await page.goto('/account');
+	await expect(page.getByText('Ton email n’est pas encore confirmé')).toBeVisible();
+	await page.getByRole('button', { name: 'Renvoyer l’email' }).click();
+	await expect(page.getByText('Message envoyé à aya@example.com')).toBeVisible();
+	expect(asked).toBe(1);
+});

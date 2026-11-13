@@ -17,6 +17,7 @@ from app.core.config import AppSettings
 from app.core.ratelimit import MemoryWindowLimiter, WindowLimiter
 from app.japanese.candidates import CandidateIndex
 from app.japanese.dictionary import Dictionary
+from app.mail import Mailer
 from app.main import create_app
 from app.realtime.clock import RoomClock, ScaledClock
 from app.realtime.registry import RoomRegistry
@@ -56,6 +57,7 @@ async def running_server(
     dictionary: Dictionary,
     *,
     scale: float = 20.0,
+    mailer: Mailer | None = None,
     proxy_headers: bool = False,  # believe X-Forwarded-Proto/For, as the server does behind its proxy
     registry: RoomRegistry | None = None,
     instance_id: str = "A",
@@ -80,6 +82,7 @@ async def running_server(
         limiter=limiter or MemoryWindowLimiter(),
         dictionary=dictionary,
         candidates=candidates,
+        mailer=mailer,
     )
     config = uvicorn.Config(
         app,

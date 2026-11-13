@@ -239,7 +239,8 @@ export const en: Record<MessageKey, string> = {
 	'account.password': 'Password',
 	'account.password.hint': 'At least 8 characters.',
 	'account.email': 'Email',
-	'account.email.hint': 'Will be used later to confirm and recover your account.',
+	'account.email.hint':
+		'A confirmation link will be sent there. It will also be used to recover your account.',
 	'account.birth': 'Date of birth',
 	'account.birth.hint': 'To know the age of our players. It is shown to nobody.',
 	'account.signUp': 'Create my account',
@@ -267,6 +268,20 @@ export const en: Record<MessageKey, string> = {
 	'credits.account.title': 'Account',
 	'credits.account.body':
 		'If you create an account, the server keeps your username, your password (never in clear text: only an Argon2 hash), your email, your date of birth (to know the age of our players; it is shown to nobody), and the list of browsers linked to the account. A sign-in cookie, needed to keep you signed in, is set in your browser; it is used for nothing else and tracks nobody. You can delete your account at any time from the Account page.',
+	'account.emailToConfirm':
+		'Your email is not confirmed yet: open the link in the message we sent you.',
+	'account.emailSent': 'Message sent to {email}. Remember to look in your spam folder.',
+	'account.resend': 'Send the email again',
+	'err.email_unavailable': 'Sending emails is not available right now.',
+	'verify.title': 'Email confirmation',
+	'verify.checking': 'Checking the link…',
+	'verify.ok': 'Confirmed: your email address is validated.',
+	'verify.bad':
+		'This link no longer works: it was already used or it has expired. Ask for a new one from the Account page.',
+	'verify.missing': 'The code is missing from this link. Open it from the message we sent you.',
+	'verify.error':
+		'The server is not answering right now. Try again in a moment: your link may be fine.',
+	'verify.toAccount': 'Go to my account',
 	'credits.dictionary.title': 'Dictionary',
 	'credits.dictionary.body':
 		'Words and their meanings (English, and French when JMdict provides it) come from the JMdict file, © Electronic Dictionary Research and Development Group (EDRDG). The game dictionary is a filtered, reformatted version of that file; the filtering rules are documented in the repository.',

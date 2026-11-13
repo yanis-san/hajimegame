@@ -82,3 +82,38 @@ def test_the_admin_packages_are_runtime_dependencies() -> None:
     dependencies = " ".join(project["project"]["dependencies"]).lower()
     for package in ("sqladmin", "itsdangerous", "argon2-cffi"):
         assert package in dependencies, f"{package} must be in [project] dependencies"
+
+
+@pytest.mark.parametrize(
+    ("override", "message"),
+    [
+        ({"smtp_user": None}, "HAJIME_SMTP_USER and HAJIME_SMTP_PASSWORD"),
+        ({"smtp_password": None}, "HAJIME_SMTP_USER and HAJIME_SMTP_PASSWORD"),
+        ({"public_url": None}, "HAJIME_PUBLIC_URL"),
+        ({"public_url": "http://hajime.dev"}, "https://"),
+        ({"smtp_security": "none"}, "not allowed in production"),
+    ],
+)
+def test_an_incomplete_or_unsafe_mail_description_does_not_start(
+    override: dict[str, object], message: str
+) -> None:
+    mail = {
+        "smtp_host": "mail.example.org",
+        "smtp_user": "contact@example.org",
+        "smtp_password": "s3cret",
+        "public_url": "https://hajime.dev",
+    }
+    with pytest.raises(ValidationError, match=message):
+        AppSettings(**{**GOOD, **mail, **override})  # type: ignore[arg-type]
+
+
+def test_a_complete_mail_description_is_accepted_and_none_means_no_mail() -> None:
+    mail = {
+        "smtp_host": "mail.example.org",
+        "smtp_user": "contact@example.org",
+        "smtp_password": "s3cret",
+        "public_url": "https://hajime.dev",
+    }
+    assert AppSettings(**{**GOOD, **mail}).email_enabled  # type: ignore[arg-type]
+    assert not AppSettings(**GOOD).email_enabled  # type: ignore[arg-type]
+    assert not AppSettings(smtp_host="  ").email_enabled  # a blank value (docker compose) means unset

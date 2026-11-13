@@ -240,7 +240,7 @@ export const ja: Record<MessageKey, string> = {
 	'account.email': 'メールアドレス',
 	'account.birth': '生年月日',
 	'account.birth.hint': 'プレイヤーの年齢を知るためです。他の人には表示されません。',
-	'account.email.hint': '今後、アカウントの確認と復旧に使います。',
+	'account.email.hint': '確認用のリンクを送信します。アカウントの復旧にも使います。',
 	'account.signUp': '登録する',
 	'account.signIn': 'ログインする',
 	'account.signOut': 'ログアウト',
@@ -266,6 +266,20 @@ export const ja: Record<MessageKey, string> = {
 	'credits.account.title': 'アカウント',
 	'credits.account.body':
 		'アカウントを作ると、サーバーはユーザー名、パスワード（平文ではなくArgon2のハッシュのみ）、メールアドレス、生年月日（プレイヤーの年齢を知るためで、他の人には表示されません）、そしてアカウントに結び付いたブラウザの一覧を保存します。ログイン状態を保つためのクッキーを使いますが、それ以外には使わず、誰かを追跡することもありません。アカウントはアカウントページからいつでも削除できます。',
+	'account.emailToConfirm':
+		'メールアドレスはまだ確認されていません。送信したメッセージのリンクを開いてください。',
+	'account.emailSent': '{email} にメッセージを送信しました。迷惑メールフォルダも確認してください。',
+	'account.resend': 'メールを再送する',
+	'err.email_unavailable': '現在メールを送信できません。',
+	'verify.title': 'メールアドレスの確認',
+	'verify.checking': 'リンクを確認しています…',
+	'verify.ok': '確認できました。メールアドレスが有効になりました。',
+	'verify.bad':
+		'このリンクは使えません（使用済みか、期限切れです）。アカウントページから新しいメールを請求してください。',
+	'verify.missing': 'このリンクにはコードがありません。送信したメッセージから開いてください。',
+	'verify.error':
+		'現在サーバーが応答していません。しばらくしてからもう一度お試しください。リンクは有効かもしれません。',
+	'verify.toAccount': 'アカウントへ',
 	'credits.dictionary.title': '辞書',
 	'credits.dictionary.body':
 		'言葉とその意味（英語、JMdictにあればフランス語）は、JMdictファイル（© Electronic Dictionary Research and Development Group / EDRDG）に由来します。ゲーム用の辞書は、このファイルをフィルタリング・再構成したものです。フィルタリングの規則はリポジトリに記載されています。',

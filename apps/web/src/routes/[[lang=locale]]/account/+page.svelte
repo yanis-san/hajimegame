@@ -6,7 +6,7 @@
 	import TextField from '#lib/design/TextField.svelte';
 	import { account, refreshAccount } from '#lib/game/account.svelte.ts';
 	import { ApiError } from '#lib/game/api.ts';
-	import { deleteAccount, signIn, signOut, signUp } from '#lib/game/auth.ts';
+	import { deleteAccount, resendVerification, signIn, signOut, signUp } from '#lib/game/auth.ts';
 	import { href, t, type MessageKey } from '#lib/i18n/index.ts';
 
 	type Tab = 'up' | 'in';
@@ -30,6 +30,7 @@
 		'bad_password',
 		'bad_email',
 		'bad_birth_date',
+		'email_unavailable',
 		'bad_credentials',
 		'captcha_failed',
 		'accounts_unavailable',
@@ -58,6 +59,24 @@
 			problem = explain(e);
 		} finally {
 			busy = false;
+		}
+	}
+
+	let resending = $state(false);
+	let resent = $state(false);
+
+	async function sendAgain(): Promise<void> {
+		if (resending) return;
+		resending = true;
+		resent = false;
+		problem = '';
+		try {
+			await resendVerification();
+			resent = true;
+		} catch (e) {
+			problem = explain(e);
+		} finally {
+			resending = false;
 		}
 	}
 
@@ -110,6 +129,25 @@
 					{t('account.emailNone')}
 				{/if}
 			</p>
+			{#if account.user.email && !account.user.email_verified}
+				<div class="confirm-mail">
+					<p>
+						{resent
+							? t('account.emailSent', { email: account.user.email })
+							: t('account.emailToConfirm')}
+					</p>
+					<Button
+						size="sm"
+						variant="secondary"
+						loading={resending}
+						disabled={resending}
+						onclick={sendAgain}
+					>
+						{t('account.resend')}
+					</Button>
+					{#if problem}<p class="problem" role="alert">{problem}</p>{/if}
+				</div>
+			{/if}
 			<div class="actions">
 				<Button href={href('/stats')} icon="trophy">{t('account.stats')}</Button>
 				<Button variant="secondary" disabled={busy} onclick={leave}>{t('account.signOut')}</Button>
@@ -256,6 +294,18 @@
 	.mail {
 		color: var(--text-mute);
 		font-size: 0.9rem;
+	}
+	.confirm-mail {
+		display: grid;
+		justify-items: start;
+		gap: 0.5rem;
+		padding: 0.7rem 0.8rem;
+		border: var(--line) dashed var(--text-mute);
+		border-radius: var(--radius-sm);
+	}
+	.confirm-mail p {
+		margin: 0;
+		font-size: 0.92rem;
 	}
 	.actions {
 		display: flex;

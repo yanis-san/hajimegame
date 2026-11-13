@@ -106,6 +106,14 @@ services:
       # the operator's admin interface: off unless the hash is set (see docs/DEPLOY.md, "The admin interface")
       HAJIME_ADMIN_USERNAME: ${HAJIME_ADMIN_USERNAME:-admin}
       HAJIME_ADMIN_PATH: ${HAJIME_ADMIN_PATH:-/admin}
+      # e-mail (confirming an address): off unless the SMTP host is set; the links in the messages use the site's address
+      HAJIME_PUBLIC_URL: https://${DOMAIN}
+      HAJIME_SMTP_HOST: ${HAJIME_SMTP_HOST:-}
+      HAJIME_SMTP_PORT: ${HAJIME_SMTP_PORT:-465}
+      HAJIME_SMTP_USER: ${HAJIME_SMTP_USER:-}
+      HAJIME_SMTP_PASSWORD: ${HAJIME_SMTP_PASSWORD:-}
+      HAJIME_SMTP_FROM: ${HAJIME_SMTP_FROM:-}
+      HAJIME_SMTP_SECURITY: ${HAJIME_SMTP_SECURITY:-ssl}
       HAJIME_ADMIN_PASSWORD_HASH: ${HAJIME_ADMIN_PASSWORD_HASH:-}
       HAJIME_ADMIN_SECRET: ${HAJIME_ADMIN_SECRET:-}
     mem_limit: 1g

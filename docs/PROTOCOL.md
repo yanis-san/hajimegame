@@ -14,7 +14,9 @@ Source of truth: `apps/server/app/realtime/protocol.py`. TypeScript types are ge
 ## Connection flow
 
 Accounts (REST): `POST /api/auth/register` (username, password, optional email, `guest_id`, captcha token),
-`POST /api/auth/login`, `POST /api/auth/logout`, `POST /api/auth/delete` (needs the password), `GET /api/auth/me`
+`POST /api/auth/login`, `POST /api/auth/verify` (the secret of the e-mailed link; `400 bad_token` when unknown, used or expired),
+`POST /api/auth/verify/resend` (signed in; `202`, `409 already_verified`, `429`, `503 email_unavailable`),
+`POST /api/auth/logout`, `POST /api/auth/delete` (needs the password), `GET /api/auth/me`
 (`{"user": null}` for a guest). Mutations need the same-site headers; the session is the httpOnly cookie
 `hajime_session`. Errors are short codes: `bad_username`, `bad_password`, `bad_email`, `username_taken` (409),
 `bad_credentials` (401), `captcha_failed` (403), `rate_limited` (429), `accounts_unavailable` (503).

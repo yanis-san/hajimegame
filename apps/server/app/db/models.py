@@ -95,6 +95,20 @@ class PlayerGuest(Base):
     linked_at: Mapped[datetime] = mapped_column(sa.DateTime, default=_now)
 
 
+class EmailToken(Base):
+    """A one-time secret sent by e-mail to confirm an address. Only its hash is stored; it expires, and it
+    can be used once. ``email`` is the address it was sent to: if that changes, the token is useless."""
+
+    __tablename__ = "email_tokens"
+
+    token_hash: Mapped[str] = mapped_column(sa.String(64), primary_key=True)
+    player_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey("players.id", ondelete="CASCADE"), index=True)
+    email: Mapped[str] = mapped_column(sa.String(255))
+    created_at: Mapped[datetime] = mapped_column(sa.DateTime, default=_now)
+    expires_at: Mapped[datetime] = mapped_column(sa.DateTime)
+    used_at: Mapped[datetime | None] = mapped_column(sa.DateTime)
+
+
 class LoginSession(Base):
     """A signed-in browser. Only the hash of the cookie's token is stored, so a copy of the database cannot
     be used to sign in."""

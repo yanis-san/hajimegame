@@ -30,8 +30,12 @@ designed for now so that nobody's history is lost when they arrive.
   `player_guests`, so every device the person signs in on shows the same history. A browser already linked to one
   account cannot be claimed by another. A player deletes their own account from the Account page: the login,
   sessions and links are erased, and the past games stay with nobody attached.
-- **Next for accounts.** Confirming the email after sign-up (needs an SMTP server; `accounts.email_verified_at` is
-  there), password reset by email once the address is confirmed, and "Sign in with Google". Apple is left out: it
+- **E-mail confirmation.** The address is required at sign-up and confirmed by a link: a random secret in a message
+  (`app/mail`), stored only as a hash in `email_tokens`, valid 24 hours, single use, and tied to the address it was sent
+  to (changing the address makes it useless). Sending happens in the background: no mail server, or a failing one,
+  never blocks or fails a sign-up. "Send again" is limited to 3 per hour per account. The link opens a page that
+  posts the secret (a link scanner that only reads the page confirms nothing).
+- **Next for accounts.** Password reset by email once the address is confirmed (the confirmation itself exists), and "Sign in with Google". Apple is left out: it
   needs a paid developer account. Ranks, leaderboards and friends build on `player_id`.
 - **Only what is needed.** No IP address, no device information, no tracking cookie. What is stored is described to
   players on the credits page.

@@ -1,6 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from './api';
-import { deleteAccount, fetchAccount, signIn, signUp } from './auth';
+import {
+	deleteAccount,
+	fetchAccount,
+	resendVerification,
+	signIn,
+	signUp,
+	verifyEmail
+} from './auth';
 
 const GUEST = '11111111-2222-4333-8444-555555555555';
 
@@ -35,6 +42,7 @@ describe('account client', () => {
 			password: 'longenough',
 			email: 'a@b.fr', // trimmed
 			birth_date: '1995-06-15',
+			lang: 'fr', // the e-mail is written in the language of the page
 			captcha: 'tok',
 			guest_id: GUEST
 		});
@@ -68,5 +76,27 @@ describe('account client', () => {
 		const user = { username: 'Aya', email: null, email_verified: false };
 		expect(await fetchAccount(reply(200, { user }))).toEqual(user);
 		expect(await fetchAccount(reply(200, { user: null }))).toBeNull();
+	});
+
+	it('confirms an address with the secret of the link, and says plainly when the link is no good', async () => {
+		const good = reply(200, { verified: true });
+		expect(await verifyEmail('the-secret', good)).toBe(true);
+		const init = (good as unknown as ReturnType<typeof vi.fn>).mock.calls[0][1] as RequestInit;
+		expect(JSON.parse(init.body as string)).toEqual({ token: 'the-secret' });
+		expect(await verifyEmail('old', reply(400, { detail: 'bad_token' }))).toBe(false); // used or expired
+		// the server not answering is not "a bad link": the person is told to try again
+		await expect(
+			verifyEmail('x', reply(503, { detail: 'accounts_unavailable' }))
+		).rejects.toMatchObject({
+			status: 503
+		});
+	});
+
+	it('asks for the message again, and surfaces a refusal', async () => {
+		await expect(resendVerification(reply(202, { sent: true }))).resolves.toBeUndefined();
+		await expect(resendVerification(reply(429, { detail: 'rate_limited' }))).rejects.toMatchObject({
+			status: 429,
+			detail: 'rate_limited'
+		});
 	});
 });
