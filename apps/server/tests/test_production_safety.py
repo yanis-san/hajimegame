@@ -70,3 +70,15 @@ def test_an_empty_optional_value_means_it_is_not_set() -> None:
     settings = AppSettings(admin_password_hash="", admin_secret="", turnstile_secret=" ", database_url="")
     assert not settings.admin_enabled
     assert settings.turnstile_secret is None and settings.database_url is None
+
+
+def test_the_admin_packages_are_runtime_dependencies() -> None:
+    """The production image has no dev packages: what the admin needs must be a real dependency. (It once
+    crashed the real server: `itsdangerous`, used for its session, was only on a developer's machine.)"""
+    import tomllib
+    from pathlib import Path
+
+    project = tomllib.loads((Path(__file__).parent.parent / "pyproject.toml").read_text(encoding="utf-8"))
+    dependencies = " ".join(project["project"]["dependencies"]).lower()
+    for package in ("sqladmin", "itsdangerous", "argon2-cffi"):
+        assert package in dependencies, f"{package} must be in [project] dependencies"

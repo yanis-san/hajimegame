@@ -56,6 +56,14 @@ if [[ -n "$previous" ]]; then
   done
 fi
 
+echo "==> checking that the new version accepts this configuration"
+# Nothing has been touched yet: a setting it rejects, or a package it lacks when the admin is on, stops the deployment
+# here, instead of after the running version was replaced (the rollback reads the same .env and would fail too).
+if ! compose run --rm --no-deps server python -c "from app.main import create_app; create_app()" >/dev/null; then
+  echo "!! the new version cannot start with this .env: nothing was changed, $previous is still running" >&2
+  exit 1
+fi
+
 echo "==> database: up, then migrations"
 compose up -d --wait --wait-timeout 120 postgres
 # Migrations only add (see docs/DEPLOY.md), so the version that is still running keeps working while they
