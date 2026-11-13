@@ -34,7 +34,12 @@ def test_fragment_must_not_cut_small_kana(dictionary: Dictionary) -> None:
 
 def test_single_kana_words_are_excluded(dictionary: Dictionary) -> None:
     assert dictionary.check("あ", "あ") == WordRejected("not_in_dictionary")
-    assert all(len(r) >= 2 for e in (dictionary.entry(i) for i in range(len(dictionary))) for r in e.readings)
+    entries = (dictionary.entry(i) for i in range(len(dictionary)))
+    assert all(len(r) >= 2 for e in entries if not e.short for r in e.readings)
+    # one-kana words (日 is ひ) exist for the kanji game only: the fragment game does not accept them
+    assert dictionary.check("ひ", "ひ") == WordRejected("not_in_dictionary")
+    assert dictionary.check("き", "き") == WordRejected("not_in_dictionary")
+    assert not dictionary.matches("て", "て")
 
 
 def test_matches_returns_each_homograph_once(dictionary: Dictionary) -> None:

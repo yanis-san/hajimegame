@@ -30,6 +30,8 @@ class CandidateIndex:
         starts: dict[str, array[int]] = {}
         for entry_id in range(len(dictionary)):
             entry = dictionary.entry(entry_id)
+            if entry.short:
+                continue
             grams: set[str] = set()
             for reading in entry.readings:
                 grams |= fragment_ngrams(reading)

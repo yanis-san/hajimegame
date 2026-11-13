@@ -202,6 +202,7 @@ def convert(
                 priorities += [p.text or "" for p in k.findall("ke_pri")]
         readings: list[str] = []
         hira_written: set[str] = set()
+        short: list[str] = []  # one-kana readings (日 is ひ): only the kanji game plays them
         katakana: list[str] = []  # readings that JMdict writes in katakana (コーヒー), to show them that way
         for r in entry.findall("r_ele"):
             info = {clean_tag(i.text) for i in r.findall("re_inf")}
@@ -214,12 +215,18 @@ def convert(
             if reb == hira:
                 hira_written.add(hira)
             if len(hira) < 2:
+                if hira not in short:
+                    short.append(hira)
                 continue
             if hira not in readings:
                 readings.append(hira)
             if reb != hira and KATAKANA_RE.match(reb) and reb not in katakana:
                 katakana.append(reb)
             priorities += [p.text or "" for p in r.findall("re_pri")]
+        only_short = False
+        if not readings and short and forms:
+            readings, only_short = short, True  # a word like 日 (ひ), 木 (き), 手 (て): kept apart, see Entry.short
+            stats["short_only"] += 1
         if not readings:
             stats["drop_reading"] += 1
             continue
@@ -242,6 +249,7 @@ def convert(
                 "k": rank_from_priorities(priorities),
                 "p": sorted(all_pos - EXCLUDED_POS - {""})[:3],
                 **({"t": katakana} if katakana else {}),
+                **({"x": 1} if only_short else {}),
                 "f": meaning[0],
                 "g": meaning[1],
                 **({"s": list(example)} if example else {}),
@@ -267,7 +275,7 @@ def main() -> None:
     print("Parsing ...")
     examples = load_examples(args.cache.parent)
     entries, stats = convert(load_xml(source), examples)
-    entries.sort(key=lambda e: (e["k"], e["r"]))  # type: ignore[arg-type, return-value]
+    entries.sort(key=lambda e: (bool(e.get("x")), e["k"], e["r"]))  # type: ignore[arg-type, return-value]  # one-kana words last
 
     ranks = Counter(int(e["k"]) for e in entries)  # type: ignore[call-overload]
     meta = {
@@ -281,7 +289,7 @@ def main() -> None:
         "rank_note": "k: commonness, smaller is more common (nfNN band, 12 = ichi1, 25 = other *1 priority, 40 = *2 priority, 99 = other). It only orders suggestions: every word is playable.",
     }
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    fragments = count_fragments(e["r"] for e in entries)  # type: ignore[misc]
+    fragments = count_fragments(e["r"] for e in entries if not e.get("x"))  # type: ignore[misc]
     meta["fragments"] = len(fragments)
     payload = json.dumps({"meta": meta, "entries": entries, "fragments": fragments}, ensure_ascii=False, separators=(",", ":"))
     with gzip.GzipFile(args.out, "wb", mtime=0) as fh:

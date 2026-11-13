@@ -34,6 +34,7 @@ class Entry:
     meaning_en: str = ""
     example: tuple[str, str, str] = ("", "", "")  # Japanese sentence, English, French (Tatoeba)
     katakana: tuple[str, ...] = ()  # readings that the dictionary writes in katakana, as written (コーヒー)
+    short: bool = False  # a word of one kana (日 is ひ): the kanji game plays it, the fragment game does not
 
 
 @dataclass(frozen=True, slots=True)
@@ -93,6 +94,8 @@ class Dictionary:
         self._entries = entries
         starts: dict[str, int] = {}
         for entry in entries:
+            if entry.short:
+                continue
             for first in {r[0] for r in entry.readings}:
                 starts[first] = starts.get(first, 0) + 1
         self._starts = starts
@@ -109,6 +112,14 @@ class Dictionary:
 
     def entry(self, entry_id: int) -> Entry:
         return self._entries[entry_id]
+
+    def entry_ids(self, text: str) -> tuple[int, ...]:
+        """The entries written (kanji or kana) as the normalized ``text``; see :meth:`canonical`."""
+        return self._index.get(text, ())
+
+    def match(self, entry_id: int, reading: str, text: str) -> WordMatch:
+        """The result for ``text`` played as the entry ``entry_id`` (read ``reading``)."""
+        return _match(entry_id, self._entries[entry_id], reading, text)
 
     @staticmethod
     def canonical(text: str) -> str:
@@ -151,6 +162,8 @@ class Dictionary:
         found = False
         for entry_id in self._index.get(text, ()):
             entry = self._entries[entry_id]
+            if entry.short:
+                continue
             found = True
             reading = _reading_used(entry, text, fragment, starts_with)
             if reading is not None:
@@ -168,6 +181,8 @@ class Dictionary:
         result = []
         for entry_id in self._index.get(text, ()):
             entry = self._entries[entry_id]
+            if entry.short:
+                continue
             reading = _reading_used(entry, text, fragment, starts_with)
             if reading is not None:
                 result.append(_match(entry_id, entry, reading, text))
@@ -177,6 +192,8 @@ class Dictionary:
         """Example words for a fragment, commonest first (used by bots and tests)."""
         out: list[str] = []
         for entry in self._entries:
+            if entry.short:
+                continue
             for reading in entry.readings:
                 if contains_fragment(reading, fragment):
                     out.append(reading)
@@ -199,6 +216,7 @@ class Dictionary:
                 e.get("g", ""),
                 tuple(e["s"]) if "s" in e else ("", "", ""),
                 tuple(e.get("t", ())),
+                bool(e.get("x")),
             )
             for e in raw["entries"]
         )
