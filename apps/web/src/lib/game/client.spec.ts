@@ -1,5 +1,5 @@
 import type { ServerMessage } from '@hajime/protocol';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { backoffDelay, GameClient, type ConnectionStatus, type SocketLike } from './client';
 
 class FakeSocket implements SocketLike {
@@ -270,5 +270,32 @@ describe('GameClient', () => {
 		h.sockets[0].open();
 		h.sockets[0].onmessage?.({ data: 'not json' });
 		expect(h.messages).toHaveLength(0);
+	});
+});
+
+describe('coming back to the tab', () => {
+	let visibility: (() => void) | undefined;
+	beforeEach(() => {
+		vi.stubGlobal('document', {
+			visibilityState: 'visible',
+			addEventListener: (_: string, fn: () => void) => (visibility = fn),
+			removeEventListener: () => undefined
+		});
+		vi.stubGlobal('window', {
+			addEventListener: () => undefined,
+			removeEventListener: () => undefined
+		});
+	});
+	afterEach(() => vi.unstubAllGlobals());
+
+	it('leaves a connection that is still being made alone, and replaces one that died', () => {
+		const h = harness();
+		h.client.connect('ABCD', { name: 'Aya', avatar: 0, spectator: false } as never);
+		expect(h.sockets).toHaveLength(1);
+		visibility?.(); // the tab became visible while the socket is still connecting
+		expect(h.sockets).toHaveLength(1); // not dropped: closing it would log "closed before the connection..."
+		h.sockets[0].drop();
+		visibility?.();
+		expect(h.sockets).toHaveLength(2); // a dead one is replaced at once
 	});
 });

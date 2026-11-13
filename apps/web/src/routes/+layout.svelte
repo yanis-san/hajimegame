@@ -58,17 +58,16 @@
 		void loadAccount();
 		applyTheme(loadPref<'dark' | 'light'>('theme', 'dark'));
 		muted = sfx.muted;
-		// Audio can only start from a user gesture (iOS): unlock on the first tap or key press.
+		// Audio can only start from a user gesture: try on each tap, click and key press until it is awake. (A touch
+		// counts as a gesture when it ends, a key such as F12 does not count at all: hence several events.)
+		const events = ['pointerdown', 'pointerup', 'click', 'keydown'] as const;
 		const unlock = (): void => {
 			sfx.unlock();
-			window.removeEventListener('pointerdown', unlock);
-			window.removeEventListener('keydown', unlock);
+			if (sfx.running) for (const name of events) window.removeEventListener(name, unlock);
 		};
-		window.addEventListener('pointerdown', unlock);
-		window.addEventListener('keydown', unlock);
+		for (const name of events) window.addEventListener(name, unlock);
 		return () => {
-			window.removeEventListener('pointerdown', unlock);
-			window.removeEventListener('keydown', unlock);
+			for (const name of events) window.removeEventListener(name, unlock);
 		};
 	});
 

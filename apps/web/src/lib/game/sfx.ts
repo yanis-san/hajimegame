@@ -153,9 +153,20 @@ class SfxEngine {
 		if (this.#master) this.#master.gain.value = this.#muted ? 0 : this.#volume;
 	}
 
-	/** iOS only starts audio from a user gesture: call this from the first tap or key press. */
+	/** True once the audio context is awake: nothing more to unlock. */
+	get running(): boolean {
+		return this.#ctx?.state === 'running';
+	}
+
+	/**
+	 * Browsers only start audio from a real user gesture (a click, a tap, a key press; not F12, Ctrl or a scroll):
+	 * call this from the events that are one. Chrome tells whether the page has had one; asking before only makes
+	 * a console warning and leaves the context asleep, so in that case this waits for the next event.
+	 */
 	unlock(): void {
 		this.load();
+		const activation = (navigator as { userActivation?: { isActive: boolean } }).userActivation;
+		if (!this.#ctx && activation && !activation.isActive) return;
 		try {
 			if (!this.#ctx) {
 				const Ctor =

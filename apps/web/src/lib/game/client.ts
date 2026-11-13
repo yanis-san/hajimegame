@@ -44,6 +44,7 @@ export interface ClientOptions {
 	onFatal: (code: string) => void;
 }
 
+const CONNECTING = 0;
 const OPEN = 1;
 /** Errors after which retrying is pointless, wherever they happen. */
 const FATAL = new Set(['room_not_found', 'kicked', 'bad_version']);
@@ -106,7 +107,9 @@ export class GameClient {
 		if (typeof document !== 'undefined' && !this.#visibilityHandler) {
 			// Safari kills sockets in the background: reconnect right away when the tab comes back.
 			this.#visibilityHandler = () => {
-				if (document.visibilityState === 'visible' && !this.#stopped && !this.isOpen)
+				// a connection that is still being made is left alone: dropping it would only start the same one again
+				const connecting = this.#socket?.readyState === CONNECTING;
+				if (document.visibilityState === 'visible' && !this.#stopped && !this.isOpen && !connecting)
 					this.reconnectNow();
 			};
 			document.addEventListener('visibilitychange', this.#visibilityHandler);
