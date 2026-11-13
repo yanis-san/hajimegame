@@ -224,7 +224,7 @@ export const en: Record<MessageKey, string> = {
 	'credits.code.licence': 'MIT licence',
 	'credits.data.title': 'Your data',
 	'credits.data.body':
-		'When a game ends, the server stores the nickname chosen, the words played, the scores, the interface language and a random identifier created by your browser (never shown to other players). Nothing else: no IP address, no tracking cookie, no information about your device. This data is used to improve the game and, later, to link your history to an account if you create one. It is neither sold nor shared. If you clear the site’s data in your browser you start over with a new identifier: your past games are no longer linked to you.',
+		'When a game ends, the server stores the nickname chosen, the words played, the scores, the interface language and a random identifier created by your browser (never shown to other players). Nothing else: no IP address, no tracking cookie, no information about your device. This data is used to improve the game and to link your history to your account if you create one. It is neither sold nor shared. If you clear the site’s data in your browser you start over with a new identifier: your past games are no longer linked to you.',
 	'account.title': 'My account',
 	'account.open': 'Account',
 	'account.back': 'Back',
@@ -238,7 +238,7 @@ export const en: Record<MessageKey, string> = {
 	'account.password': 'Password',
 	'account.password.hint': 'At least 8 characters.',
 	'account.email': 'Email (optional)',
-	'account.email.hint': 'Used to confirm and recover your account.',
+	'account.email.hint': 'Will be used later to confirm and recover your account.',
 	'account.signUp': 'Create my account',
 	'account.signIn': 'Sign in',
 	'account.signOut': 'Sign out',

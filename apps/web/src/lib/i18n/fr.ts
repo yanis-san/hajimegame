@@ -1,11 +1,11 @@
 /** French strings: the reference locale. Other dictionaries must define every key of this one. */
 export const fr = {
 	'app.name': 'Bakahatsu',
-	'app.tagline': 'Trouve un mot japonais avant que la bombe explose.',
+	'app.tagline': 'Trouve un mot japonais avant que la bombe n’explose.',
 	'mode.label': 'Mode de jeu',
 	'mode.classic.title': 'Classique',
 	'mode.classic.desc':
-		'Un fragment de kana s’affiche : trouve un mot qui le contient avant que la bombe explose.',
+		'Un fragment de kana s’affiche : trouve un mot qui le contient avant que la bombe n’explose.',
 	'mode.shiritori.title': 'Shiritori',
 	'mode.shiritori.desc':
 		'Chaque mot commence par le dernier kana du mot précédent. Pas de répétition, jamais de mot en ん.',
@@ -108,7 +108,7 @@ export const fr = {
 	'results.score': '{n} pts',
 	'results.words.one': '{n} mot',
 	'results.words.other': '{n} mots',
-	'results.longest': 'Plus long : {word}',
+	'results.longest': 'Mot le plus long : {word}',
 	'results.rematch': 'Revanche',
 	'results.waitRematch': 'L’hôte lance la revanche',
 	'results.leave': 'Quitter',
@@ -224,7 +224,7 @@ export const fr = {
 	'credits.code.licence': 'Licence MIT',
 	'credits.data.title': 'Tes données',
 	'credits.data.body':
-		'Quand une partie se termine, le serveur enregistre le pseudo choisi, les mots joués, les scores, la langue de l’interface et un identifiant aléatoire créé par ton navigateur (jamais montré aux autres joueurs). Rien d’autre : ni adresse IP, ni cookie de suivi, ni information sur ton appareil. Ces données servent à améliorer le jeu et, plus tard, à relier ton historique à un compte si tu en crées un. Elles ne sont ni vendues ni partagées. Si tu effaces les données du site dans ton navigateur, tu repars avec un nouvel identifiant : tes anciennes parties ne sont plus reliées à toi.',
+		'Quand une partie se termine, le serveur enregistre le pseudo choisi, les mots joués, les scores, la langue de l’interface et un identifiant aléatoire créé par ton navigateur (jamais montré aux autres joueurs). Rien d’autre : ni adresse IP, ni cookie de suivi, ni information sur ton appareil. Ces données servent à améliorer le jeu et à relier ton historique à ton compte si tu en crées un. Elles ne sont ni vendues ni partagées. Si tu effaces les données du site dans ton navigateur, tu repars avec un nouvel identifiant : tes anciennes parties ne sont plus reliées à toi.',
 	'account.title': 'Mon compte',
 	'account.open': 'Compte',
 	'account.back': 'Retour',
@@ -238,7 +238,7 @@ export const fr = {
 	'account.password': 'Mot de passe',
 	'account.password.hint': '8 caractères minimum.',
 	'account.email': 'Email (facultatif)',
-	'account.email.hint': 'Servira à confirmer et à récupérer ton compte.',
+	'account.email.hint': 'Servira plus tard à confirmer et à récupérer ton compte.',
 	'account.signUp': 'Créer mon compte',
 	'account.signIn': 'Me connecter',
 	'account.signOut': 'Me déconnecter',
@@ -267,9 +267,9 @@ export const fr = {
 	'credits.dictionary.body':
 		'Les mots et leurs sens (anglais, et français quand JMdict le fournit) viennent du fichier JMdict, © Electronic Dictionary Research and Development Group (EDRDG). Le dictionnaire de jeu est une version filtrée et reformatée de ce fichier ; ses règles de filtrage sont documentées dans le dépôt.',
 	'credits.dictionary.licence': 'Licence du groupe EDRDG',
-	'credits.examples.title': "Phrases d'exemple",
+	'credits.examples.title': 'Phrases d’exemple',
 	'credits.examples.body':
-		"Les phrases d'exemple et leurs traductions viennent du projet Tatoeba et de ses contributeurs, sous licence CC BY 2.0 FR. Elles sont rattachées aux mots par les exemples du fichier JMdict. Aucune traduction n'est générée automatiquement.",
+		'Les phrases d’exemple et leurs traductions viennent du projet Tatoeba et de ses contributeurs, sous licence CC BY 2.0 FR. Elles sont rattachées aux mots par les exemples du fichier JMdict. Aucune traduction n’est générée automatiquement.',
 	'credits.fonts.title': 'Polices',
 	'credits.fonts.body':
 		'Shippori Mincho, Zen Maru Gothic, Zen Kaku Gothic New et JetBrains Mono, sous licence SIL Open Font License 1.1, auto-hébergées via Fontsource.',
