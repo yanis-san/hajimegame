@@ -672,3 +672,16 @@ async def test_a_cpu_plays_the_kanji_mode(server: RunningServer, dictionary: Dic
     else:
         raise AssertionError("the CPU never played a word")
     await host.close()
+
+
+async def test_a_player_who_leaves_mid_game_is_still_named_in_the_recap(server: RunningServer) -> None:
+    _, (a, b, c) = await lobby(server, 3)
+    await start_game([a, b, c], lives=1, fuse_seconds=5)
+    await c.send(t="leave")  # leaves in the middle of the game: eliminated, the game goes on for the others
+    over = await a.wait("game_over", timeout=30)
+    rows = {r["player_id"]: r for r in over["results"]}
+    assert len(rows) == 3
+    assert rows[c.player_id]["name"] == "Chi" and rows[c.player_id]["avatar"] >= 0
+    assert {r["name"] for r in rows.values()} == {"Aya", "Ben", "Chi"}
+    await a.close()
+    await b.close()

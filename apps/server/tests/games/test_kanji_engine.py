@@ -119,6 +119,9 @@ class SameKanji:
     def reject_reason(self, text: str, char: str) -> Reject:
         return self._book.reject_reason(text, char)
 
+    def difficulty(self, char: str) -> int:
+        return self._book.difficulty(char)
+
 
 def test_a_word_already_played_is_refused(dictionary: Dictionary, book: KanjiBook) -> None:
     engine = BombEngine(

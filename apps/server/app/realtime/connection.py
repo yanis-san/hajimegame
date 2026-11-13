@@ -28,6 +28,7 @@ class Connection:
     member_id: str | None = None
     last_seen: float = field(default_factory=time.monotonic)
     closed: bool = False
+    latency: float = 0.0  # round trip in seconds, as the client measured it: credited to its answers' speed
     queue: asyncio.Queue[str | CloseRequest] = field(init=False)
 
     def __post_init__(self) -> None:

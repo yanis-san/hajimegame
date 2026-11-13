@@ -203,9 +203,21 @@
 		.typing {
 			display: none;
 		}
+		/* the score is a small badge on the corner of the tile: always visible, even with the keyboard open */
 		.score {
-			font-size: 0.8rem;
-			color: var(--text-mute);
+			position: absolute;
+			top: -7px;
+			right: -5px;
+			min-width: 1.5rem;
+			padding: 0 0.3rem 0.05rem;
+			box-sizing: border-box;
+			text-align: center;
+			font-size: 0.72rem;
+			line-height: 1.3;
+			background: var(--washi);
+			color: var(--sumi);
+			border: 2px solid var(--sumi);
+			border-radius: 999px;
 		}
 		.card.compact {
 			padding-block: 0.2rem 0.15rem;
@@ -214,7 +226,6 @@
 			width: 30px;
 			height: 30px;
 		}
-		.card.compact .score,
 		.card.compact .cpu {
 			display: none;
 		}
@@ -222,9 +233,6 @@
 		.card.compact .name {
 			font-size: 0.64rem;
 			line-height: 1.15;
-		}
-		.active .score {
-			color: var(--sumi);
 		}
 	}
 </style>

@@ -15,7 +15,7 @@ test('a finished game can be reviewed with all its words, then found again in th
 	await host.page.getByRole('radio', { name: '1', exact: true }).first().click();
 	await host.page.getByRole('radio', { name: '5 s', exact: true }).click();
 	await joinRoom(guest, code);
-	await guest.page.getByRole('button', { name: 'Pas prêt' }).click();
+	await guest.page.getByRole('button', { name: 'Je suis prêt' }).click();
 	await expect(host.page.getByRole('button', { name: 'Lancer la partie' })).toBeEnabled();
 	await host.page.getByRole('button', { name: 'Lancer la partie' }).click();
 	await expect(host.page.locator('.game')).toBeVisible({ timeout: 15_000 });

@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, WebSocket
 from fastapi.responses import Response
+from msgspec import UnsetType
 from starlette.websockets import WebSocketDisconnect, WebSocketState
 
 from app.core import metrics
@@ -148,6 +149,10 @@ async def ws_endpoint(websocket: WebSocket, code: str) -> None:
             if isinstance(msg, pr.Ping):
                 # Answered immediately, outside the room queue, so latency estimates stay clean.
                 conn.last_seen = asyncio.get_running_loop().time()
+                if not isinstance(msg.rtt, UnsetType):
+                    conn.latency = (
+                        msg.rtt / 1000
+                    )  # credited to the speed of this player's answers (capped there)
                 conn.offer(
                     pr.encode(pr.Pong(n=msg.n, t0=msg.t0, server_time=to_ms(room.clock.now()))).decode()
                 )

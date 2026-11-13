@@ -27,7 +27,7 @@ test('no serious accessibility violation in the lobby and in a game', async ({ b
 	const code = await createRoom(host);
 	expect(await serious(host.page)).toEqual([]);
 	await joinRoom(guest, code);
-	await guest.page.getByRole('button', { name: 'Pas prêt' }).click();
+	await guest.page.getByRole('button', { name: 'Je suis prêt' }).click();
 	await host.page.getByRole('button', { name: 'Lancer la partie' }).click();
 	await expect(host.page.locator('.game')).toBeVisible({ timeout: 15_000 });
 	expect(await serious(host.page)).toEqual([]);

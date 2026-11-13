@@ -329,7 +329,7 @@
 				pressed={meReady}
 				onclick={() => session.ready(!meReady)}
 			>
-				{meReady ? t('lobby.ready') : t('lobby.notReady')}
+				{meReady ? t('lobby.readyDone') : t('lobby.readyAction')}
 			</Button>
 			<p class="hint">{t('lobby.waitHost')}</p>
 		{/if}

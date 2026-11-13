@@ -47,6 +47,8 @@ export const ja: Record<MessageKey, string> = {
 	'lobby.copied': 'コピーしました',
 	'lobby.share': '共有',
 	'lobby.ready': '準備OK',
+	'lobby.readyAction': '準備OK',
+	'lobby.readyDone': '準備OK！（取り消し）',
 	'lobby.notReady': '準備中',
 	'lobby.start': 'ゲーム開始',
 	'lobby.waitHost': 'ホストを待っています',

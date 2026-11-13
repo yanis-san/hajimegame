@@ -317,6 +317,12 @@ export class GameClient {
 		const t0 = this.#now;
 		this.#pending.set(n, t0);
 		if (this.#pending.size > 20) this.#pending.delete(this.#pending.keys().next().value as number);
-		this.#raw({ t: 'ping', n, t0 });
+		// the best round trip we know: the server credits it to the speed of our answers (a bad connection costs no points)
+		this.#raw({
+			t: 'ping',
+			n,
+			t0,
+			...(this.clock.ready ? { rtt: Math.round(this.clock.rtt) } : {})
+		});
 	}
 }

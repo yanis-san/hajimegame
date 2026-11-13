@@ -26,6 +26,7 @@ DEFAULT_PATH: Final = Path(__file__).parent / "data" / "kanji.json.gz"
 LEVELS: Final = (5, 4, 3, 2, 1)
 # A kanji needs this many words to be worth a turn (a kanji with two words would be a trap for the players).
 MIN_WORDS: Final = 5
+DIFFICULTY: Final = {5: 0, 4: 0, 3: 1, 2: 2, 1: 2}
 CANDIDATES_PER_KANJI: Final = 600  # the words a CPU player can pick from, commonest first
 
 
@@ -128,6 +129,11 @@ class KanjiBook:
                 reading = text if text in entry.readings else entry.readings[0]
                 out.append(dictionary.match(entry_id, reading, text))
         return tuple(out)
+
+    def difficulty(self, char: str) -> int:
+        """0 for N5 and N4, 1 for N3, 2 for N2 and N1 (a kanji that is not in the table counts as easy)."""
+        kanji = self._kanji.get(char)
+        return 0 if kanji is None else DIFFICULTY[kanji.level]
 
     def reject_reason(self, raw: str, char: str) -> Reject:
         result = self.check(raw, char)

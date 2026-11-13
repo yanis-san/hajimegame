@@ -26,9 +26,35 @@ from app.games.base import Clock, GameEvent, Phase, PlayerInfo
 from app.games.bomb import events as ev
 from app.games.bomb.ports import FragmentPicker, KanjiSource, WordValidator
 from app.games.bomb.settings import LIFE_CAP, BombSettings
-from app.japanese.kana import shiritori_end, units
+from app.japanese.kana import shiritori_end
 
 RECENT_FRAGMENTS = 8
+
+# Points. Every word is worth the same, whatever its length: 10, plus 2 per level of difficulty of
+# the prompt (classic: the fragment's tier, 0 to 2; kanji: N5 and N4 = 0, N3 = 1, N2 and N1 = 2).
+# Then the speed: a very quick answer (within the first quarter of the fuse) is worth half as much
+# again, a late one (after 70% of the fuse) a fifth less. The speed is the time the server measured,
+# minus the round trip of the player's connection (the ``credit``, capped), so a bad connection
+# does not cost points.
+POINTS_BASE = 10
+POINTS_PER_DIFFICULTY = 2
+QUICK_RATIO = 0.25
+LATE_RATIO = 0.70
+QUICK_FACTOR = 1.5
+LATE_FACTOR = 0.8
+MAX_CREDIT = 0.25  # seconds of latency a connection may be credited, whatever it reports
+
+
+def word_points(difficulty: int, ratio: float) -> int:
+    """Points of an accepted word, from the prompt's difficulty (0 to 2) and the share of the fuse used."""
+    base = POINTS_BASE + POINTS_PER_DIFFICULTY * difficulty
+    if ratio <= QUICK_RATIO:
+        return round(base * QUICK_FACTOR)
+    if ratio > LATE_RATIO:
+        return round(base * LATE_FACTOR)
+    return base
+
+
 BONUS_LIST_SIZE = 3
 # The 45 basic hiragana used for bonus lives (gojuon without を).
 BONUS_POOL = tuple(
@@ -98,6 +124,7 @@ class BombEngine:
         self._fragment = ""
         self._deadline: float | None = None
         self._turn_started = 0.0
+        self._difficulty = 0  # of the prompt of the current turn, 0 to 2
         self._next_start = ""  # shiritori: the kana the next word must start with
         self._recent: list[str] = []
         self._used: set[int] = set()
@@ -165,7 +192,9 @@ class BombEngine:
         self._begin_turn(first, out)
         return out
 
-    def submit(self, player_id: str, text: str, at: float | None = None) -> list[GameEvent]:
+    def submit(
+        self, player_id: str, text: str, at: float | None = None, credit: float = 0.0
+    ) -> list[GameEvent]:
         if self._phase is not Phase.PLAYING or self._current is None or self._deadline is None:
             return []
         now = self._clock.now() if at is None else at
@@ -207,7 +236,10 @@ class BombEngine:
 
         state = self._players[player_id]
         self._used.add(hit.entry_id)
-        gain = len(units(hit.reading))
+        used_ratio = max(0.0, now - min(max(credit, 0.0), MAX_CREDIT) - self._turn_started) / max(
+            1e-9, self.settings.fuse_seconds
+        )
+        gain = word_points(self._difficulty, used_ratio)
         state.score += gain
         state.words += 1
         self._history.append(PlayedWord(self._turn, player_id, hit.text, hit.reading, hit.entry_id))
@@ -282,7 +314,10 @@ class BombEngine:
     def _pick_fragment(self, state: PlayerState) -> str:
         if self.settings.mode == "kanji":
             assert self._kanji is not None
-            return self._kanji.draw(self.settings.levels, self._rng, self._recent)
+            char = self._kanji.draw(self.settings.levels, self._rng, self._recent)
+            self._difficulty = self._kanji.difficulty(char)
+            return char
+        self._difficulty = state.skill if self.settings.mode == "classic" else 0
         if self.settings.mode == "classic":
             return self._fragments.pick_text(self._rng, state.skill, self._recent)
         if self._next_start:

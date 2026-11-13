@@ -48,6 +48,8 @@ export const en: Record<MessageKey, string> = {
 	'lobby.copied': 'Link copied',
 	'lobby.share': 'Share',
 	'lobby.ready': 'Ready',
+	'lobby.readyAction': 'I’m ready',
+	'lobby.readyDone': 'Ready! (cancel)',
 	'lobby.notReady': 'Not ready',
 	'lobby.start': 'Start the game',
 	'lobby.waitHost': 'Waiting for the host',

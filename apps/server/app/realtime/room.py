@@ -120,6 +120,7 @@ class Room:
         self._phase: pr.RoomPhase = "lobby"
         self._settings = BombSettings(max_players=self._cfg.max_players_per_room, mode=mode)
         self._engine: BombEngine | None = None
+        self._seat_avatars: dict[str, int] = {}  # who sat in the game, for the recap of those who left
         self._seq = 0
         self._turn: pr.TurnView | None = None
         self._typing = ""
@@ -717,6 +718,7 @@ class Room:
             kanji=self._kanji_book() if settings.mode == "kanji" else None,
         )
         self._engine = engine
+        self._seat_avatars = {m.id: m.avatar for m in players}
         self._recording = BombRecording(
             self.code,
             self._settings.mode,
@@ -762,7 +764,7 @@ class Room:
         if engine is None or self._phase != "playing" or member.spectator:
             self._error(conn, "wrong_phase")
             return
-        self._apply(engine.submit(member.id, msg.text, at=at))
+        self._apply(engine.submit(member.id, msg.text, at=at, credit=conn.latency))
 
     # ------------------------------------------------------------------ CPU players
 
@@ -975,7 +977,17 @@ class Room:
             state = stats[player_id]
             words = [h for h in engine.history if h.player_id == player_id]
             longest = max((h.word for h in words), key=len, default="")
-            rows.append(pr.ResultRow(player_id, place, state.score, state.words, longest))
+            rows.append(
+                pr.ResultRow(
+                    player_id,
+                    state.info.name,
+                    self._seat_avatars.get(player_id, 0),
+                    place,
+                    state.score,
+                    state.words,
+                    longest,
+                )
+            )
         self._results = rows
         metrics.GAMES_FINISHED.inc()
         self._submit_record(rows)

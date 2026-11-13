@@ -20,7 +20,7 @@ test('two players play a full game: refused word, accepted word, reload mid-game
 
 	// the host cannot start until the guest is ready
 	await expect(host.page.getByRole('button', { name: 'Lancer la partie' })).toBeDisabled();
-	await guest.page.getByRole('button', { name: 'Pas prêt' }).click();
+	await guest.page.getByRole('button', { name: 'Je suis prêt' }).click();
 	await expect(host.page.getByRole('button', { name: 'Lancer la partie' })).toBeEnabled();
 	await host.page.getByRole('button', { name: 'Lancer la partie' }).click();
 
@@ -83,7 +83,7 @@ test('a spectator can watch a running game', async ({ browser }) => {
 	const watcher = await newPlayer(browser, 'Curieux');
 	const code = await createRoom(host);
 	await joinRoom(guest, code);
-	await guest.page.getByRole('button', { name: 'Pas prêt' }).click();
+	await guest.page.getByRole('button', { name: 'Je suis prêt' }).click();
 	await expect(host.page.getByRole('button', { name: 'Lancer la partie' })).toBeEnabled();
 	await host.page.getByRole('button', { name: 'Lancer la partie' }).click();
 	await expect(host.page.locator('.game')).toBeVisible({ timeout: 15_000 });
@@ -116,7 +116,7 @@ test('shiritori: the next fragment is the last kana of the word just played', as
 	await expect(host.page.getByRole('radio', { name: /Classique/ })).toHaveCount(0);
 	await joinRoom(guest, code);
 	await expect(guest.page.locator('.modeline')).toContainText('Shiritori');
-	await guest.page.getByRole('button', { name: 'Pas prêt' }).click();
+	await guest.page.getByRole('button', { name: 'Je suis prêt' }).click();
 	await expect(host.page.getByRole('button', { name: 'Lancer la partie' })).toBeEnabled();
 	await host.page.getByRole('button', { name: 'Lancer la partie' }).click();
 	await expect(host.page.locator('.game')).toBeVisible({ timeout: 15_000 });
@@ -173,7 +173,7 @@ test('shiritori option: a word ending in ん can cost a life instead of being re
 	await host.page.getByRole('switch', { name: /ん fait perdre une vie/ }).click();
 	await joinRoom(guest, code);
 	await expect(guest.page.getByRole('switch', { name: /ん fait perdre une vie/ })).toBeChecked();
-	await guest.page.getByRole('button', { name: 'Pas prêt' }).click();
+	await guest.page.getByRole('button', { name: 'Je suis prêt' }).click();
 	await expect(host.page.getByRole('button', { name: 'Lancer la partie' })).toBeEnabled();
 	await host.page.getByRole('button', { name: 'Lancer la partie' }).click();
 	await expect(host.page.locator('.game')).toBeVisible({ timeout: 15_000 });
@@ -296,15 +296,15 @@ test('two players can play in different interface languages', async ({ browser }
 	await guest.page.goto(`/ja/r/${code}`);
 	await guest.page.getByLabel('ニックネーム').fill('Aya');
 	await guest.page.getByRole('button', { name: '入る' }).click();
-	await expect(guest.page.getByRole('button', { name: '準備中' })).toBeVisible();
+	await expect(guest.page.getByRole('button', { name: '準備OK' })).toBeVisible();
 	await expect(
 		host.page
-			.getByRole('button', { name: 'Pas prêt' })
+			.getByRole('button', { name: 'Je suis prêt' })
 			.or(host.page.getByText('Aya').first())
 			.first()
 	).toBeVisible();
 	await expect(host.page.getByRole('button', { name: 'Lancer la partie' })).toBeVisible();
-	await guest.page.getByRole('button', { name: '準備中' }).click();
+	await guest.page.getByRole('button', { name: '準備OK' }).click();
 	await expect(host.page.getByRole('button', { name: 'Lancer la partie' })).toBeEnabled();
 	await host.page.getByRole('button', { name: 'Lancer la partie' }).click();
 	await expect(host.page.locator('.game')).toBeVisible({ timeout: 15_000 });

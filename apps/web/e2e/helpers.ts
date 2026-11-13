@@ -67,7 +67,7 @@ export async function joinRoom(player: Player, code: string): Promise<void> {
 	await player.page.waitForLoadState('networkidle');
 	await player.page.getByLabel('Ton pseudo').fill(player.name);
 	await player.page.getByRole('button', { name: 'Entrer' }).click();
-	await player.page.getByRole('button', { name: 'Pas prêt' }).waitFor();
+	await player.page.getByRole('button', { name: 'Je suis prêt' }).waitFor();
 }
 
 /** A word starting with `first` and ending in ん (for the shiritori penalty option). */

@@ -45,7 +45,9 @@ def test_valid_word_passes_the_bomb_and_resets_deadline() -> None:
     assert kinds(events) == ["WordAccepted", "TurnStarted"]
     accepted, turn = events
     assert isinstance(accepted, ev.WordAccepted) and isinstance(turn, ev.TurnStarted)
-    assert accepted.score_gain == 3
+    assert (
+        accepted.score_gain == 12
+    )  # 10 + 2 for the medium fragment, answered in 40% of the fuse: normal speed
     assert turn.player_id != first
     assert turn.deadline == clock.now() + 10.0
 
@@ -429,3 +431,45 @@ def test_manual_clock_cannot_go_backwards() -> None:
         clock.set(1)
     clock.set(7)
     assert clock.now() == 7
+
+
+# --------------------------------------------------------------------------- points
+
+
+def test_points_do_not_depend_on_the_length_of_the_word() -> None:
+    from app.games.bomb.engine import word_points
+
+    assert word_points(0, 0.5) == 10  # normal speed, easy prompt
+    assert word_points(1, 0.5) == 12
+    assert word_points(2, 0.5) == 14
+
+
+def test_a_very_quick_answer_earns_half_as_much_again_and_a_late_one_a_fifth_less() -> None:
+    from app.games.bomb.engine import word_points
+
+    assert [word_points(0, r) for r in (0.0, 0.25)] == [15, 15]  # within the first quarter of the fuse
+    assert [word_points(0, r) for r in (0.26, 0.5, 0.7)] == [10, 10, 10]
+    assert [word_points(0, r) for r in (0.71, 1.0)] == [8, 8]
+    assert word_points(2, 0.1) == 21 and word_points(2, 0.9) == 11  # the hard prompt's base is 14
+
+
+def play_for_points(delay: float, credit: float = 0.0, word: str = "くるま") -> int:
+    engine, clock = make_engine()
+    engine.start()
+    player = engine.current_player
+    assert player is not None
+    clock.advance(delay)
+    accepted = engine.submit(player, word, credit=credit)[0]
+    assert isinstance(accepted, ev.WordAccepted)
+    return accepted.score_gain
+
+
+def test_the_speed_is_what_the_server_measured_with_the_round_trip_credited() -> None:
+    # fuse 10 s, medium fragment (base 12): 2.4 s is the limit of the quick band (25%)
+    assert play_for_points(2.0) == 18
+    assert play_for_points(2.6) == 12  # a slow connection would have made this one normal...
+    assert play_for_points(2.6, credit=0.2) == 18  # ...but its round trip of 0.2 s is credited
+    assert play_for_points(8.0) == 10  # late: 12 * 0.8
+    # the credit is capped: a connection cannot claim a huge latency to look faster
+    assert play_for_points(2.9, credit=5.0) == 12  # only 0.25 s credited: 2.65 s is above the quick band
+    assert play_for_points(2.9, credit=-1.0) == 12  # a negative credit is nothing

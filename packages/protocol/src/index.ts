@@ -56,6 +56,8 @@ export interface WordView {
 
 export interface ResultRow {
   player_id: string;
+  name: string;
+  avatar: number;
   place: number;
   score: number;
   words: number;
@@ -168,6 +170,7 @@ export interface Ping {
   t: "ping";
   n: number;
   t0: number;
+  rtt?: number;
   v?: number;
 }
 

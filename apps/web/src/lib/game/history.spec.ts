@@ -53,8 +53,8 @@ const word = (id: string, text: string, turn: number): WordView => ({
 	example_fr: ''
 });
 const results: ResultRow[] = [
-	{ player_id: 'b', place: 2, score: 1, words: 1, longest: 'ねこ' },
-	{ player_id: 'a', place: 1, score: 5, words: 2, longest: 'さくら' }
+	{ player_id: 'b', name: 'Ben', avatar: 1, place: 2, score: 1, words: 1, longest: 'ねこ' },
+	{ player_id: 'a', name: 'Aya', avatar: 0, place: 1, score: 5, words: 2, longest: 'さくら' }
 ];
 
 function finished(extra: Partial<FinishedGame> = {}): FinishedGame {
@@ -88,6 +88,13 @@ describe('history', () => {
 		expect(game?.words.map((w) => w.word)).toEqual(['さくら', 'ねこ']);
 		expect(game?.at).toBe(1000);
 		expect(buildSavedGame(finished({ results: [] }), 1)).toBeNull();
+	});
+
+	it('keeps the name and the avatar of a player who left before the end', () => {
+		const game = buildSavedGame(finished({ players: [player('a', 'Aya')] }), 1);
+		const ben = game?.players.find((p) => p.id === 'b');
+		expect(ben?.name).toBe('Ben'); // never a question mark
+		expect(ben?.avatar).toBe(1);
 	});
 
 	it('saves, lists newest first, and never saves the same game twice', () => {

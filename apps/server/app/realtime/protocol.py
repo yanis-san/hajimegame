@@ -112,6 +112,7 @@ class Submit(_Msg, tag_field="t", tag="submit"):
 class Ping(_Msg, tag_field="t", tag="ping"):
     n: int
     t0: float  # client time, echoed back untouched
+    rtt: Annotated[float, Meta(ge=0, le=60_000)] | UnsetType = UNSET  # round trip the client measured, in ms
     v: int = PROTOCOL_VERSION
 
 
@@ -270,6 +271,8 @@ class BombStatsView(Struct, frozen=True, omit_defaults=False):
 
 class ResultRow(Struct, frozen=True, omit_defaults=False):
     player_id: str
+    name: str  # nickname and avatar during the game: a player who left is still shown in the recap
+    avatar: int
     place: int
     score: int
     words: int

@@ -58,6 +58,9 @@ class KanjiSource(Protocol):
     def reject_reason(self, text: str, char: str) -> RejectReason:
         """Why ``text`` has no match: ``not_in_dictionary`` or ``missing_fragment``."""
 
+    def difficulty(self, char: str) -> int:
+        """How hard ``char`` is, from 0 (easy) to 2 (hard): it raises the points of a word."""
+
 
 class FragmentPicker(Protocol):
     def pick_text(self, rng: random.Random, tier: int, recent: Sequence[str]) -> str:

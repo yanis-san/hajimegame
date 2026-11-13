@@ -134,6 +134,14 @@ test('with the keyboard open, the fragment stays visible and the keyboard stays 
 		expect(box?.height ?? 0).toBeGreaterThan(8);
 	}
 
+	// the score of every player is on its tile, inside the screen, even with the keyboard open
+	for (const score of await page.locator('.slot .score').all()) {
+		await expect(score).toBeVisible();
+		const box = await score.boundingBox();
+		expect(box?.x ?? -1).toBeGreaterThanOrEqual(0);
+		expect((box?.x ?? 0) + (box?.width ?? 0)).toBeLessThanOrEqual(360);
+	}
+
 	// nothing covers the fragment: its tag is entirely above the field, inside the screen
 	const layout = await page.evaluate(() => {
 		const tag = document.querySelector('.plaque')!.getBoundingClientRect();

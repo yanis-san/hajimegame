@@ -92,9 +92,9 @@
 				<span class="place">
 					{#if row.place === 1}<Icon name="crown" size={22} />{:else}{row.place}{/if}
 				</span>
-				{#if p}<Avatar id={p.avatar} size={44} label={false} />{/if}
+				<Avatar id={p?.avatar ?? row.avatar} size={44} label={false} />
 				<span class="who">
-					<strong>{p?.name ?? '?'}</strong>
+					<strong>{p?.name ?? row.name}</strong>
 					<small
 						>{row.longest
 							? t('results.longest', { word: row.longest })
@@ -135,7 +135,11 @@
 </section>
 
 <Modal bind:open={reviewOpen} title={t('review.title')}>
-	<WordReview words={store.words} players={store.players} you={store.you} />
+	<WordReview
+		words={store.words}
+		players={rows.map((r) => ({ id: r.player_id, name: r.name }))}
+		you={store.you}
+	/>
 </Modal>
 
 <style>

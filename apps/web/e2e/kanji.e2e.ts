@@ -30,7 +30,7 @@ test('kanji mode: choose the levels, get a kanji, a word written with it is acce
 
 	await joinRoom(guest, code);
 	await expect(guest.page.locator('.modeline')).toContainText('Kanji Bombe');
-	await guest.page.getByRole('button', { name: 'Pas prêt' }).click();
+	await guest.page.getByRole('button', { name: 'Je suis prêt' }).click();
 	await host.page.getByRole('button', { name: 'Lancer la partie' }).click();
 	await expect(host.page.locator('.game')).toBeVisible({ timeout: 15_000 });
 

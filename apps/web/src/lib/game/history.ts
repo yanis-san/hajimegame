@@ -61,8 +61,8 @@ export function buildSavedGame(game: FinishedGame, at: number): SavedGame | null
 			const view = game.players.find((p) => p.id === row.player_id);
 			return {
 				id: row.player_id,
-				name: view?.name ?? '?',
-				avatar: view?.avatar ?? 0,
+				name: view?.name ?? row.name,
+				avatar: view?.avatar ?? row.avatar,
 				bot: view?.bot ?? false,
 				place: row.place,
 				score: row.score,

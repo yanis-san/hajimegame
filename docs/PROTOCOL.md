@@ -75,7 +75,7 @@ with its translations; all empty for most words, French often empty). |
 | `explosion` | Bomb exploded on `player_id`, `lives` left. `cause` is `timeout` or `n_ending` (shiritori penalty). |
 | `elimination` | `player_id` is out with final `place`. |
 | `life` / `bonus` | Bonus kana progress and extra life. |
-| `game_over` | `winner_id`, `results` (place, score, words, longest word) and `words`: every word of the game in order (at most 500), with meanings and examples, for the end-of-game review and the history kept by the client. |
+| `game_over` | `winner_id`, `results` (player, nickname, avatar, place, score, words, longest word: a player who left is still named) and `words`: every word of the game in order (at most 500), with meanings and examples, for the end-of-game review and the history kept by the client. |
 | `chat` | Lobby chat line. Plain text, never HTML. |
 | `error` | `code` is one of `ErrorCode` in the generated types. |
 | `pong` | Echo of `n` and `t0` plus `server_time`. |
@@ -88,6 +88,15 @@ The server stamps each `submit` with its own receive time on the room clock.
 - Received after `deadline`: `rejected: too_late` and the bomb explodes.
 - The bomb timer fires at `deadline`. Both paths go through the single room queue, so there is no race and the outcome
   is deterministic for a given receive order.
+
+## Points
+
+Every accepted word is worth the same whatever its length: **10 points, plus 2 per level of difficulty** of the prompt
+(classic: the fragment's tier 0 to 2, which follows the player's own speed; shiritori: 0; kanji: N5 and N4 = 0, N3 = 1,
+N2 and N1 = 2). Then the speed, as a share of the fuse used: within the first **25%** the word is worth **half as much
+again** (rounded), after **70%** a **fifth less**, in between it is worth the base. The time is measured by the server
+(never taken from the client); the round trip the client reports in its `ping` (`rtt`, ms; the best one it measured)
+is credited to it, at most 250 ms, so a bad connection does not cost points. The deadline itself is never moved.
 
 ## Reconnection
 

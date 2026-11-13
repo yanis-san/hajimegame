@@ -46,6 +46,8 @@ export const fr = {
 	'lobby.copied': 'Lien copié',
 	'lobby.share': 'Partager',
 	'lobby.ready': 'Prêt',
+	'lobby.readyAction': 'Je suis prêt',
+	'lobby.readyDone': 'Prêt ! (annuler)',
 	'lobby.notReady': 'Pas prêt',
 	'lobby.start': 'Lancer la partie',
 	'lobby.waitHost': 'En attente de l’hôte',
