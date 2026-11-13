@@ -140,9 +140,11 @@
 	}
 	.art {
 		display: flex;
+		flex-wrap: wrap; /* a wider fallback font must push a tile down, never out of the card */
 		align-items: center;
 		gap: 0.25rem;
 		min-height: 2.6rem;
+		min-width: 0;
 	}
 	.tile {
 		padding: 0 0.35rem 0.1rem;

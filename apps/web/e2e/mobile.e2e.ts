@@ -15,8 +15,9 @@ const sticking = (page: Page): Promise<string[]> =>
 	page.evaluate(() =>
 		[...document.querySelectorAll('body *')]
 			.filter((e) => e.getBoundingClientRect().right > document.documentElement.clientWidth + 0.5)
-			.filter((e) => getComputedStyle(e).position !== 'fixed')
-			.slice(0, 5)
+			// the fixed background is only wider because the page is: look for what widens it
+			.filter((e) => !e.closest('.sky') && getComputedStyle(e).position !== 'fixed')
+			.slice(0, 8)
 			.map((e) => `${e.tagName}.${String(e.getAttribute('class')).slice(0, 40)}`)
 	);
 
