@@ -175,9 +175,20 @@
 		display: flex;
 		align-items: center;
 		gap: 0.75rem;
+		min-width: 0;
 	}
 	/* narrow phones: tighter bar so the logo, the language picker and the two buttons never widen the page */
-	@media (max-width: 400px) {
+	/* a game on a phone: no bar, the whole screen is the game */
+	@media (max-width: 899px) {
+		:global(html[data-playing]) {
+			--bar: 0px;
+			overflow: hidden;
+		}
+		:global(html[data-playing]) .bar {
+			display: none;
+		}
+	}
+	@media (max-width: 480px) {
 		.bar {
 			padding-inline: 0.5rem;
 		}
@@ -190,7 +201,7 @@
 		}
 	}
 	/* the seal alone is the logo on phones: the account button needs the room */
-	@media (max-width: 400px) {
+	@media (max-width: 560px) {
 		.word {
 			display: none;
 		}

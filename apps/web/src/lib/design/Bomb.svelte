@@ -160,7 +160,7 @@
 			{/key}
 		{/if}
 		{#if showTimer}
-			<div class="seconds" aria-hidden="true">
+			<div class="seconds" class:small={size < 140} aria-hidden="true">
 				<span class="digits" class:hot={running && fraction < 0.3}
 					>{running ? seconds : '--.-'}</span
 				>
@@ -198,7 +198,10 @@
 	.kana {
 		font-family: var(--font-kana);
 		font-weight: 700;
-		font-size: calc(var(--size) * 0.3);
+		font-size: max(
+			1.7rem,
+			calc(var(--size) * 0.3)
+		); /* the fragment is the whole game: never small */
 		line-height: 1.15;
 		letter-spacing: 0.04em;
 		white-space: nowrap;
@@ -220,9 +223,15 @@
 	}
 	.seconds {
 		position: absolute;
-		left: calc(var(--size) * -0.1);
-		top: calc(var(--size) * 0.16);
+		left: calc(var(--size) * -0.36);
+		top: calc(var(--size) * 0.04);
 		z-index: 3;
+	}
+	/* a small bomb has no room to hold the timer on its shoulder: it sits beside it */
+	.seconds.small {
+		left: auto;
+		right: calc(100% - 6px);
+		top: 0;
 	}
 	.digits {
 		display: inline-block;
@@ -231,7 +240,7 @@
 		text-align: center;
 		font-family: var(--font-mono);
 		font-weight: 700;
-		font-size: 1.4rem;
+		font-size: max(0.95rem, calc(var(--size) * 0.118));
 		background: var(--sumi);
 		color: var(--washi);
 		border: var(--line) solid var(--washi);

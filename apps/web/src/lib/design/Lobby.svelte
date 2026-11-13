@@ -326,7 +326,7 @@
 		<div class="mascot"><Mascot mood="worried" size={150} /></div>
 		<p class="lead">{t('lobby.countdown')}</p>
 		{#key seconds}
-			<p class="num">{seconds > 0 ? seconds : 'バカハツ'}</p>
+			<p class="num" class:word={seconds === 0}>{seconds > 0 ? seconds : 'バカハツ'}</p>
 		{/key}
 	</div>
 {/if}
@@ -545,6 +545,8 @@
 		justify-items: center;
 		gap: 0.3rem;
 		background: rgb(10 19 32 / 0.9);
+		overflow: hidden; /* the number pops in scaled up: it must never widen the page */
+		touch-action: none;
 	}
 	.lead {
 		margin: 0;
@@ -563,6 +565,13 @@
 		paint-order: stroke fill;
 		text-shadow: 6px 8px 0 var(--sumi);
 		animation: count-pop var(--t-slow) var(--ease-pop) both;
+	}
+	/* the final word is four kana wide: sized to the screen instead of to a digit */
+	.num.word {
+		font-size: clamp(2.4rem, 15vw, 6.5rem);
+		white-space: nowrap;
+		-webkit-text-stroke-width: 3px;
+		text-shadow: 4px 6px 0 var(--sumi);
 	}
 	@keyframes count-pop {
 		0% {

@@ -26,6 +26,9 @@
 	// start from the real window size so the bomb never changes size after the first frame
 	let width = $state(typeof window === 'undefined' ? 1000 : window.innerWidth);
 	let height = $state(typeof window === 'undefined' ? 800 : window.innerHeight);
+	// What is really visible: on phones the keyboard covers part of the page without resizing it.
+	let visualHeight = $state(0);
+	const visible = $derived(visualHeight > 0 ? visualHeight : height);
 	let mood = $state<Mood | undefined>(undefined);
 	let announcement = $state('');
 	let rejection = $state('');
@@ -35,8 +38,13 @@
 	let rejectTimer: ReturnType<typeof setTimeout> | undefined;
 
 	const desktop = $derived(width >= 900);
+	// Phones: what is left once the players, the turn line, the last word and the field have their room goes to the
+	// bomb, with its fuse above and its tag below (about 1.75 times its size).
+	// With the keyboard open (a short screen) the tiles, the last word and the preview all shrink to a line.
+	const compact = $derived(!desktop && visible < 620);
+	const chrome = $derived(compact ? 262 : 330);
 	const bombSize = $derived(
-		desktop ? 230 : Math.max(130, Math.min(200, Math.round(height * 0.22)))
+		desktop ? 230 : Math.max(76, Math.min(200, Math.floor((visible - chrome) / 1.75)))
 	);
 	const lastWord = $derived(store.words.at(-1) ?? null);
 
@@ -145,11 +153,18 @@
 		return () => clearInterval(id);
 	});
 
+	// While a game is on, phones hide the site bar: every pixel goes to the game.
+	onMount(() => {
+		document.documentElement.dataset.playing = '';
+		return () => delete document.documentElement.dataset.playing;
+	});
+
 	// Keep the input above the on-screen keyboard (iOS does not resize the layout viewport).
 	onMount(() => {
 		const viewport = window.visualViewport;
 		if (!viewport || !root) return;
 		const update = (): void => {
+			visualHeight = viewport.height;
 			root?.style.setProperty('--vvh', `${viewport.height}px`);
 			if (viewport.offsetTop > 0) window.scrollTo(0, 0);
 		};
@@ -191,13 +206,16 @@
 					active={player.id === store.turn?.player_id && store.phase === 'playing'}
 					maxLives={store.settings.lives}
 					typing={store.typing}
+					{compact}
 				/>
 			</div>
 		{/each}
 	</div>
 
 	<div class="main">
-		<div class="stage">
+		<!-- tapping the stage brings the keyboard back if it was closed -->
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<div class="stage" onpointerdown={() => input?.focus()}>
 			<div class="center" bind:this={bombBox}>
 				<Bomb
 					fragment={store.turn?.fragment ?? ''}
@@ -232,18 +250,20 @@
 		<div class="last" bind:this={lastBox}>
 			{#if lastWord}
 				{#key lastWord.turn + lastWord.word}
-					<div class="lastcard">
+					<div class="lastcard" class:compact>
 						<div class="lead">
 							<span class="w">{lastWord.word}</span>
 							{#if lastWord.reading !== lastWord.word}<span class="r">{lastWord.reading}</span>{/if}
 						</div>
 						<Meanings fr={lastWord.meaning_fr} en={lastWord.meaning_en} />
-						<Example
-							compact
-							ja={lastWord.example_ja}
-							fr={lastWord.example_fr}
-							en={lastWord.example_en}
-						/>
+						{#if !compact}
+							<Example
+								compact
+								ja={lastWord.example_ja}
+								fr={lastWord.example_fr}
+								en={lastWord.example_en}
+							/>
+						{/if}
 					</div>
 				{/key}
 			{:else}
@@ -262,6 +282,7 @@
 					active={store.isMyTurn && (store.me?.alive ?? false)}
 					{placeholder}
 					error={rejection}
+					{compact}
 					onsubmit={(text) => session.submit(text)}
 					ontyping={(text) => session.typing(text)}
 				/>
@@ -280,7 +301,8 @@
 		grid-template-rows: auto minmax(0, 1fr);
 		height: calc(var(--vvh, 100dvh) - var(--bar, 52px));
 		box-sizing: border-box;
-		padding: 0.3rem 0.7rem calc(0.6rem + env(safe-area-inset-bottom));
+		padding: calc(0.6rem + env(safe-area-inset-top)) 0.7rem
+			calc(0.6rem + env(safe-area-inset-bottom));
 		gap: 0.5rem;
 		max-width: 1240px;
 		margin-inline: auto;
@@ -295,18 +317,19 @@
 		min-width: 0;
 		max-width: 5.4rem;
 	}
+	/* The bomb and its tag come first and never shrink; the last word's card takes what is left and gives way. */
 	.main {
-		display: grid;
-		grid-template-rows: minmax(0, 1fr) auto auto;
+		display: flex;
+		flex-direction: column;
 		gap: 0.5rem;
 		min-height: 0;
 	}
 	.stage {
+		flex: 1 0 auto;
 		display: grid;
 		align-content: center;
 		justify-items: center;
 		gap: 0.6rem;
-		min-height: 0;
 		padding-top: calc(var(--bomb) * 0.4); /* room for the fuse above the bomb */
 	}
 	.center {
@@ -364,9 +387,14 @@
 		font-size: 1.4rem;
 	}
 	.last {
-		min-height: 3.8rem;
+		flex: 0 1 auto;
+		min-height: 0;
+		overflow: hidden;
 		display: grid;
 		align-items: center;
+	}
+	.foot {
+		flex: none;
 	}
 	.lastcard {
 		display: grid;
@@ -378,6 +406,34 @@
 		border-radius: 14px;
 		box-shadow: var(--shadow-sm);
 		animation: card-pop var(--t-mid) var(--ease-pop) both;
+	}
+	/* short screens: the word and the first meaning on one line each */
+	.lastcard.compact {
+		display: flex;
+		align-items: baseline;
+		gap: 0.6rem;
+		padding: 0.25rem 0.8rem 0.3rem;
+	}
+	.lastcard.compact .lead {
+		flex: none;
+	}
+	.lastcard.compact .w {
+		font-size: 1.2rem;
+	}
+	.lastcard.compact .r {
+		display: none;
+	}
+	.lastcard.compact :global(.meanings) {
+		flex: 1;
+		min-width: 0;
+	}
+	.lastcard.compact :global(.meanings p) {
+		overflow: hidden;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+	}
+	.lastcard.compact :global(.meanings p:nth-child(n + 2)) {
+		display: none;
 	}
 	.lead {
 		display: flex;
@@ -403,6 +459,20 @@
 	}
 	.history {
 		display: none;
+	}
+	/* phones: the tag already shows the fragment, and an empty list needs no sentence */
+	@media (max-width: 899px) {
+		.turnline.mine,
+		.hint {
+			display: none;
+		}
+		.turnline {
+			min-height: 0;
+			font-size: 0.95rem;
+		}
+		.lastcard .w {
+			font-size: 1.4rem;
+		}
 	}
 	.watching {
 		margin: 0;
@@ -449,6 +519,7 @@
 			display: none;
 		}
 		.last {
+			flex: none;
 			min-height: 5.4rem;
 		}
 	}

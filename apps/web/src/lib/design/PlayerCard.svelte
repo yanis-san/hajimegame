@@ -14,19 +14,22 @@
 		you = false,
 		active = false,
 		maxLives = 3,
-		typing = ''
+		typing = '',
+		compact = false
 	}: {
 		player: PlayerView;
 		you?: boolean;
 		active?: boolean;
 		maxLives?: number;
 		typing?: string;
+		/** short screens (the keyboard is open): a smaller tile */
+		compact?: boolean;
 	} = $props();
 
 	const out = $derived(!player.alive);
 </script>
 
-<div class="card" class:active class:out class:you data-player={player.id}>
+<div class="card" class:active class:out class:you class:compact data-player={player.id}>
 	<div class="face">
 		<Avatar id={player.avatar} size={48} {out} label={false} />
 		{#if !player.connected}
@@ -203,6 +206,25 @@
 		.score {
 			font-size: 0.8rem;
 			color: var(--text-mute);
+		}
+		.card.compact {
+			padding-block: 0.2rem 0.15rem;
+		}
+		.card.compact .face :global(svg) {
+			width: 30px;
+			height: 30px;
+		}
+		.card.compact .score,
+		.card.compact .cpu {
+			display: none;
+		}
+		/* the name stays for screen readers; the avatar and the petals say who is who */
+		.card.compact .name {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			overflow: hidden;
+			clip-path: inset(50%);
 		}
 		.active .score {
 			color: var(--sumi);

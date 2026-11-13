@@ -10,7 +10,8 @@
 		placeholder = '',
 		onsubmit,
 		ontyping,
-		error = ''
+		error = '',
+		compact = false
 	}: {
 		fragment?: string;
 		mode?: 'classic' | 'shiritori';
@@ -20,6 +21,8 @@
 		onsubmit: (text: string) => void;
 		ontyping: (text: string) => void;
 		error?: string;
+		/** short screen (the keyboard is open): a smaller preview line */
+		compact?: boolean;
 	} = $props();
 
 	let value = $state('');
@@ -107,6 +110,8 @@
 		const text = finalKana(value).trim();
 		if (!active || !text) return;
 		onsubmit(text);
+		// Sending must never close the keyboard: focus goes straight back (still inside the tap, so phones allow it).
+		input?.focus({ preventScroll: true });
 	}
 
 	function handleKeydown(event: KeyboardEvent): void {
@@ -117,7 +122,7 @@
 </script>
 
 <div class="dock" bind:this={wrap}>
-	<div class="preview" class:empty={!value} aria-hidden="true">
+	<div class="preview" class:empty={!value} class:compact aria-hidden="true">
 		{#if !value}
 			<span class="hint">{t('game.kanaInput')}</span>
 		{:else if parts}
@@ -154,7 +159,14 @@
 			oncompositionend={handleCompositionEnd}
 			onkeydown={handleKeydown}
 		/>
-		<button class="send" type="submit" aria-label={t('game.send')} disabled={!active || !value}>
+		<button
+			class="send"
+			type="submit"
+			aria-label={t('game.send')}
+			disabled={!active || !value}
+			tabindex={-1}
+			onmousedown={(e) => e.preventDefault()}
+		>
 			<Icon name="send" size={24} />
 		</button>
 	</form>
@@ -185,6 +197,11 @@
 	@media (max-width: 899px) {
 		.preview.empty {
 			display: none;
+		}
+		.preview.compact {
+			min-height: 1.9rem;
+			padding-block: 0;
+			font-size: 1.45rem;
 		}
 	}
 	.preview.empty {
