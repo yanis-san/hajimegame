@@ -10,6 +10,16 @@ const WIDTHS = [320, 360, 390, 412, 430, 480, 600];
 const overflow = (page: Page): Promise<number> =>
 	page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
 
+/** The elements that stick out, for a useful failure message. */
+const sticking = (page: Page): Promise<string[]> =>
+	page.evaluate(() =>
+		[...document.querySelectorAll('body *')]
+			.filter((e) => e.getBoundingClientRect().right > document.documentElement.clientWidth + 0.5)
+			.filter((e) => getComputedStyle(e).position !== 'fixed')
+			.slice(0, 5)
+			.map((e) => `${e.tagName}.${String(e.getAttribute('class')).slice(0, 40)}`)
+	);
+
 for (const width of WIDTHS) {
 	test(`no sideways scrolling at ${width}px`, async ({ browser }) => {
 		const player = await newPlayer(browser, 'Aya', {
@@ -21,7 +31,10 @@ for (const width of WIDTHS) {
 		for (const path of ['/', '/ja', '/en', '/history', '/stats/bomb', '/account', '/credits']) {
 			await page.goto(path);
 			await page.waitForLoadState('networkidle');
-			expect(await overflow(page), `${path} at ${width}px`).toBeLessThanOrEqual(0);
+			expect(
+				await overflow(page),
+				`${path} at ${width}px: ${(await sticking(page)).join(', ')}`
+			).toBeLessThanOrEqual(0);
 		}
 		await createRoom(player);
 		expect(await overflow(page), `the lobby at ${width}px`).toBeLessThanOrEqual(0);

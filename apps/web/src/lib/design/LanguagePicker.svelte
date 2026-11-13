@@ -74,6 +74,16 @@
 		outline: 3px solid var(--kinpaku);
 		outline-offset: 3px;
 	}
+	/* the smallest phones (320 px): the bar has no spare pixel, so the select gives some back */
+	@media (max-width: 380px) {
+		select {
+			padding: 0.3rem 1.7rem 0.45rem 0.6rem;
+			font-size: 0.9rem;
+		}
+		.field :global(svg) {
+			right: 0.35rem;
+		}
+	}
 	/* phones: only the select, the label stays available to screen readers */
 	@media (max-width: 640px) {
 		.text {

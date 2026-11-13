@@ -200,6 +200,14 @@
 			font-size: 1.2rem;
 		}
 	}
+	@media (max-width: 380px) {
+		.bar {
+			padding-inline: 0.4rem;
+		}
+		.tools {
+			gap: 0.25rem;
+		}
+	}
 	/* the seal alone is the logo on phones: the account button needs the room */
 	@media (max-width: 560px) {
 		.word {
