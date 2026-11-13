@@ -10,6 +10,14 @@ export const ja: Record<MessageKey, string> = {
 	'mode.shiritori.title': 'しりとり',
 	'mode.shiritori.desc':
 		'前の言葉の最後の文字から始まる言葉を答えよう。同じ言葉は使えず、「ん」で終わる言葉は禁止。',
+	'mode.kanji.title': '漢字エクスプロージョン',
+	'mode.kanji.desc':
+		'漢字が1つ表示されます。その漢字を使う言葉を、漢字でもかなでも、爆弾が爆発する前に答えよう。',
+	'lobby.levels': 'JLPTレベル',
+	'lobby.levels.all': 'すべて',
+	'lobby.levels.note': '非公式のリストによる目安のレベルです。',
+	'game.typeKanji': '次の漢字を使う言葉',
+	'reject.missing_kanji': '「{fragment}」を使う言葉にしてください。',
 	'home.mode': 'モードを選ぼう',
 	'home.nickname': 'ニックネーム',
 	'home.nicknameRequired': 'ニックネームを入力してください。',
@@ -284,6 +292,9 @@ export const ja: Record<MessageKey, string> = {
 	'credits.dictionary.body':
 		'言葉とその意味（英語、JMdictにあればフランス語）は、JMdictファイル（© Electronic Dictionary Research and Development Group / EDRDG）に由来します。ゲーム用の辞書は、このファイルをフィルタリング・再構成したものです。フィルタリングの規則はリポジトリに記載されています。',
 	'credits.dictionary.licence': 'EDRDGのライセンス',
+	'credits.kanji.title': '漢字とレベル',
+	'credits.kanji.body':
+		'漢字の読みと意味は KANJIDIC2（EDRDG、CC BY-SA 4.0）によります。JLPTは公式の漢字リストを公表していないため、N5〜N1のレベルはジョナサン・ウォラー氏のリスト（CC BY）に基づく目安です。',
 	'credits.examples.title': '例文',
 	'credits.examples.body':
 		'例文とその翻訳はTatoebaプロジェクトとその投稿者によるもので、CC BY 2.0 FRライセンスです。JMdictの例文データを通じて単語に結び付けています。機械翻訳は使っていません。',

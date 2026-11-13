@@ -21,7 +21,7 @@ router = APIRouter()
 
 
 class CreateRoomBody(BaseModel):
-    mode: Literal["classic", "shiritori"] = "classic"
+    mode: Literal["classic", "shiritori", "kanji"] = "classic"
 
 
 class CreatedRoom(BaseModel):

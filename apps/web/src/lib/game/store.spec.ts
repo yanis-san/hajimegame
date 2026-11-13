@@ -8,7 +8,8 @@ const settings: SettingsView = {
 	mode: 'classic',
 	max_players: 8,
 	bonus_kana: false,
-	n_penalty: false
+	n_penalty: false,
+	levels: [5, 4]
 };
 
 function player(id: string, extra: Partial<PlayerView> = {}): PlayerView {

@@ -46,6 +46,19 @@ class WordValidator(Protocol):
         """How many words start with ``kana``."""
 
 
+class KanjiSource(Protocol):
+    """The kanji mode: which kanji to ask, and whether a word is written with it."""
+
+    def draw(self, levels: Sequence[int], rng: random.Random, recent: Sequence[str] = ...) -> str:
+        """A kanji of one of the JLPT ``levels``, not one of ``recent``."""
+
+    def matches(self, text: str, char: str) -> Sequence[WordHit]:
+        """Every dictionary entry spelled ``text`` that is written with the kanji ``char``."""
+
+    def reject_reason(self, text: str, char: str) -> RejectReason:
+        """Why ``text`` has no match: ``not_in_dictionary`` or ``missing_fragment``."""
+
+
 class FragmentPicker(Protocol):
     def pick_text(self, rng: random.Random, tier: int, recent: Sequence[str]) -> str:
         """Return a playable fragment of the given difficulty tier, avoiding ``recent`` ones."""

@@ -1,4 +1,4 @@
-"""Pure, deterministic bomb game engine with two modes.
+"""Pure, deterministic bomb game engine with three modes.
 
 No network, no database, no system clock. Clock and RNG are injected: the same seed and the same
 actions always produce the same game.
@@ -8,6 +8,8 @@ Modes
   to each player's answer speed: fast answers get rarer fragments, slow answers or explosions easier ones.
 - ``shiritori``: the word must START with the last kana of the previous word.
   A word ending in ん is refused (or, with n_penalty, costs a life). The chain survives explosions.
+- ``kanji``: a kanji of the chosen JLPT levels is shown; the word must be written with it (typed in kanji, or
+  in kana when the dictionary writes that word with the kanji). The "fragment" of the turn is the kanji.
 
 Timing rule (documented in docs/PROTOCOL.md): a word received at ``at <= deadline`` is judged on its merits;
 ``at > deadline`` is ``too_late`` and the bomb explodes. A ``timeout`` before the deadline is ignored.
@@ -22,7 +24,7 @@ from typing import Literal
 
 from app.games.base import Clock, GameEvent, Phase, PlayerInfo
 from app.games.bomb import events as ev
-from app.games.bomb.ports import FragmentPicker, WordValidator
+from app.games.bomb.ports import FragmentPicker, KanjiSource, WordValidator
 from app.games.bomb.settings import LIFE_CAP, BombSettings
 from app.japanese.kana import shiritori_end, units
 
@@ -72,13 +74,17 @@ class BombEngine:
         fragments: FragmentPicker,
         clock: Clock,
         rng: random.Random,
+        kanji: KanjiSource | None = None,
     ) -> None:
         ids = [p.id for p in players]
         if len(set(ids)) != len(ids):
             raise ValueError("duplicate player ids")
         if not 2 <= len(players) <= settings.max_players:
             raise ValueError("player count out of range")
+        if settings.mode == "kanji" and kanji is None:
+            raise ValueError("the kanji mode needs a kanji source")
         self.settings = settings
+        self._kanji = kanji
         self._validator = validator
         self._fragments = fragments
         self._clock = clock
@@ -176,9 +182,15 @@ class BombEngine:
             return out
 
         shiritori = self.settings.mode == "shiritori"
-        hits = self._validator.matches(text, self._fragment, starts_with=shiritori)
+        if self._kanji is not None and self.settings.mode == "kanji":
+            hits = self._kanji.matches(text, self._fragment)
+        else:
+            hits = self._validator.matches(text, self._fragment, starts_with=shiritori)
         if not hits:
-            reason = self._validator.reject_reason(text, self._fragment, starts_with=shiritori)
+            if self._kanji is not None and self.settings.mode == "kanji":
+                reason = self._kanji.reject_reason(text, self._fragment)
+            else:
+                reason = self._validator.reject_reason(text, self._fragment, starts_with=shiritori)
             out.append(ev.WordRejected(turn=self._turn, player_id=player_id, text=text, reason=reason))
             return out
         hit = next((h for h in hits if h.entry_id not in self._used), None)
@@ -268,6 +280,9 @@ class BombEngine:
             state.skill = max(SKILL_MIN, state.skill - 1)
 
     def _pick_fragment(self, state: PlayerState) -> str:
+        if self.settings.mode == "kanji":
+            assert self._kanji is not None
+            return self._kanji.draw(self.settings.levels, self._rng, self._recent)
         if self.settings.mode == "classic":
             return self._fragments.pick_text(self._rng, state.skill, self._recent)
         if self._next_start:

@@ -66,7 +66,8 @@
 	options={[
 		{ value: 'all', label: t('stats.mode.all') },
 		{ value: 'classic', label: t('mode.classic.title') },
-		{ value: 'shiritori', label: t('mode.shiritori.title') }
+		{ value: 'shiritori', label: t('mode.shiritori.title') },
+		{ value: 'kanji', label: t('mode.kanji.title') }
 	]}
 	onchange={choose}
 />

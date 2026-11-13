@@ -20,12 +20,19 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Final
 
-from app.japanese.dictionary import Dictionary, WordMatch, WordRejected
+from app.japanese.dictionary import Dictionary, Reject, WordMatch, WordRejected
 
 DEFAULT_PATH: Final = Path(__file__).parent / "data" / "kanji.json.gz"
 LEVELS: Final = (5, 4, 3, 2, 1)
 # A kanji needs this many words to be worth a turn (a kanji with two words would be a trap for the players).
 MIN_WORDS: Final = 5
+CANDIDATES_PER_KANJI: Final = 600  # the words a CPU player can pick from, commonest first
+
+
+@dataclass(frozen=True, slots=True)
+class Candidate:
+    entry_id: int
+    reading: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -44,6 +51,7 @@ class KanjiBook:
     def __init__(self, dictionary: Dictionary, kanji: dict[str, Kanji]) -> None:
         self._dictionary = dictionary
         self._kanji = kanji
+        self._candidates: dict[str, tuple[Candidate, ...]] = {}
         words: dict[str, set[int]] = {char: set() for char in kanji}
         for entry_id in range(len(dictionary)):
             entry = dictionary.entry(entry_id)
@@ -120,6 +128,20 @@ class KanjiBook:
                 reading = text if text in entry.readings else entry.readings[0]
                 out.append(dictionary.match(entry_id, reading, text))
         return tuple(out)
+
+    def reject_reason(self, raw: str, char: str) -> Reject:
+        result = self.check(raw, char)
+        return result.reason if isinstance(result, WordRejected) else "missing_fragment"
+
+    def candidates(self, char: str, starts_with: bool = False) -> Sequence[Candidate]:
+        """Words written with ``char``, commonest first, for the CPU players (``starts_with`` is unused)."""
+        found = self._candidates.get(char)
+        if found is None:
+            dictionary = self._dictionary
+            ids = sorted(self._words.get(char, ()), key=lambda i: (dictionary.entry(i).rank, i))
+            found = tuple(Candidate(i, dictionary.entry(i).readings[0]) for i in ids[:CANDIDATES_PER_KANJI])
+            self._candidates[char] = found
+        return found
 
     def sample_words(self, char: str, limit: int = 5) -> list[str]:
         """Commonest words written with ``char`` (used by bots and tests), as their first reading."""

@@ -7,7 +7,8 @@ from dataclasses import dataclass
 LIVES_MIN, LIVES_DEFAULT, LIVES_MAX = 1, 3, 5
 FUSE_MIN, FUSE_DEFAULT, FUSE_MAX = 5.0, 10.0, 20.0
 PLAYERS_MIN, PLAYERS_DEFAULT, PLAYERS_MAX = 2, 8, 8
-MODES = ("classic", "shiritori")
+MODES = ("classic", "shiritori", "kanji")
+LEVELS_DEFAULT = (5, 4)  # kanji mode: the JLPT levels asked, N5 (easiest) to N1
 LIFE_CAP = 5  # bonus lives never raise a player above this
 
 
@@ -19,6 +20,7 @@ class BombSettings:
     max_players: int = PLAYERS_DEFAULT
     bonus_kana: bool = False
     n_penalty: bool = False  # shiritori: a word ending in ん costs a life instead of being refused
+    levels: tuple[int, ...] = LEVELS_DEFAULT  # kanji mode: which JLPT levels (5 to 1) a kanji may come from
 
     def __post_init__(self) -> None:
         if not LIVES_MIN <= self.lives <= LIVES_MAX:
@@ -29,3 +31,5 @@ class BombSettings:
             raise ValueError(f"max_players must be in [{PLAYERS_MIN}, {PLAYERS_MAX}]")
         if self.mode not in MODES:
             raise ValueError(f"mode must be one of {MODES}")
+        if not self.levels or not set(self.levels) <= {1, 2, 3, 4, 5}:
+            raise ValueError("levels must be a non-empty subset of 1 to 5")

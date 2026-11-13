@@ -11,6 +11,14 @@ export const en: Record<MessageKey, string> = {
 	'mode.shiritori.title': 'Shiritori',
 	'mode.shiritori.desc':
 		'Each word starts with the last kana of the previous word. No repeats, and never a word ending in ん.',
+	'mode.kanji.title': 'Kanji Bomb',
+	'mode.kanji.desc':
+		'A kanji appears: write a word that is written with that kanji (in kanji or in kana) before the bomb explodes.',
+	'lobby.levels': 'JLPT levels',
+	'lobby.levels.all': 'All',
+	'lobby.levels.note': 'Indicative levels, from unofficial lists.',
+	'game.typeKanji': 'A word with the kanji',
+	'reject.missing_kanji': 'This word is not written with “{fragment}”.',
 	'home.mode': 'Pick your mode',
 	'home.nickname': 'Your nickname',
 	'home.nicknameRequired': 'Pick a nickname to play.',
@@ -286,6 +294,9 @@ export const en: Record<MessageKey, string> = {
 	'credits.dictionary.body':
 		'Words and their meanings (English, and French when JMdict provides it) come from the JMdict file, © Electronic Dictionary Research and Development Group (EDRDG). The game dictionary is a filtered, reformatted version of that file; the filtering rules are documented in the repository.',
 	'credits.dictionary.licence': 'EDRDG licence',
+	'credits.kanji.title': 'Kanji and levels',
+	'credits.kanji.body':
+		'The readings and meanings of the kanji come from KANJIDIC2 (EDRDG, CC BY-SA 4.0). The JLPT no longer publishes official lists: the levels N5 to N1 follow Jonathan Waller’s lists (CC BY), so they are only indicative.',
 	'credits.examples.title': 'Example sentences',
 	'credits.examples.body':
 		'Example sentences and their translations come from the Tatoeba project and its contributors, under the CC BY 2.0 FR licence. They are attached to the words through the JMdict example file. No translation is machine generated.',

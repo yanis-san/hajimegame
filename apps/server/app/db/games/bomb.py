@@ -19,7 +19,7 @@ from app.db.models import Base, Game, GamePlayer
 from app.games.bomb.recording import KIND, BombDetail
 from app.games.recording import GameRecord
 
-MODES = ("all", "classic", "shiritori")
+MODES = ("all", "classic", "shiritori", "kanji")
 TOP_WORDS = 20
 RECENT_WORDS = 10
 ACTIVITY_DAYS = 30

@@ -52,7 +52,8 @@ const DEFAULT_SETTINGS: SettingsView = {
 	mode: 'classic',
 	max_players: 8,
 	bonus_kana: false,
-	n_penalty: false
+	n_penalty: false,
+	levels: [5, 4]
 };
 
 /** Reactive game state. The server is authoritative: this class only mirrors what it sends. */

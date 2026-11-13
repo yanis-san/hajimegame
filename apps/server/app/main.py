@@ -55,6 +55,12 @@ async def _build_candidates(words: Dictionary, manager: RoomManager) -> None:
     log.info("bots_ready")
 
 
+async def _build_kanji(manager: RoomManager) -> None:
+    """Index the kanji table (which words are written with which kanji) off the event loop."""
+    manager.kanji = await asyncio.to_thread(manager.kanji_book)
+    log.info("kanji_ready")
+
+
 def build_fragments(dictionary: Dictionary, min_words: int) -> FragmentTable:
     """Every word is playable, so one table (all words) serves every game."""
     return FragmentTable(dictionary.fragment_counts, min_words)
@@ -100,6 +106,7 @@ def create_app(
             manager.candidates = candidates
         elif cfg.preload_bots:
             index_task = asyncio.get_running_loop().create_task(_build_candidates(words, manager))
+        kanji_task = asyncio.get_running_loop().create_task(_build_kanji(manager))
         lag_task = asyncio.get_running_loop().create_task(_watch_loop_lag())
         app.state.settings = cfg
         app.state.dictionary = words
@@ -119,6 +126,7 @@ def create_app(
             yield
         finally:
             lag_task.cancel()
+            kanji_task.cancel()
             if index_task is not None:
                 index_task.cancel()
             await manager.shutdown()

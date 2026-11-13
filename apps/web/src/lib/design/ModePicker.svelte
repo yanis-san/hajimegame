@@ -4,7 +4,7 @@
 	import Icon from './Icon.svelte';
 
 	/**
-	 * Two big cards to choose how to play. Each one shows the rule with kana tiles and explains it in one sentence.
+	 * Big cards to choose how to play. Each one shows the rule with kana tiles and explains it in one sentence.
 	 */
 	let {
 		value,
@@ -21,7 +21,7 @@
 		label?: string;
 	} = $props();
 
-	const modes: Mode[] = ['classic', 'shiritori'];
+	const modes: Mode[] = ['classic', 'shiritori', 'kanji'];
 
 	function onkey(event: KeyboardEvent, index: number): void {
 		if (disabled) return;
@@ -47,6 +47,10 @@
 			<span class="tile hot">べ</span>
 			<span class="link"><Icon name="back" size={20} /></span>
 			<span class="tile">た</span><span class="tile hot">べ</span><span class="tile">もの</span>
+		{:else if mode === 'kanji'}
+			<span class="tile hot">土</span>
+			<span class="link"><Icon name="back" size={20} /></span>
+			<span class="tile">どよう</span><span class="tile hot">び</span>
 		{:else}
 			<span class="tile">くる</span><span class="tile hot">ま</span>
 			<span class="link"><Icon name="back" size={20} /></span>

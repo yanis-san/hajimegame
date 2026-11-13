@@ -172,7 +172,7 @@ class Game(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(sa.Uuid, primary_key=True, default=_uuid)
     kind: Mapped[str] = mapped_column(sa.String(16), default="bomb")
-    mode: Mapped[str] = mapped_column(sa.String(16), default="classic")  # classic | shiritori
+    mode: Mapped[str] = mapped_column(sa.String(16), default="classic")  # classic | shiritori | kanji
     room_code: Mapped[str] = mapped_column(sa.String(8))
     settings: Mapped[dict[str, Any]] = mapped_column(JSONType, default=dict)
     started_at: Mapped[datetime] = mapped_column(sa.DateTime)

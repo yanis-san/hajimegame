@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import itertools
+from collections.abc import Callable
 from typing import Any
 
 import pytest
@@ -588,3 +589,86 @@ async def test_the_proxy_probe_says_starting_until_the_cpu_index_is_built(server
     finally:
         settings.preload_bots = False
         server.manager.candidates = index
+
+
+async def test_kanji_mode_levels_a_kanji_turn_and_a_word_written_with_it(
+    server: RunningServer, dictionary: Dictionary
+) -> None:
+    from app.japanese.kanji import KanjiBook
+
+    book = KanjiBook.load(dictionary)
+    created = await server.http.post("/api/rooms", headers=CSRF, json={"mode": "kanji"})
+    code = created.json()["code"]
+    a, b = server.client(code), server.client(code)
+    for client, name in ((a, "Aya"), (b, "Ben")):
+        await client.connect()
+        snap = await client.join(code, name)
+        assert snap["settings"]["mode"] == "kanji"
+    assert snap["settings"]["levels"] == [5, 4]  # the default
+    await a.send(t="settings", levels=[5])
+    patch = await a.wait("patch", lambda m: "settings" in m)
+    assert patch["settings"]["levels"] == [5]
+    await a.send(t="settings", levels=[])  # at least one level
+    assert (await a.wait("error"))["code"] == "bad_message"
+    await a.send(t="settings", levels=[7])
+    assert (await a.wait("error", start=1))["code"] == "bad_message"
+
+    clients = {a.player_id: a, b.player_id: b}
+    await start_game([a, b])
+    turn = await a.wait("turn")
+    kanji = book.get(turn["fragment"])
+    assert kanji is not None and kanji.level == 5  # the fragment of the turn is a kanji of the chosen level
+    active = clients[turn["player_id"]]
+    other = b if active is a else a
+
+    # a word that is not written with this kanji: refused, same turn
+    wrong = next(
+        w for c in book.pool([5]) for w in book.sample_words(c, 1) if book.reject_reason(w, turn["fragment"])
+    )
+    await active.send(t="submit", text=wrong)
+    assert (await active.wait("rejected"))["reason"] == "missing_fragment"
+    # a word that is: accepted, and the other player gets the next kanji
+    word = book.sample_words(turn["fragment"], 1)[0]
+    await active.send(t="submit", text=word)
+    accepted = await a.wait("accepted")
+    assert accepted["word"] and accepted["player_id"] == active.player_id
+    nxt = await a.wait("turn", lambda m: m["turn"] > turn["turn"])
+    assert nxt["player_id"] == other.player_id and book.get(nxt["fragment"]) is not None
+    await a.close()
+    await b.close()
+
+
+def turn_after(number: int) -> Callable[[dict[str, Any]], bool]:
+    return lambda m: bool(m["turn"] > number)
+
+
+def turn_is(number: int) -> Callable[[dict[str, Any]], bool]:
+    return lambda m: bool(m["turn"] == number)
+
+
+async def test_a_cpu_plays_the_kanji_mode(server: RunningServer, dictionary: Dictionary) -> None:
+    from app.japanese.kanji import KanjiBook
+
+    book = KanjiBook.load(dictionary)
+    created = await server.http.post("/api/rooms", headers=CSRF, json={"mode": "kanji"})
+    code = created.json()["code"]
+    host = server.client(code)
+    await host.connect()
+    await host.join(code, "Aya")
+    await host.send(
+        t="add_bot", difficulty="hard"
+    )  # works without the fragment index: it plays from the kanji table
+    await host.wait("patch", lambda m: any(p and p.get("bot") for p in m.get("players", {}).values()))
+    await host.send(t="start")
+    last = 0
+    for _ in range(8):  # the human does not answer: the CPU plays within the first turns
+        turn = await host.wait("turn", turn_after(last), timeout=15)
+        last = turn["turn"]
+        assert book.get(turn["fragment"]) is not None
+        if turn["player_id"] != host.player_id:
+            accepted = await host.wait("accepted", turn_is(last), timeout=15)
+            assert accepted["player_id"] == turn["player_id"]
+            break
+    else:
+        raise AssertionError("the CPU never played a word")
+    await host.close()

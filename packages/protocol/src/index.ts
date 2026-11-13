@@ -2,12 +2,12 @@
 
 export const PROTOCOL_VERSION = 1;
 
-export type Mode = "classic" | "shiritori";
+export type Mode = "classic" | "shiritori" | "kanji";
 export type Difficulty = "easy" | "normal" | "hard";
 export type RoomPhase = "lobby" | "countdown" | "playing" | "finished";
 export type RejectCode = "not_in_dictionary" | "missing_fragment" | "already_used" | "not_your_turn" | "too_late" | "ends_with_n";
 export type ErrorCode = "bad_version" | "bad_message" | "room_not_found" | "room_full" | "bad_token" | "name_invalid" | "rate_limited" | "not_host" | "not_allowed" | "wrong_phase" | "need_more_players" | "players_not_ready" | "kicked" | "replaced" | "server_restarting" | "wrong_instance" | "bots_loading";
-export type BombStatsMode = "all" | "classic" | "shiritori";
+export type BombStatsMode = "all" | "classic" | "shiritori" | "kanji";
 
 export interface SettingsView {
   lives: number;
@@ -16,6 +16,7 @@ export interface SettingsView {
   max_players: number;
   bonus_kana: boolean;
   n_penalty: boolean;
+  levels: number[];
 }
 
 export interface PlayerView {
@@ -147,6 +148,7 @@ export interface SetSettings {
   max_players?: number;
   n_penalty?: boolean;
   bonus_kana?: boolean;
+  levels?: number[];
   v?: number;
 }
 

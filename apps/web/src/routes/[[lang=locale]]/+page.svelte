@@ -21,7 +21,7 @@
 	let error = $state('');
 	let nameError = $state('');
 	let mood = $state<Mood | undefined>(undefined);
-	let mode = $state<'classic' | 'shiritori'>('classic');
+	let mode = $state<'classic' | 'shiritori' | 'kanji'>('classic');
 
 	onMount(() => {
 		const profile = loadProfile();

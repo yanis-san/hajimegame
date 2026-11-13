@@ -16,6 +16,13 @@
 	let { session }: { session: GameSession } = $props();
 	const store = $derived(session.store);
 
+	// kanji mode: the JLPT levels a kanji may come from; at least one stays on
+	const LEVELS = [5, 4, 3, 2, 1] as const;
+	function chooseLevel(level: number, on: boolean): void {
+		const next = LEVELS.filter((n) => (n === level ? on : store.settings.levels.includes(n)));
+		if (next.length > 0) session.settings({ levels: next });
+	}
+
 	let copied = $state(false);
 	let cpuLevel = $state<'easy' | 'normal' | 'hard'>('normal');
 	let chatText = $state('');
@@ -245,6 +252,30 @@
 					onchange={(fuse_seconds) => session.settings({ fuse_seconds })}
 				/>
 			</div>
+			{#if store.settings.mode === 'kanji'}
+				<div class="setting">
+					<span class="lbl">{t('lobby.levels')}</span>
+					<div class="levels" role="group" aria-label={t('lobby.levels')}>
+						{#each LEVELS as n (n)}
+							<Toggle
+								label={`N${n}`}
+								disabled={!isHost}
+								checked={store.settings.levels.includes(n)}
+								onchange={(on) => chooseLevel(n, on)}
+							/>
+						{/each}
+						<Button
+							size="sm"
+							variant="secondary"
+							disabled={!isHost || store.settings.levels.length === LEVELS.length}
+							onclick={() => session.settings({ levels: [...LEVELS] })}
+						>
+							{t('lobby.levels.all')}
+						</Button>
+					</div>
+					<span class="levelnote">{t('lobby.levels.note')}</span>
+				</div>
+			{/if}
 			<div class="setting toggles">
 				{#if store.settings.mode === 'shiritori'}
 					<Toggle
@@ -254,12 +285,14 @@
 						onchange={(n_penalty) => session.settings({ n_penalty })}
 					/>
 				{/if}
-				<Toggle
-					label={t('lobby.bonus')}
-					disabled={!isHost}
-					checked={store.settings.bonus_kana}
-					onchange={(bonus_kana) => session.settings({ bonus_kana })}
-				/>
+				{#if store.settings.mode !== 'kanji'}
+					<Toggle
+						label={t('lobby.bonus')}
+						disabled={!isHost}
+						checked={store.settings.bonus_kana}
+						onchange={(bonus_kana) => session.settings({ bonus_kana })}
+					/>
+				{/if}
 			</div>
 		</div>
 	</div>
@@ -494,6 +527,16 @@
 	}
 	.lbl {
 		font-weight: 700;
+	}
+	.levels {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.2rem 0.8rem;
+	}
+	.levelnote {
+		color: var(--text-mute);
+		font-size: 0.82rem;
 	}
 	.toggles {
 		gap: 0.1rem;

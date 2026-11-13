@@ -59,7 +59,7 @@ def build_view(raw: db.PlayerStats, mode: str, dictionary: Dictionary, today: da
                 word=w.word,
                 reading=w.reading,
                 played_at=w.played_at.isoformat(),
-                mode="shiritori" if w.mode == "shiritori" else "classic",
+                mode=w.mode if w.mode in ("shiritori", "kanji") else "classic",  # type: ignore[arg-type]
                 response_ms=w.response_ms,
                 **_meaning(dictionary, w.word),
             )

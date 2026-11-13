@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import os
 import random
 
@@ -14,6 +15,7 @@ from app.games.bomb.settings import LIFE_CAP, MODES, BombSettings
 from app.japanese.dictionary import Dictionary
 from app.japanese.fragments import FragmentTable
 from app.japanese.kana import fragment_ngrams, shiritori_end
+from app.japanese.kanji import KanjiBook
 
 GAMES = int(os.environ.get("HAJIME_SIM_GAMES", "1000"))
 
@@ -64,13 +66,16 @@ def build_index(dictionary: Dictionary) -> None:
                 starts.append(reading)
 
 
-def candidates(dictionary: Dictionary, fragment: str, mode: str) -> list[str]:
+def candidates(dictionary: Dictionary, fragment: str, mode: str, book: KanjiBook | None = None) -> list[str]:
+    if mode == "kanji":
+        assert book is not None
+        return book.sample_words(fragment, 60)
     if not _CONTAINS:
         build_index(dictionary)
     return (_STARTS if mode == "shiritori" else _CONTAINS).get(fragment, [])
 
 
-def play_one(seed: int, dictionary: Dictionary, table: FragmentTable) -> int:
+def play_one(seed: int, dictionary: Dictionary, table: FragmentTable, book: KanjiBook) -> int:
     rng = random.Random(seed)
     settings = BombSettings(
         lives=rng.randint(1, 5),
@@ -78,11 +83,19 @@ def play_one(seed: int, dictionary: Dictionary, table: FragmentTable) -> int:
         mode=rng.choice(MODES),
         bonus_kana=rng.random() < 0.3,
     )
+    if settings.mode == "kanji":
+        settings = dataclasses.replace(settings, levels=tuple(rng.sample([5, 4, 3, 2, 1], rng.randint(1, 5))))
     count = rng.randint(2, 8)
     players = [PlayerInfo(f"p{i}", f"P{i}") for i in range(count)]
     clock = ManualClock()
     engine = BombEngine(
-        players, settings, validator=dictionary, fragments=table, clock=clock, rng=random.Random(seed + 1)
+        players,
+        settings,
+        validator=dictionary,
+        fragments=table,
+        clock=clock,
+        rng=random.Random(seed + 1),
+        kanji=book,
     )
     ids = {p.id for p in players}
     events: list[GameEvent] = engine.start()
@@ -97,7 +110,7 @@ def play_one(seed: int, dictionary: Dictionary, table: FragmentTable) -> int:
         if roll < 0.02:
             events = engine.leave(rng.choice(engine.alive_ids()))
         elif roll < 0.55:
-            words = candidates(dictionary, engine.fragment, settings.mode)
+            words = candidates(dictionary, engine.fragment, settings.mode, book)
             clock.set(max(clock.now(), min(deadline, clock.now() + rng.random() * 3)))
             events = engine.submit(player, rng.choice(words)) if words else []
         elif roll < 0.65:
@@ -116,6 +129,7 @@ def play_one(seed: int, dictionary: Dictionary, table: FragmentTable) -> int:
     return actions
 
 
-def test_simulated_games_both_modes(dictionary: Dictionary, table: FragmentTable) -> None:
-    total = sum(play_one(seed, dictionary, table) for seed in range(GAMES))
+def test_simulated_games_all_modes(dictionary: Dictionary, table: FragmentTable) -> None:
+    book = KanjiBook.load(dictionary)
+    total = sum(play_one(seed, dictionary, table, book) for seed in range(GAMES))
     assert total > GAMES  # every game took several actions

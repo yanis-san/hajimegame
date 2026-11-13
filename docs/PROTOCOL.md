@@ -71,7 +71,7 @@ the current `seq` without advancing it, so they never create gaps.
 | `typing` | What the active player is typing (ephemeral). |
 | `accepted` | Word played: `word`, `reading`, `score_gain`, `score`, `meaning_fr` and `meaning_en` (French may be empty), `example_ja`, `example_en` and `example_fr` (an example sentence
 with its translations; all empty for most words, French often empty). |
-| `rejected` | Only to the submitter: `reason` is `not_in_dictionary`, `missing_fragment` (classic: fragment absent; shiritori: wrong first kana), `already_used`, `not_your_turn`, `too_late` or `ends_with_n` (shiritori). The turn continues (except `too_late`). |
+| `rejected` | Only to the submitter: `reason` is `not_in_dictionary`, `missing_fragment` (classic: fragment absent; shiritori: wrong first kana; kanji: the word is not written with the kanji), `already_used`, `not_your_turn`, `too_late` or `ends_with_n` (shiritori). The turn continues (except `too_late`). |
 | `explosion` | Bomb exploded on `player_id`, `lives` left. `cause` is `timeout` or `n_ending` (shiritori penalty). |
 | `elimination` | `player_id` is out with final `place`. |
 | `life` / `bonus` | Bonus kana progress and extra life. |
@@ -114,9 +114,16 @@ close code 1012: reconnect after a short delay.
 
 ## Game mode
 
-The mode (`classic` or `shiritori`) is chosen once, in the body of `POST /api/rooms` (`{"mode": "shiritori"}`), and never changes
+The mode (`classic`, `shiritori` or `kanji`) is chosen once, in the body of `POST /api/rooms` (`{"mode": "shiritori"}`), and never changes
 afterwards: `settings` has no `mode` field, so a client that sends one gets `error: bad_message`. The mode is visible in
 `snapshot.settings.mode`.
+
+**Kanji mode.** The "fragment" of a turn is one kanji of the JLPT levels chosen in the lobby (`settings.levels`, a list of
+1 to 5 numbers, 5 = N5 the easiest, default `[5, 4]`; the levels are indicative, from Jonathan Waller's unofficial lists).
+A word is accepted when the dictionary writes it with that kanji: typed in kanji (`土曜日`), or in kana (`どようび`,
+`つき`, `ひ`, romaji too) when some entry with that reading is written with the kanji. A reading with no word is refused.
+The data comes from KANJIDIC2 and JMdict (`tools/build_kanji.py`, `tools/build_dictionary.py`); one-kana words (日 is ひ)
+are kept in the dictionary for this mode only.
 
 
 Players carry `bot` (true for CPU players, always connected and ready) and `difficulty` (CPU only).

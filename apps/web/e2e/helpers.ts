@@ -6,7 +6,15 @@ const tables: {
 	contains: Record<string, string[]>;
 	starts: Record<string, string[]>;
 	nends: Record<string, string[]>;
+	kanji: Record<string, string[]>;
 } = JSON.parse(readFileSync(path.resolve(import.meta.dirname, '.cache/answers.json'), 'utf8'));
+
+/** A word (in hiragana) written with the kanji, for the kanji mode. */
+export function wordWithKanji(kanji: string): string {
+	const word = tables.kanji[kanji]?.[0];
+	if (!word) throw new Error(`no word for the kanji ${kanji}`);
+	return word;
+}
 
 export function answerFor(fragment: string, used: Set<string>, shiritori = false): string {
 	const table = shiritori ? tables.starts : tables.contains;

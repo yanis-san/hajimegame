@@ -48,6 +48,18 @@
 	</section>
 
 	<section>
+		<h2>{t('credits.kanji.title')}</h2>
+		<p>{t('credits.kanji.body')}</p>
+		<p>
+			<a href="https://www.edrdg.org/wiki/index.php/KANJIDIC_Project" rel="noreferrer">KANJIDIC2</a>
+			·
+			<a href="https://www.tanos.co.uk/jlpt/" rel="noreferrer">Jonathan Waller</a>
+			·
+			<a href="https://creativecommons.org/licenses/by/4.0/" rel="noreferrer">CC BY</a>
+		</p>
+	</section>
+
+	<section>
 		<h2>{t('credits.examples.title')}</h2>
 		<p>{t('credits.examples.body')}</p>
 		<p>

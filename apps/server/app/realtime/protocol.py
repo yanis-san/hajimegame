@@ -14,7 +14,7 @@ from msgspec import UNSET, Meta, Struct, UnsetType
 
 PROTOCOL_VERSION = 1
 
-Mode = Literal["classic", "shiritori"]
+Mode = Literal["classic", "shiritori", "kanji"]
 Difficulty = Literal["easy", "normal", "hard"]
 RoomPhase = Literal["lobby", "countdown", "playing", "finished"]
 RejectCode = Literal[
@@ -93,6 +93,9 @@ class SetSettings(_Msg, tag_field="t", tag="settings"):
     max_players: Annotated[int, Meta(ge=2, le=8)] | UnsetType = UNSET
     n_penalty: bool | UnsetType = UNSET
     bonus_kana: bool | UnsetType = UNSET
+    levels: (
+        Annotated[list[Annotated[int, Meta(ge=1, le=5)]], Meta(min_length=1, max_length=5)] | UnsetType
+    ) = UNSET
     v: int = PROTOCOL_VERSION
 
 
@@ -168,6 +171,7 @@ class SettingsView(Struct, frozen=True, omit_defaults=False):
     max_players: int
     bonus_kana: bool
     n_penalty: bool
+    levels: list[int]  # kanji mode: the JLPT levels (5 to 1) a kanji may come from
 
 
 class PlayerView(Struct, frozen=True, omit_defaults=False):
@@ -206,7 +210,7 @@ class WordView(Struct, frozen=True, omit_defaults=False):
 
 
 # Statistics views. Each game has its own, named for it (the bomb game's are the ``Bomb*`` ones).
-BombStatsMode = Literal["all", "classic", "shiritori"]
+BombStatsMode = Literal["all", "classic", "shiritori", "kanji"]
 
 
 class BombWordStat(Struct, frozen=True, omit_defaults=False):

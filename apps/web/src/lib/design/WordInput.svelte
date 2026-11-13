@@ -14,7 +14,7 @@
 		compact = false
 	}: {
 		fragment?: string;
-		mode?: 'classic' | 'shiritori';
+		mode?: 'classic' | 'shiritori' | 'kanji';
 		/** true when it is this player's turn */
 		active?: boolean;
 		placeholder?: string;
@@ -150,7 +150,11 @@
 			autocomplete="off"
 			spellcheck="false"
 			maxlength="32"
-			aria-label={mode === 'shiritori' ? t('game.typeStart') : t('game.typeHere')}
+			aria-label={mode === 'shiritori'
+				? t('game.typeStart')
+				: mode === 'kanji'
+					? t('game.typeKanji')
+					: t('game.typeHere')}
 			{placeholder}
 			{value}
 			class:idle={!active}

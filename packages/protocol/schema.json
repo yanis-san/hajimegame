@@ -236,6 +236,16 @@
           "bonus_kana": {
             "type": "boolean"
           },
+          "levels": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5
+            },
+            "maxItems": 5,
+            "minItems": 1
+          },
           "v": {
             "type": "integer",
             "default": 1
@@ -696,6 +706,7 @@
           "mode": {
             "enum": [
               "classic",
+              "kanji",
               "shiritori"
             ]
           },
@@ -707,6 +718,12 @@
           },
           "n_penalty": {
             "type": "boolean"
+          },
+          "levels": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
           }
         },
         "required": [
@@ -715,7 +732,8 @@
           "mode",
           "max_players",
           "bonus_kana",
-          "n_penalty"
+          "n_penalty",
+          "levels"
         ]
       },
       "PlayerView": {
@@ -1630,6 +1648,16 @@
         "bonus_kana": {
           "type": "boolean"
         },
+        "levels": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "maxItems": 5,
+          "minItems": 1
+        },
         "v": {
           "type": "integer",
           "default": 1
@@ -2015,6 +2043,7 @@
         "mode": {
           "enum": [
             "classic",
+            "kanji",
             "shiritori"
           ]
         },
@@ -2026,6 +2055,12 @@
         },
         "n_penalty": {
           "type": "boolean"
+        },
+        "levels": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
         }
       },
       "required": [
@@ -2034,7 +2069,8 @@
         "mode",
         "max_players",
         "bonus_kana",
-        "n_penalty"
+        "n_penalty",
+        "levels"
       ]
     },
     "PlayerView": {

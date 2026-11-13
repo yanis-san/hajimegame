@@ -27,7 +27,7 @@ from app.core.ratelimit import TokenBucket
 from app.core.security import sanitize_chat, sanitize_nickname
 from app.games.base import GameEvent, Phase, PlayerInfo
 from app.games.bomb import events as ev
-from app.games.bomb.bots import Difficulty, plan_turn
+from app.games.bomb.bots import CandidateSource, Difficulty, plan_turn
 from app.games.bomb.engine import BombEngine
 from app.games.bomb.recording import BombRecording
 from app.games.bomb.settings import BombSettings
@@ -35,6 +35,7 @@ from app.games.recording import NullRecorder, Recorder, RunRecording, SeatInfo, 
 from app.japanese.candidates import CandidateIndex
 from app.japanese.dictionary import Dictionary
 from app.japanese.fragments import FragmentTable
+from app.japanese.kanji import KanjiBook
 from app.realtime import protocol as pr
 from app.realtime.clock import RoomClock, to_ms
 from app.realtime.connection import Connection
@@ -97,6 +98,7 @@ class RoomDeps:
     fragments: FragmentTable
     clock: RoomClock
     get_candidates: Callable[[], CandidateIndex | None] = lambda: None
+    get_kanji: Callable[[], KanjiBook] | None = None  # the kanji table, for the kanji mode
     rng_factory: Callable[[], random.Random] = lambda: random.Random(secrets.randbits(64))  # noqa: S311
     on_close: Callable[[Room], None] | None = None
     recorder: Recorder = field(default_factory=NullRecorder)  # where finished games go
@@ -301,6 +303,7 @@ class Room:
             n_penalty=s.n_penalty,
             max_players=s.max_players,
             bonus_kana=s.bonus_kana,
+            levels=list(s.levels),
         )
 
     def _player_view(self, m: Member) -> pr.PlayerView:
@@ -599,6 +602,9 @@ class Room:
                 n_penalty=current.n_penalty if msg.n_penalty is UNSET else msg.n_penalty,
                 max_players=current.max_players if msg.max_players is UNSET else msg.max_players,
                 bonus_kana=current.bonus_kana if msg.bonus_kana is UNSET else msg.bonus_kana,
+                levels=current.levels
+                if msg.levels is UNSET
+                else tuple(sorted(set(msg.levels), reverse=True)),
             )
         except ValueError as exc:
             self._error(conn, "bad_message", str(exc))
@@ -708,6 +714,7 @@ class Room:
             fragments=self._deps.fragments,
             clock=self.clock,
             rng=self._deps.rng_factory(),
+            kanji=self._kanji_book() if settings.mode == "kanji" else None,
         )
         self._engine = engine
         self._recording = BombRecording(
@@ -766,7 +773,7 @@ class Room:
         if self._phase != "lobby":
             self._error(conn, "wrong_phase")
             return
-        if self._deps.get_candidates() is None:
+        if self._settings.mode != "kanji" and self._deps.get_candidates() is None:
             self._error(conn, "bots_loading", "Les CPU se préparent, réessaie dans un instant")
             return
         if self.player_count() >= self._settings.max_players:
@@ -804,7 +811,9 @@ class Room:
         """When the turn belongs to a CPU player, decide what it will do and when."""
         engine = self._engine
         member = self._members.get(event.player_id)
-        index = self._deps.get_candidates()
+        index: CandidateSource | None = (
+            self._kanji_book() if self._settings.mode == "kanji" else self._deps.get_candidates()
+        )
         if engine is None or member is None or member.bot_difficulty is None or index is None:
             return
         plan = plan_turn(
@@ -822,6 +831,12 @@ class Room:
             self._arm_at("bot_type", started + plan.typing_at)
             self._arm_at("bot_submit", started + plan.delay)
         # no word: the bot draws a blank and the bomb explodes on the normal timer
+
+    def _kanji_book(self) -> KanjiBook:
+        getter = self._deps.get_kanji
+        if getter is None:
+            raise RuntimeError("no kanji table for the kanji mode")
+        return getter()
 
     def _bot_turn_is_current(self) -> tuple[BombEngine, str, str] | None:
         engine = self._engine

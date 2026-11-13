@@ -14,6 +14,7 @@ from app.games.recording import NullRecorder, Recorder
 from app.japanese.candidates import CandidateIndex
 from app.japanese.dictionary import Dictionary
 from app.japanese.fragments import FragmentTable
+from app.japanese.kanji import KanjiBook
 from app.realtime.clock import RoomClock
 from app.realtime.registry import ROOM_TTL_SECONDS, RoomRegistry
 from app.realtime.room import Room, RoomDeps
@@ -63,6 +64,9 @@ class RoomManager:
         self._by_ip: dict[str, set[str]] = defaultdict(set)
         self._refresher: asyncio.Task[None] | None = None
         self.candidates: CandidateIndex | None = None  # CPU word index, filled in the background
+        self.kanji: KanjiBook | None = (
+            None  # the kanji table; filled in the background, built on demand otherwise
+        )
         self._release_tasks: set[asyncio.Task[None]] = set()
 
     # ------------------------------------------------------------------ lifecycle
@@ -115,6 +119,7 @@ class RoomManager:
             dictionary=self._dictionary,
             fragments=self._fragments,
             get_candidates=lambda: self.candidates,
+            get_kanji=self.kanji_book,
             clock=self._clock,
             on_close=self._on_room_closed,
             recorder=self._recorder,
@@ -126,6 +131,12 @@ class RoomManager:
         room.start()
         log.info("room_created", room=code)
         return room
+
+    def kanji_book(self) -> KanjiBook:
+        """The kanji table. Normally ready since start-up; built here (about a second) if it is not."""
+        if self.kanji is None:
+            self.kanji = KanjiBook.load(self._dictionary)
+        return self.kanji
 
     def get_local(self, code: str) -> Room | None:
         return self._rooms.get(normalize_code(code))

@@ -107,7 +107,9 @@
 		const key =
 			event.reason === 'missing_fragment' && store.settings.mode === 'shiritori'
 				? 'reject.missing_start'
-				: (`reject.${event.reason}` as const);
+				: event.reason === 'missing_fragment' && store.settings.mode === 'kanji'
+					? 'reject.missing_kanji'
+					: (`reject.${event.reason}` as const);
 		rejection = t(key, { fragment });
 		clearTimeout(rejectTimer);
 		rejectTimer = setTimeout(() => (rejection = ''), 3200);
@@ -240,7 +242,11 @@
 				{#if store.turn}
 					{#if store.isMyTurn}
 						<strong>{t('game.yourTurn')}</strong>
-						{store.settings.mode === 'shiritori' ? t('game.typeStart') : t('game.typeHere')}
+						{store.settings.mode === 'shiritori'
+							? t('game.typeStart')
+							: store.settings.mode === 'kanji'
+								? t('game.typeKanji')
+								: t('game.typeHere')}
 						<span class="frag">{store.turn.fragment}</span>
 					{:else}
 						{t('game.turnOf', { name: activeName })}

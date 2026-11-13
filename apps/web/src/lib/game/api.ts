@@ -14,7 +14,7 @@ export class ApiError extends Error {
 const HEADERS = { 'Content-Type': 'application/json', 'X-Hajime-Client': 'web' };
 
 export async function createRoom(
-	mode: 'classic' | 'shiritori' = 'classic',
+	mode: 'classic' | 'shiritori' | 'kanji' = 'classic',
 	fetcher: typeof fetch = fetch
 ): Promise<{ code: string }> {
 	const response = await fetcher(apiUrl('/api/rooms'), {
