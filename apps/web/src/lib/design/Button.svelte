@@ -149,6 +149,13 @@
 		font-size: 1.3rem;
 		border-radius: 16px;
 	}
+	/* narrow phones: less padding, so a label such as "Créer une partie" keeps two lines at most */
+	@media (max-width: 380px) {
+		.lg {
+			padding-inline: 1rem;
+			font-size: 1.15rem;
+		}
+	}
 	.full {
 		width: 100%;
 	}

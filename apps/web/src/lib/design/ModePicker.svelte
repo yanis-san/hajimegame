@@ -99,11 +99,13 @@
 	}
 	.picker {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
+		/* min(…, 100%): on a narrow card the two choices stack instead of forcing the card wider than the screen */
+		grid-template-columns: repeat(auto-fit, minmax(min(10.5rem, 100%), 1fr));
 		gap: 0.8rem;
 	}
 	.opt {
 		position: relative;
+		min-width: 0;
 		display: grid;
 		gap: 0.35rem;
 		padding: 0.8rem 0.9rem 0.9rem;
@@ -200,7 +202,8 @@
 	}
 
 	/* phones: two compact cards side by side instead of two tall ones */
-	@media (max-width: 639px) {
+	/* two side by side only when each card can hold its rule; below 420 px they stack (one above the other) */
+	@media (min-width: 420px) and (max-width: 639px) {
 		.picker {
 			grid-template-columns: 1fr 1fr;
 			gap: 0.5rem;
