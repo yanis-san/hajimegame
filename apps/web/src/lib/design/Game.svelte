@@ -44,7 +44,7 @@
 	const compact = $derived(visible < 620);
 	// Many players on a phone: smaller tiles (avatar and name), so that eight still fit in a row.
 	const crowded = $derived(!desktop && store.players.length > 5);
-	const chrome = $derived(desktop ? (compact ? 310 : 355) : compact ? 250 : 285);
+	const chrome = $derived(desktop ? (compact ? 310 : 355) : compact ? 278 : 330);
 	const bombSize = $derived(
 		desktop
 			? Math.max(110, Math.min(260, Math.floor((visible - chrome) / 1.74)))
@@ -254,7 +254,7 @@
 		<div class="last" bind:this={lastBox}>
 			{#if lastWord}
 				{#key lastWord.turn + lastWord.word}
-					<div class="lastcard" lang="ja">
+					<div class="lastcard" class:compact lang="ja">
 						<span class="w">{lastWord.word}</span>
 						{#if toHiragana(lastWord.reading) !== toHiragana(lastWord.word)}<span class="r"
 								>{lastWord.reading}</span
@@ -415,6 +415,19 @@
 		font-family: var(--font-kana);
 		font-size: 1rem;
 		opacity: 0.8;
+	}
+	/* short screens (a phone with its keyboard open): the word on a slimmer line */
+	.last:has(.compact) {
+		min-height: 0;
+	}
+	.lastcard.compact {
+		padding: 0.15rem 0.8rem 0.2rem;
+	}
+	.lastcard.compact .w {
+		font-size: 1.2rem;
+	}
+	.lastcard.compact .r {
+		display: none;
 	}
 	.hint {
 		margin: 0;
