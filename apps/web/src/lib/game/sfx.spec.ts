@@ -37,3 +37,47 @@ describe('audio unlock', () => {
 		expect(created).toBe(1);
 	});
 });
+
+/** iPhone: the ring/silent switch mutes Web Audio unless the page says it plays media. */
+describe('audio on iPhone', () => {
+	class FailingContext {
+		constructor() {
+			throw new Error('stop here: only the audio session is being looked at');
+		}
+	}
+
+	beforeEach(() => {
+		vi.stubGlobal('window', { AudioContext: FailingContext });
+		vi.stubGlobal('localStorage', { getItem: () => null, setItem: () => undefined });
+	});
+	afterEach(() => vi.unstubAllGlobals());
+
+	it('asks for the playback audio session where Safari offers it', () => {
+		const audioSession = { type: 'auto' };
+		vi.stubGlobal('navigator', { audioSession, userAgent: 'iPhone', maxTouchPoints: 5 });
+		sfx.unlock();
+		expect(audioSession.type).toBe('playback');
+	});
+
+	it('plays a silent loop on an older iPhone that has no audio session', () => {
+		const play = vi.fn(() => Promise.resolve());
+		const made: { loop?: boolean }[] = [];
+		class FakeAudio {
+			loop = false;
+			constructor() {
+				made.push(this);
+			}
+			setAttribute(): void {}
+			play = play;
+		}
+		vi.stubGlobal('Audio', FakeAudio);
+		vi.stubGlobal('URL', { createObjectURL: () => 'blob:silent' });
+		vi.stubGlobal('navigator', {
+			userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0)',
+			maxTouchPoints: 5
+		});
+		sfx.unlock();
+		expect(play).toHaveBeenCalledTimes(1);
+		expect(made[0].loop).toBe(true);
+	});
+});

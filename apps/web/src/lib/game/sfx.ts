@@ -106,7 +106,36 @@ const LEVEL: Record<SfxName, number> = {
 	crackle: 3
 };
 
+/** One tenth of a second of silence, as a WAV file (8-bit, 8 kHz, mono). */
+function silentWav(): Blob {
+	const samples = 800;
+	const buffer = new ArrayBuffer(44 + samples);
+	const view = new DataView(buffer);
+	const text = (offset: number, value: string): void =>
+		[...value].forEach((c, i) => view.setUint8(offset + i, c.charCodeAt(0)));
+	text(0, 'RIFF');
+	view.setUint32(4, 36 + samples, true);
+	text(8, 'WAVE');
+	text(12, 'fmt ');
+	view.setUint32(16, 16, true);
+	view.setUint16(20, 1, true); // PCM
+	view.setUint16(22, 1, true); // mono
+	view.setUint32(24, 8000, true);
+	view.setUint32(28, 8000, true);
+	view.setUint16(32, 1, true);
+	view.setUint16(34, 8, true);
+	text(36, 'data');
+	view.setUint32(40, samples, true);
+	new Uint8Array(buffer, 44).fill(128); // 8-bit silence
+	return new Blob([buffer], { type: 'audio/wav' });
+}
+
+const onIos = (): boolean =>
+	/iPad|iPhone|iPod/.test(navigator.userAgent) ||
+	(navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); // iPadOS says it is a Mac
+
 class SfxEngine {
+	#silent: HTMLAudioElement | null = null;
 	#ctx: AudioContext | null = null;
 	#master: GainNode | null = null;
 	#dry: GainNode | null = null;
@@ -168,6 +197,7 @@ class SfxEngine {
 		const activation = (navigator as { userActivation?: { isActive: boolean } }).userActivation;
 		if (!this.#ctx && activation && !activation.isActive) return;
 		try {
+			this.#playbackSession();
 			if (!this.#ctx) {
 				const Ctor =
 					window.AudioContext ??
@@ -175,10 +205,31 @@ class SfxEngine {
 				if (!Ctor) return;
 				this.#build(new Ctor());
 			}
-			if (this.#ctx?.state === 'suspended') void this.#ctx.resume();
+			// 'suspended', or 'interrupted' (Safari, after a call or a trip to another app): both need a gesture to resume
+			if (this.#ctx && (this.#ctx.state as string) !== 'running') {
+				this.#ctx.resume().catch(() => undefined);
+			}
 		} catch {
 			/* audio is optional */
 		}
+	}
+
+	/**
+	 * On iPhone the ring/silent switch mutes Web Audio unless the page plays "media". Safari 16.4 lets the page say so
+	 * (`navigator.audioSession`); older iOS needs a looping silent <audio> element started from a gesture.
+	 */
+	#playbackSession(): void {
+		const session = (navigator as { audioSession?: { type: string } }).audioSession;
+		if (session) {
+			if (session.type !== 'playback') session.type = 'playback';
+			return;
+		}
+		if (this.#silent || !onIos()) return;
+		const audio = new Audio(URL.createObjectURL(silentWav()));
+		audio.loop = true;
+		audio.setAttribute('playsinline', '');
+		this.#silent = audio;
+		audio.play().catch(() => (this.#silent = null)); // not allowed yet: the next gesture tries again
 	}
 
 	/** voices -> dry bus + reverb send -> compressor -> master volume -> speakers */

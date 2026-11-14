@@ -68,13 +68,12 @@
 		}
 		applyTheme(loadPref<'dark' | 'light'>('theme', 'dark'));
 		muted = sfx.muted;
-		// Audio can only start from a user gesture: try on each tap, click and key press until it is awake. (A touch
-		// counts as a gesture when it ends, a key such as F12 does not count at all: hence several events.)
-		const events = ['pointerdown', 'pointerup', 'click', 'keydown'] as const;
-		const unlock = (): void => {
-			sfx.unlock();
-			if (sfx.running) for (const name of events) window.removeEventListener(name, unlock);
-		};
+		// Audio can only start from a user gesture: try on each tap, click and key press. (A touch counts as a gesture
+		// when it ends, a key such as F12 does not count at all: hence several events, `touchend` being the one iOS
+		// trusts.) It stays on for the whole visit: Safari puts the audio to sleep again after a call or a trip to
+		// another app, and the next tap wakes it; when it is awake the call does nothing.
+		const events = ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown'] as const;
+		const unlock = (): void => sfx.unlock();
 		for (const name of events) window.addEventListener(name, unlock);
 		return () => {
 			for (const name of events) window.removeEventListener(name, unlock);
