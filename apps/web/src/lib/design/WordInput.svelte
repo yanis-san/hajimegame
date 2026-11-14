@@ -182,6 +182,8 @@
 <style>
 	.dock {
 		display: grid;
+		grid-template-columns: minmax(0, 1fr);
+		min-width: 0;
 		gap: 0.4rem;
 	}
 	.preview {
@@ -223,6 +225,7 @@
 	}
 	.row {
 		display: flex;
+		min-width: 0;
 		gap: 0.6rem;
 	}
 	.field {

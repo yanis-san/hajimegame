@@ -302,7 +302,7 @@ export const ja: Record<MessageKey, string> = {
 	'credits.dictionary.licence': 'EDRDGのライセンス',
 	'credits.kanji.title': '漢字とレベル',
 	'credits.kanji.body':
-		'漢字の読みと意味は KANJIDIC2（EDRDG、CC BY-SA 4.0）によります。JLPTは公式の漢字リストを公表していないため、N5〜N1のレベルはジョナサン・ウォラー氏のリスト（CC BY）に基づく目安です。',
+		'漢字の読みと意味は KANJIDIC2、地名と姓は JMnedict（EDRDG、CC BY-SA 4.0）によります。JLPTは公式の漢字リストを公表していないため、N5〜N1のレベルはジョナサン・ウォラー氏のリスト（CC BY）に基づく目安です。',
 	'credits.examples.title': '例文',
 	'credits.examples.body':
 		'例文とその翻訳はTatoebaプロジェクトとその投稿者によるもので、CC BY 2.0 FRライセンスです。JMdictの例文データを通じて単語に結び付けています。機械翻訳は使っていません。',

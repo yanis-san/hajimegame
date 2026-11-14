@@ -304,7 +304,7 @@ export const en: Record<MessageKey, string> = {
 	'credits.dictionary.licence': 'EDRDG licence',
 	'credits.kanji.title': 'Kanji and levels',
 	'credits.kanji.body':
-		'The readings and meanings of the kanji come from KANJIDIC2 (EDRDG, CC BY-SA 4.0). The JLPT no longer publishes official lists: the levels N5 to N1 follow Jonathan Waller’s lists (CC BY), so they are only indicative.',
+		'The readings and meanings of the kanji come from KANJIDIC2, and the place and family names from JMnedict (EDRDG, CC BY-SA 4.0). The JLPT no longer publishes official lists: the levels N5 to N1 follow Jonathan Waller’s lists (CC BY), so they are only indicative.',
 	'credits.examples.title': 'Example sentences',
 	'credits.examples.body':
 		'Example sentences and their translations come from the Tatoeba project and its contributors, under the CC BY 2.0 FR licence. They are attached to the words through the JMdict example file. No translation is machine generated.',

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import random
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 from typing import Protocol
 
 from app.games.bomb.events import RejectReason
@@ -49,7 +49,7 @@ class WordValidator(Protocol):
 class KanjiSource(Protocol):
     """The kanji mode: which kanji to ask, and whether a word is written with it."""
 
-    def draw(self, levels: Sequence[int], rng: random.Random, recent: Sequence[str] = ...) -> str:
+    def draw(self, levels: Sequence[int], rng: random.Random, recent: Collection[str] = ...) -> str:
         """A kanji of one of the JLPT ``levels``, not one of ``recent``."""
 
     def matches(self, text: str, char: str) -> Sequence[WordHit]:

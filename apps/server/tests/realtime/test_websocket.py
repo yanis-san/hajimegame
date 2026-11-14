@@ -594,9 +594,9 @@ async def test_the_proxy_probe_says_starting_until_the_cpu_index_is_built(server
 async def test_kanji_mode_levels_a_kanji_turn_and_a_word_written_with_it(
     server: RunningServer, dictionary: Dictionary
 ) -> None:
-    from app.japanese.kanji import KanjiBook
+    from app.japanese.kanji import shared_book
 
-    book = KanjiBook.load(dictionary)
+    book = shared_book(dictionary)
     created = await server.http.post("/api/rooms", headers=CSRF, json={"mode": "kanji"})
     code = created.json()["code"]
     a, b = server.client(code), server.client(code)
@@ -647,9 +647,9 @@ def turn_is(number: int) -> Callable[[dict[str, Any]], bool]:
 
 
 async def test_a_cpu_plays_the_kanji_mode(server: RunningServer, dictionary: Dictionary) -> None:
-    from app.japanese.kanji import KanjiBook
+    from app.japanese.kanji import shared_book
 
-    book = KanjiBook.load(dictionary)
+    book = shared_book(dictionary)
     created = await server.http.post("/api/rooms", headers=CSRF, json={"mode": "kanji"})
     code = created.json()["code"]
     host = server.client(code)

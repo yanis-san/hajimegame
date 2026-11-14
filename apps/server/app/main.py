@@ -106,7 +106,10 @@ def create_app(
             manager.candidates = candidates
         elif cfg.preload_bots:
             index_task = asyncio.get_running_loop().create_task(_build_candidates(words, manager))
-        kanji_task = asyncio.get_running_loop().create_task(_build_kanji(manager))
+        # the kanji table is built at start-up in production (like the CPU index); on demand otherwise
+        kanji_task = (
+            asyncio.get_running_loop().create_task(_build_kanji(manager)) if cfg.preload_bots else None
+        )
         lag_task = asyncio.get_running_loop().create_task(_watch_loop_lag())
         app.state.settings = cfg
         app.state.dictionary = words
@@ -126,7 +129,8 @@ def create_app(
             yield
         finally:
             lag_task.cancel()
-            kanji_task.cancel()
+            if kanji_task is not None:
+                kanji_task.cancel()
             if index_task is not None:
                 index_task.cancel()
             await manager.shutdown()

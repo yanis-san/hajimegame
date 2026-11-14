@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import random
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 
 import pytest
 
@@ -13,12 +13,12 @@ from app.games.bomb.ports import WordHit
 from app.games.bomb.settings import BombSettings
 from app.japanese.dictionary import Dictionary, Reject, WordMatch
 from app.japanese.fragments import FragmentTable
-from app.japanese.kanji import KanjiBook
+from app.japanese.kanji import KanjiBook, shared_book
 
 
 @pytest.fixture(scope="module")
 def book(dictionary: Dictionary) -> KanjiBook:
-    return KanjiBook.load(dictionary)
+    return shared_book(dictionary)
 
 
 def make(
@@ -110,7 +110,7 @@ class SameKanji:
     def __init__(self, book: KanjiBook, char: str) -> None:
         self._book, self._char = book, char
 
-    def draw(self, levels: Sequence[int], rng: random.Random, recent: Sequence[str] = ()) -> str:
+    def draw(self, levels: Sequence[int], rng: random.Random, recent: Collection[str] = ()) -> str:
         return self._char
 
     def matches(self, text: str, char: str) -> Sequence[WordHit]:
@@ -150,3 +150,18 @@ def test_a_cpu_can_play_every_kanji(book: KanjiBook) -> None:
         )
         if plan.word is not None:
             assert isinstance(book.check(plan.word, char), WordMatch), (char, plan.word)
+
+
+def test_no_kanji_comes_back_before_all_of_them_were_asked(dictionary: Dictionary, book: KanjiBook) -> None:
+    engine, clock = make(dictionary, book, levels=(5,), seed=11)
+    pool = set(book.pool([5]))
+    turn = next(e for e in engine.start() if isinstance(e, ev.TurnStarted))
+    asked = [turn.fragment]
+    for _ in range(len(pool) - 1):  # the bomb explodes every turn: only the kanji matter here
+        clock.advance(11)
+        nxt = [e for e in engine.timeout() if isinstance(e, ev.TurnStarted)]
+        if not nxt:
+            break
+        asked.append(nxt[0].fragment)
+    assert len(asked) == len(set(asked)), "a kanji came back inside a round"
+    assert set(asked) <= pool

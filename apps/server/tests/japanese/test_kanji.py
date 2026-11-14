@@ -5,12 +5,12 @@ import random
 import pytest
 
 from app.japanese.dictionary import Dictionary, WordMatch, WordRejected
-from app.japanese.kanji import LEVELS, MIN_WORDS, KanjiBook
+from app.japanese.kanji import LEVELS, MIN_WORDS, KanjiBook, shared_book
 
 
 @pytest.fixture(scope="module")
 def book(dictionary: Dictionary) -> KanjiBook:
-    return KanjiBook.load(dictionary)
+    return shared_book(dictionary)
 
 
 def accepted(book: KanjiBook, raw: str, char: str) -> bool:
@@ -65,7 +65,7 @@ def test_words_written_with_the_kanji_are_accepted(book: KanjiBook, raw: str, ch
     [
         ("がっこう", "土", "missing_fragment"),  # a word, but not written with the kanji
         ("ねこ", "月", "missing_fragment"),
-        ("ひがし", "日", "missing_fragment"),  # 東, not 日
+        ("ひがし", "土", "missing_fragment"),  # 東, not 土
         ("ぬぬぬぬぬ", "土", "not_in_dictionary"),
         ("", "土", "not_in_dictionary"),
         ("月曜日", "土", "missing_fragment"),  # kanji typed but another kanji
@@ -104,3 +104,55 @@ def test_every_asked_kanji_has_a_playable_word_for_the_bots(book: KanjiBook, dic
         words = book.sample_words(char, 3)
         assert words, char
         assert accepted(book, words[0], char), (char, words[0])
+
+
+def test_every_chosen_level_is_asked_in_proportion_not_in_proportion_to_its_size(book: KanjiBook) -> None:
+    rng = random.Random(4)
+    counts = {level: 0 for level in LEVELS}
+    for _ in range(3000):
+        counts[book.get(book.draw(LEVELS, rng)).level] += 1  # type: ignore[union-attr]
+    # N1 has 15 times more kanji than N5, but each level gets about a fifth of the turns
+    assert all(450 <= c <= 750 for c in counts.values()), counts
+
+
+def test_the_commonest_kanji_do_not_dominate_a_level(book: KanjiBook) -> None:
+    rng = random.Random(8)
+    seen = {book.draw([5, 4], rng) for _ in range(1500)}
+    assert len(seen) >= 0.9 * len(book.pool([5, 4]))  # most of the kanji of the levels come up
+
+
+@pytest.mark.parametrize(
+    ("raw", "char"),
+    [
+        ("ueno", "上"),  # the district of Tokyo and the family name: a proper name, not in JMdict
+        ("ueno", "野"),
+        ("うえの", "野"),
+        ("上野", "上"),
+        ("tanaka", "田"),  # a family name
+        ("tanaka", "中"),
+        ("ikebukuro", "池"),  # a place
+    ],
+)
+def test_proper_names_written_with_the_kanji_are_accepted(book: KanjiBook, raw: str, char: str) -> None:
+    result = book.check(raw, char)
+    assert isinstance(result, WordMatch), (raw, char, result)
+
+
+def test_a_proper_name_is_shown_in_kanji_and_counts_once(book: KanjiBook) -> None:
+    names = [m for m in book.matches("ueno", "野") if m.entry_id >= 1 << 30]
+    assert len(names) == 1  # one name for one typed word: it cannot be played twice under two spellings
+    assert names[0].text == "上野"  # the shortest form made of kanji only
+    assert book.check("ueno", "上").text == "上野"  # type: ignore[union-attr]  # not 上の, which has a kana
+    assert "nom" in names[0].meaning_fr.lower() and names[0].meaning_en.startswith("Proper name")
+    assert book.matches("ueno", "野")[0].entry_id == names[0].entry_id  # always the same id
+
+
+def test_a_name_without_the_kanji_is_refused_like_any_word(book: KanjiBook) -> None:
+    result = book.check("ueno", "土")
+    assert isinstance(result, WordRejected) and result.reason == "missing_fragment"
+    assert book.check("ぬぬぬぬぬ", "土") == WordRejected("not_in_dictionary")
+
+
+def test_proper_names_exist_only_in_the_kanji_game(dictionary: Dictionary) -> None:
+    # the fragment game does not know 上野 (うえの): only the kanji game does
+    assert dictionary.check("うえの", "うえ").__class__.__name__ == "WordRejected"

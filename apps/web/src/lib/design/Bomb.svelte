@@ -223,7 +223,8 @@
 	}
 	.seconds {
 		position: absolute;
-		left: calc(var(--size) * -0.36);
+		/* on its shoulder, but never past the edge of a narrow screen (the bomb is centred there) */
+		left: max(calc(var(--size) * -0.36), calc((100vw - var(--size)) / -2 + 8px));
 		top: calc(var(--size) * 0.04);
 		z-index: 3;
 	}

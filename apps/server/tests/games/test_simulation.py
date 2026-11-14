@@ -15,7 +15,7 @@ from app.games.bomb.settings import DURATIONS, LIFE_CAP, MODES, BombSettings
 from app.japanese.dictionary import Dictionary
 from app.japanese.fragments import FragmentTable
 from app.japanese.kana import fragment_ngrams, shiritori_end
-from app.japanese.kanji import KanjiBook
+from app.japanese.kanji import KanjiBook, shared_book
 
 GAMES = int(os.environ.get("HAJIME_SIM_GAMES", "1000"))
 
@@ -135,6 +135,6 @@ def play_one(seed: int, dictionary: Dictionary, table: FragmentTable, book: Kanj
 
 
 def test_simulated_games_all_modes(dictionary: Dictionary, table: FragmentTable) -> None:
-    book = KanjiBook.load(dictionary)
+    book = shared_book(dictionary)
     total = sum(play_one(seed, dictionary, table, book) for seed in range(GAMES))
     assert total > GAMES  # every game took several actions

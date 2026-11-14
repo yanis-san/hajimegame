@@ -14,7 +14,7 @@ from app.games.recording import NullRecorder, Recorder
 from app.japanese.candidates import CandidateIndex
 from app.japanese.dictionary import Dictionary
 from app.japanese.fragments import FragmentTable
-from app.japanese.kanji import KanjiBook
+from app.japanese.kanji import KanjiBook, shared_book
 from app.realtime.clock import RoomClock
 from app.realtime.registry import ROOM_TTL_SECONDS, RoomRegistry
 from app.realtime.room import Room, RoomDeps
@@ -135,7 +135,7 @@ class RoomManager:
     def kanji_book(self) -> KanjiBook:
         """The kanji table. Normally ready since start-up; built here (about a second) if it is not."""
         if self.kanji is None:
-            self.kanji = KanjiBook.load(self._dictionary)
+            self.kanji = shared_book(self._dictionary)
         return self.kanji
 
     def get_local(self, code: str) -> Room | None:

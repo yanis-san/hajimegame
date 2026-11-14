@@ -15,7 +15,8 @@ from __future__ import annotations
 import gzip
 import json
 import random
-from collections.abc import Iterable, Sequence
+import zlib
+from collections.abc import Collection, Iterable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Final
@@ -23,10 +24,15 @@ from typing import Final
 from app.japanese.dictionary import Dictionary, Reject, WordMatch, WordRejected
 
 DEFAULT_PATH: Final = Path(__file__).parent / "data" / "kanji.json.gz"
+NAMES_PATH: Final = Path(__file__).parent / "data" / "names.json.gz"
+NAME_ID_BASE: Final = 1 << 30  # ids of proper names (they have no dictionary entry), above any entry id
+NAME_MEANING_EN: Final = "Proper name (place or family name)"
+NAME_MEANING_FR: Final = "Nom propre (lieu ou nom de famille)"
 LEVELS: Final = (5, 4, 3, 2, 1)
 # A kanji needs this many words to be worth a turn (a kanji with two words would be a trap for the players).
 MIN_WORDS: Final = 5
 DIFFICULTY: Final = {5: 0, 4: 0, 3: 1, 2: 2, 1: 2}
+WEIGHT_CAP: Final = 40  # a kanji with more words than this is not drawn more often for it
 CANDIDATES_PER_KANJI: Final = 600  # the words a CPU player can pick from, commonest first
 
 
@@ -49,9 +55,21 @@ class Kanji:
 class KanjiBook:
     """Kanji table plus the index kanji -> dictionary entries. Built once, never mutated."""
 
-    def __init__(self, dictionary: Dictionary, kanji: dict[str, Kanji]) -> None:
+    def __init__(
+        self,
+        dictionary: Dictionary,
+        kanji: dict[str, Kanji],
+        names: dict[str, list[str]] | None = None,
+    ) -> None:
         self._dictionary = dictionary
         self._kanji = kanji
+        # proper names (places, stations, family names): reading -> written forms, and form -> readings
+        self._names: dict[str, tuple[str, ...]] = {r: tuple(f) for r, f in (names or {}).items()}
+        by_form: dict[str, list[str]] = {}
+        for reading, forms in self._names.items():
+            for form in forms:
+                by_form.setdefault(form, []).append(reading)
+        self._names_by_form: dict[str, tuple[str, ...]] = {f: tuple(r) for f, r in by_form.items()}
         self._candidates: dict[str, tuple[Candidate, ...]] = {}
         words: dict[str, set[int]] = {char: set() for char in kanji}
         for entry_id in range(len(dictionary)):
@@ -70,14 +88,20 @@ class KanjiBook:
         }
 
     @classmethod
-    def load(cls, dictionary: Dictionary, path: Path = DEFAULT_PATH) -> KanjiBook:
+    def load(
+        cls, dictionary: Dictionary, path: Path = DEFAULT_PATH, names_path: Path = NAMES_PATH
+    ) -> KanjiBook:
         with gzip.open(path, "rt", encoding="utf-8") as fh:
             raw = json.load(fh)
         kanji = {
             char: Kanji(char, int(v[0]), tuple(v[1]), tuple(v[2]), str(v[3]), str(v[4]))
             for char, v in raw["k"].items()
         }
-        return cls(dictionary, kanji)
+        names: dict[str, list[str]] = {}
+        if names_path.exists():
+            with gzip.open(names_path, "rt", encoding="utf-8") as fh:
+                names = json.load(fh)["n"]
+        return cls(dictionary, kanji, names)
 
     def __contains__(self, char: str) -> bool:
         return char in self._kanji
@@ -93,33 +117,68 @@ class KanjiBook:
     def word_count(self, char: str) -> int:
         return len(self._words.get(char, ()))
 
-    def draw(self, levels: Iterable[int], rng: random.Random, recent: Sequence[str] = ()) -> str:
-        """A kanji of the chosen levels, not one of the recent ones, favouring kanji that have many words."""
-        pool = self.pool(levels)
-        if not pool:
-            raise ValueError("no kanji for these levels")
+    def draw(self, levels: Iterable[int], rng: random.Random, recent: Collection[str] = ()) -> str:
+        """A kanji of the chosen levels that is not in ``recent``.
+
+        The level comes first, drawn evenly among the chosen ones (otherwise N1, which has the most kanji,
+        would be almost all of a game that asks for every level). Then the kanji inside the level, with a
+        weight that grows only slowly with its number of words, so the very common kanji do not come up much
+        more than the others. When every kanji of the levels is in ``recent``, any of them may come again.
+        """
+        wanted = [level for level in LEVELS if level in set(levels)]
         banned = set(recent)
-        candidates = [c for c in pool if c not in banned] or list(pool)
-        # the weight grows slowly with the number of words: frequent kanji come up more often than rare ones
-        weights = [min(self.word_count(c), 400) ** 0.5 for c in candidates]
+        tiers = [
+            [c for c in self._by_level[level] if c not in banned] for level in wanted if self._by_level[level]
+        ]
+        tiers = [t for t in tiers if t]
+        if not tiers:
+            pool = self.pool(levels)
+            if not pool:
+                raise ValueError("no kanji for these levels")
+            return rng.choice(pool)
+        candidates = rng.choice(tiers)
+        weights = [min(self.word_count(c), WEIGHT_CAP) ** 0.5 for c in candidates]
         return rng.choices(candidates, weights=weights, k=1)[0]
+
+    def _name_matches(self, text: str, char: str) -> list[WordMatch]:
+        """The proper name that makes ``text`` valid for ``char``, typed in kana (ueno) or in kanji (上野).
+
+        One match at most, so a name cannot be played twice under two spellings. Typed in kana it is the
+        most ordinary spelling that has the kanji (上野, not 上乃 or 上の), identified by the reading; typed
+        in kanji, it is identified by the form.
+        """
+        if char in text:
+            readings = self._names_by_form.get(text, ())
+            if readings:
+                return [self._name(text, readings[0], f"form:{text}")]
+        forms = sorted((f for f in self._names.get(text, ()) if char in f), key=lambda f: self._name_rank(f))
+        if forms:
+            return [self._name(forms[0], text, f"reading:{text}")]
+        return []
+
+    def _name_rank(self, form: str) -> tuple[bool, int, int, str]:
+        """Which spelling of a name to show: kanji only, then the easiest kanji, then the shortest."""
+        levels = [k.level for c in form if (k := self._kanji.get(c)) is not None]
+        return (len(levels) != len(form), -min(levels, default=0), len(form), form)
+
+    @staticmethod
+    def _name(form: str, reading: str, key: str) -> WordMatch:
+        return WordMatch(
+            NAME_ID_BASE + zlib.crc32(key.encode()), reading, form, NAME_MEANING_FR, NAME_MEANING_EN
+        )
 
     def check(self, raw: str, char: str) -> WordMatch | WordRejected:
         """Is ``raw`` a word written with ``char``? Else ``not_in_dictionary`` or ``missing_fragment``."""
-        dictionary = self._dictionary
-        text = dictionary.canonical(raw)
-        entry_ids = dictionary.entry_ids(text)
-        if not text or not entry_ids:
-            return WordRejected("not_in_dictionary")
-        for entry_id in entry_ids:
-            entry = dictionary.entry(entry_id)
-            if char in text or any(char in form for form in entry.words):
-                reading = text if text in entry.readings else entry.readings[0]
-                return dictionary.match(entry_id, reading, text)
-        return WordRejected("missing_fragment")
+        text = self._dictionary.canonical(raw)
+        found = self.matches(raw, char)
+        if found:
+            return found[0]
+        known = text in self._names or text in self._names_by_form or self._dictionary.entry_ids(text)
+        return WordRejected("missing_fragment" if text and known else "not_in_dictionary")
 
     def matches(self, raw: str, char: str) -> tuple[WordMatch, ...]:
-        """Every entry that makes ``raw`` valid for ``char`` (the engine refuses words already played)."""
+        """Every word that makes ``raw`` valid for ``char`` (the engine refuses words already played):
+        dictionary entries, or the proper names when there is none."""
         dictionary = self._dictionary
         text = dictionary.canonical(raw)
         out = []
@@ -128,6 +187,8 @@ class KanjiBook:
             if char in text or any(char in form for form in entry.words):
                 reading = text if text in entry.readings else entry.readings[0]
                 out.append(dictionary.match(entry_id, reading, text))
+        if not out:  # a name counts only when no ordinary word does, so a word cannot be played twice as both
+            out.extend(self._name_matches(text, char))
         return tuple(out)
 
     def difficulty(self, char: str) -> int:
@@ -156,4 +217,15 @@ class KanjiBook:
         return [dictionary.entry(i).readings[0] for i in ids[:limit]]
 
 
-__all__ = ["DEFAULT_PATH", "LEVELS", "MIN_WORDS", "Kanji", "KanjiBook"]
+_BOOKS: dict[int, KanjiBook] = {}
+
+
+def shared_book(dictionary: Dictionary) -> KanjiBook:
+    """The kanji book of this dictionary, built once (about 3 seconds of work) and shared by everybody."""
+    book = _BOOKS.get(id(dictionary))
+    if book is None or book._dictionary is not dictionary:
+        book = _BOOKS[id(dictionary)] = KanjiBook.load(dictionary)
+    return book
+
+
+__all__ = ["DEFAULT_PATH", "LEVELS", "MIN_WORDS", "Kanji", "KanjiBook", "shared_book"]

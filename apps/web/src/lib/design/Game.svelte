@@ -332,6 +332,8 @@
 <style>
 	.game {
 		display: grid;
+		/* minmax(0, ...): the column never grows with its content (Safari sizes a text field wider than the screen) */
+		grid-template-columns: minmax(0, 1fr);
 		grid-template-rows: auto minmax(0, 1fr);
 		height: calc(var(--vvh, 100dvh) - var(--bar, 52px));
 		box-sizing: border-box;
@@ -353,6 +355,7 @@
 	}
 	/* The bomb and its tag come first and never shrink; the last word's card takes what is left and gives way. */
 	.main {
+		min-width: 0;
 		display: flex;
 		flex-direction: column;
 		gap: 0.5rem;

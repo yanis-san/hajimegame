@@ -132,6 +132,9 @@ class BombEngine:
         self._difficulty = 0  # of the prompt of the current turn, 0 to 2
         self._next_start = ""  # shiritori: the kana the next word must start with
         self._recent: list[str] = []
+        self._kanji_seen: set[str] = (
+            set()
+        )  # kanji mode: every kanji asked so far, none comes back before all did
         self._used: set[int] = set()
         self._history: list[PlayedWord] = []
         self._eliminated: list[str] = []  # in order of elimination
@@ -347,7 +350,10 @@ class BombEngine:
     def _pick_fragment(self, state: PlayerState) -> str:
         if self.settings.mode == "kanji":
             assert self._kanji is not None
-            char = self._kanji.draw(self.settings.levels, self._rng, self._recent)
+            char = self._kanji.draw(self.settings.levels, self._rng, self._kanji_seen)
+            if char in self._kanji_seen:  # all of them were asked: a new round
+                self._kanji_seen.clear()
+            self._kanji_seen.add(char)
             self._difficulty = self._kanji.difficulty(char)
             return char
         self._difficulty = state.skill if self.settings.mode == "classic" else 0

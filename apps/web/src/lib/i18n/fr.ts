@@ -305,7 +305,7 @@ export const fr = {
 	'credits.dictionary.licence': 'Licence du groupe EDRDG',
 	'credits.kanji.title': 'Kanji et niveaux',
 	'credits.kanji.body':
-		'Les lectures et les sens des kanji viennent de KANJIDIC2 (groupe EDRDG, CC BY-SA 4.0). Le JLPT ne publie plus de listes officielles : les niveaux N5 à N1 suivent les listes de Jonathan Waller (CC BY), et ne sont donc qu’indicatifs.',
+		'Les lectures et les sens des kanji viennent de KANJIDIC2, et les noms de lieux et de famille de JMnedict (groupe EDRDG, CC BY-SA 4.0). Le JLPT ne publie plus de listes officielles : les niveaux N5 à N1 suivent les listes de Jonathan Waller (CC BY), et ne sont donc qu’indicatifs.',
 	'credits.examples.title': 'Phrases d’exemple',
 	'credits.examples.body':
 		'Les phrases d’exemple et leurs traductions viennent du projet Tatoeba et de ses contributeurs, sous licence CC BY 2.0 FR. Elles sont rattachées aux mots par les exemples du fichier JMdict. Aucune traduction n’est générée automatiquement.',

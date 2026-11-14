@@ -142,7 +142,10 @@ afterwards: `settings` has no `mode` field, so a client that sends one gets `err
 A word is accepted when the dictionary writes it with that kanji: typed in kanji (`土曜日`), or in kana (`どようび`,
 `つき`, `ひ`, romaji too) when some entry with that reading is written with the kanji. A reading with no word is refused.
 The data comes from KANJIDIC2 and JMdict (`tools/build_kanji.py`, `tools/build_dictionary.py`); one-kana words (日 is ひ)
-are kept in the dictionary for this mode only.
+are kept in the dictionary for this mode only. Proper names (place names, stations, family names written with the JLPT
+kanji, from JMnedict, `tools/build_names.py`) are also accepted in this mode, only when no ordinary word matches, so
+`ueno` is accepted for 上 and 野 (shown as 上野). The kanji are asked evenly between the chosen levels, and none comes
+back before all of them were asked.
 
 
 Players carry `bot` (true for CPU players, always connected and ready) and `difficulty` (CPU only).
