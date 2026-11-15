@@ -20,7 +20,6 @@ export const fr = {
 	'home.mode': 'Choisis ton mode',
 	'home.nickname': 'Ton pseudo',
 	'home.nicknameRequired': 'Choisis un pseudo pour jouer.',
-	'home.nicknamePlaceholder': 'Yanis',
 	'home.create': 'Créer une partie',
 	'home.join': 'Rejoindre',
 	'home.codeLabel': 'Code de la partie',

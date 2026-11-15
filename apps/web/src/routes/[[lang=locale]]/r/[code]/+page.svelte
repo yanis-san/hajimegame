@@ -11,6 +11,7 @@
 	import StatusBar from '#lib/design/StatusBar.svelte';
 	import TextField from '#lib/design/TextField.svelte';
 	import { GameSession } from '#lib/game/session.svelte.ts';
+	import { NICKNAMES, randomNickname } from '#lib/game/nicknames.ts';
 	import { loadProfile, saveProfile, sessionTokens } from '#lib/game/session.ts';
 	import { href, t, type MessageKey } from '#lib/i18n/index.ts';
 
@@ -24,7 +25,11 @@
 	const store = $derived(session?.store);
 	const fatal = $derived(store?.fatal ?? null);
 
+	// the example in the nickname field: the same on the server and in the first render, then a random silly one
+	let nicknameExample = $state<string>(NICKNAMES[0]);
+
 	onMount(() => {
+		nicknameExample = randomNickname();
 		const profile = loadProfile();
 		name = profile.name;
 		avatar = profile.avatar;
@@ -93,7 +98,7 @@
 		>
 			<TextField
 				label={t('home.nickname')}
-				placeholder={t('home.nicknamePlaceholder')}
+				placeholder={nicknameExample}
 				bind:value={name}
 				maxlength={20}
 				error={nameError}

@@ -21,7 +21,6 @@ export const ja: Record<MessageKey, string> = {
 	'home.mode': 'モードを選ぼう',
 	'home.nickname': 'ニックネーム',
 	'home.nicknameRequired': 'ニックネームを入力してください。',
-	'home.nicknamePlaceholder': 'Yanis',
 	'home.create': 'ゲームを作る',
 	'home.join': '参加する',
 	'home.codeLabel': 'ゲームコード',

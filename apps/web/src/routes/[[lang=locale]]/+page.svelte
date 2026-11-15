@@ -10,6 +10,7 @@
 	import ModePicker from '#lib/design/ModePicker.svelte';
 	import TextField from '#lib/design/TextField.svelte';
 	import { ApiError, createRoom, roomExists } from '#lib/game/api.ts';
+	import { NICKNAMES, randomNickname } from '#lib/game/nicknames.ts';
 	import { loadProfile, saveProfile } from '#lib/game/session.ts';
 	import { href, t } from '#lib/i18n/index.ts';
 	import type { Mood } from '#lib/design/Mascot.svelte';
@@ -23,7 +24,11 @@
 	let mood = $state<Mood | undefined>(undefined);
 	let mode = $state<'classic' | 'shiritori' | 'kanji'>('classic');
 
+	// the example in the nickname field: the same on the server and in the first render, then a random silly one
+	let nicknameExample = $state<string>(NICKNAMES[0]);
+
 	onMount(() => {
+		nicknameExample = randomNickname();
 		const profile = loadProfile();
 		name = profile.name;
 		avatar = profile.avatar;
@@ -124,7 +129,7 @@
 	<section class="card form" aria-label={t('home.create')}>
 		<TextField
 			label={t('home.nickname')}
-			placeholder={t('home.nicknamePlaceholder')}
+			placeholder={nicknameExample}
 			id="nickname"
 			bind:value={name}
 			maxlength={20}

@@ -22,7 +22,6 @@ export const en: Record<MessageKey, string> = {
 	'home.mode': 'Pick your mode',
 	'home.nickname': 'Your nickname',
 	'home.nicknameRequired': 'Pick a nickname to play.',
-	'home.nicknamePlaceholder': 'Yanis',
 	'home.create': 'Create a game',
 	'home.join': 'Join',
 	'home.codeLabel': 'Game code',
