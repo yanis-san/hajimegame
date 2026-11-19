@@ -25,7 +25,7 @@ services:
 
   # One origin for the browser: /api and /ws go to the game server, everything else to the web app.
   proxy:
-    image: caddy:2-alpine@sha256:78bd35025c7ba85961dd149ae670315129954e77abe2383ac47c89106b35ade9
+    image: caddy:2-alpine@sha256:003a97808e781aa9f7e75cc2f43d34d461099031faf5e20faefb9f61126836f0
     ports: ["8080:8080"]
     volumes: ["./deploy/Caddyfile:/etc/caddy/Caddyfile:ro"]
     depends_on: [server, web]
