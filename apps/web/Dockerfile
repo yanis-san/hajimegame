@@ -3,7 +3,7 @@
 #   docker build -f apps/web/Dockerfile .
 # Base images are pinned by digest (see apps/server/Dockerfile).
 
-FROM node:24-slim@sha256:dc26ae92c9fb15cf6b1d63e20f0944b2efe0f115b20e00be48fb23fceb061c54 AS build
+FROM node:26-slim@sha256:e6bedef217677b276c591795e169840edd9096dbf13f29df8ef8d1856b8820bc AS build
 RUN corepack enable
 WORKDIR /repo
 # dependencies first: this layer is rebuilt only when a manifest or the lock file changes
@@ -25,7 +25,7 @@ ARG VITE_ACCOUNTS=off
 ENV VITE_ACCOUNTS=$VITE_ACCOUNTS
 RUN pnpm --filter web build
 
-FROM node:24-slim@sha256:dc26ae92c9fb15cf6b1d63e20f0944b2efe0f115b20e00be48fb23fceb061c54 AS runtime
+FROM node:26-slim@sha256:e6bedef217677b276c591795e169840edd9096dbf13f29df8ef8d1856b8820bc AS runtime
 WORKDIR /app
 # The app only needs `node`. The package managers that ship with the base image (npm, yarn, corepack) are never
 # used at runtime and carry their own vulnerabilities, so they are removed: less to patch, less to attack.
