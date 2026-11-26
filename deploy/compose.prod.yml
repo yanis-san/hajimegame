@@ -19,7 +19,7 @@ x-hardened: &hardened
 
 services:
   postgres:
-    image: postgres:17-alpine@sha256:e5d2edd28b1f8d40a0a6c0c9cdc545b19b56a0d5d88f94bc11a97d970d4700d0
+    image: postgres:18-alpine@sha256:0115267ab5a509022df9319c77be365cef335adb71556c75f60f5360ee247e71
     restart: unless-stopped
     read_only: true
     # The image starts as root to prepare the data folder, then runs PostgreSQL as its own user: it needs
@@ -51,7 +51,7 @@ services:
   # A dump of the whole database every 24 hours, kept for 14 days. See docs/DEPLOY.md to restore one and to
   # copy the dumps off the server (a backup that lives only on the same disk is not enough).
   backup:
-    image: postgres:17-alpine@sha256:e5d2edd28b1f8d40a0a6c0c9cdc545b19b56a0d5d88f94bc11a97d970d4700d0
+    image: postgres:18-alpine@sha256:0115267ab5a509022df9319c77be365cef335adb71556c75f60f5360ee247e71
     restart: unless-stopped
     read_only: true
     cap_drop: [ALL]
